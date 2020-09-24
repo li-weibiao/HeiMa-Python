@@ -1,0 +1,441 @@
+1.单例
+01.单例设计模式
+·设计模式
+。设计模式是前人工作的总结和提炼,通常,被人们广泛流传的设计模式都是针对某一特定问题的成
+熟的解决方案
+使用设计模式是为了可重用代码、让代码更容易被他人理解、保证代码可靠性
+单例设计模式
+目的让类创建的对象,在系统中只有唯一的一个实例
+。每一次执行类名()返回的对象,内存地址是相同的
+单例设计模式的应用场景
+音乐播放对象
+回收站对象
+·打印机对象
+
+02.__new__方法
+·使用类名0创建对象时, Python的解释器首先会调用__new__方法为对象分配空间
+·__new__ 是一 个object个由基类提供的内置的静态方法,主要作用有两个:
+1)在内存中为对象分配空间
+2)返回对象的引用
+ Python的解释器获得对象的引用后,将引用作为第一个参数,传递给__init__方法
+重写__new__方法的代码非常固定!
+·重写__new__方法一定要  return super().__new__(cls)
+·否则 Python的解释器得不到分配了空间的对象引用,就不会调用对象的初始化方法
+·注意:__new__是一个静态方法,在调用时需要主动传递cls参数
+
+eg:__new__方法
+
+class MusicPlayer(object):
+
+    def __new__(cls,*args,**kwargs):
+
+        #1.创建对象时，new方法会被自动调用
+        print("创建对象，分配空间")
+
+        #2.为对象分配空间
+        instance = super().__new__(cls)      #返回父类对象方法，用super()
+
+        #3.返回对象的引用
+        return instance
+
+    def __init__(self):
+        print("播放器初始化")
+
+
+#创建播放器对象
+player  = MusicPlayer()
+
+print(player)
+        
+
+·单例--让类创建的对象,在系统中只有唯一的一个实例I
+1.定义一个类属性,初始值是None,用于记录单例对象的引用
+*。
+2.重写__new__方法
+3.如果类属性 is None,调用父类方法分配空间,并在类属性中记录结果
+4.返回类属性中记录的对象引用
+
+eg: 单例
+
+class MusicPlayer(object):
+
+    # 记录第一个被创建对象的引用
+    instance = None
+
+    def __new__(cls,*args,**kwargs):    #new方法负责分配空间，可以让产生的多个实例具有同一个空间
+
+        #1.判断类属性是否是空对象
+        if cls.instance is None:
+            #2.调用父类的方法，为第一个对象分配空间
+            cls.instance = super().__new__(cls)
+
+        #3.返回类属性保存的对象引用
+        return cls.instance
+            
+
+#创建多个对象
+player1 = MusicPlayer()
+print(player1)
+
+player2 = MusicPlayer()
+print(player2)
+
+
+只执行一次初始化工作
+·在每次使用 类名() 创建对象时, Python的解释器都会自动调用两个方法:
+。__new__分配空间
+。__init__对象初始化
+·在上一小节对__new__方法改造之后,每次都会得到第一次被创建对象的引用
+·但是:初始化方法还会被再次调用
+
+需求
+·让初始化动作只被执行一次
+
+解决办法
+1.定义一个类属性 init_flag 标记是否 执行过初始化动作,初始值为 False
+2.在__init__方法中,判断init_flag,如果为 False就执行初始化动作
+3.然后将init_flag设置为true
+4.这样,再次自动调用__init__方法时,初始化动作就不会被再次执行了
+
+eg: 只执行一次初始化
+
+class MusicPlayer(object):
+
+    # 记录第一个被创建对象的引用
+    instance = None
+
+    #记录是否执行过初始化动作
+    init_flag = False
+
+    def __new__(cls,*args,**kwargs):    #new方法负责分配空间，可以让产生的多个实例具有同一个空间
+
+        #1.判断类属性是否是空对象
+        if cls.instance is None:
+            #2.调用父类的方法，为第一个对象分配空间
+            cls.instance = super().__new__(cls)            #调用父类的方法，就要用super()
+
+        #3.返回类属性保存的对象引用
+        return cls.instance
+
+    def __init__(self):
+
+        #1.判断是否执行过初始化动作(类属性)
+        if MusicPlayer.init_flag:
+            return
+
+        #2.如果没有执行过，就再执行初始化动作
+        print("初始化播放器")
+
+        #3.修改类属性的标记
+        MusicPlayer.init_flag = True
+        
+            
+
+#创建多个对象
+player1 = MusicPlayer()
+print(player1)
+
+player2 = MusicPlayer()
+print(player2)
+
+
+2.异常
+
+01.异常的概念
+·程序在运行时,如果 Python解释器遇到到一个错误,会停止程序的执行,并且提示一些错误信息,这
+就是异常
+·程序停止执行并且提示错误信息这个动作,我们通常称之为:抛出(raise)异常
+
+程序开发时，很难将 所有的特殊情况 都处理的面面俱到，通过 异常捕获 可以针对突发事件做集中的处理。
+从而保证程序的稳定性和健壮性。
+
+02.捕获异常
+2.1简单的捕获异常语法
+在程序开发中,如果对某些代码的执行不能确定是否正确,可以增加 try(尝试) 来捕获异常
+·捕获异常最简单的语法格式:
+try:
+    尝试执行的代码
+except:
+    出现错误的处理
+
+try尝试,下方编写要尝试代码,不确定是否能够正常执行的代码
+except如果不是,下方编写尝试失败的代码
+
+简单异常捕获演练--要求用户输入整数
+try:
+    #不能确定正确执行的代码
+    #提示用户输入一个数字
+    num=int(input("请输入数字:"))
+except:
+    #错误的处理代码
+    print("请输入正确的数字")
+
+print('*' * 50)     #无论程序执行的错误与否，都会执行这行代码，也就是说会执行后面的代码
+
+
+2.2 错误类型捕获
+在程序执行时,可能会遇到不同类型的异常,并且需要针对不同类型的异常,做出不同的响应,这个时
+候,就需要捕获错误类型了
+
+·语法如下:
+try:
+    #尝试执行的代码
+     pass
+except错误类型1:
+    #针对错误类型1,对应的代码处理
+     pass
+except(错误类型2,错误类型3):
+    #针对错误类型2和3,对应的代码处理
+     pass
+except Exception as result:
+    print("未知错误 %s " %  result)
+
+·当Python解释器抛出异常时,最后一行错误信息的第一个单词,就是错误类型
+
+
+异常类型捕获演练--要求用户输入整数
+需求
+1.提示用户输入一个整数
+2.使用8除以用户输入的整数并且输出
+
+eg:捕获错误类型
+
+try:
+    #提示用户输入一个整数
+    num = int(input("输入一个整数\n"))
+
+
+    #使用 8 除以用户输入的整数并且输出
+    result = 8 / num
+
+    print(result)
+except ZeroDivisionError:
+    print("除0错误")
+except ValueError:
+    print("请输入正确的整数")
+
+    
+
+捕获未知错误
+·在开发时,要预判到所有可能出现的错误,还是有一定难度的
+如果希望程序无论 出现任何错误,都不会因为 Python解释器抛出异常而被终止,可以再增加一个
+ except
+语法如下:
+except Exception as result:
+    print("未知错误 %s" %  result)
+
+
+eg: 捕获未知错误
+
+try:
+    #提示用户输入一个整数
+    num = int(input("输入一个整数\n"))
+
+
+    #使用 8 除以用户输入的整数并且输出
+    result = 8 / num
+
+    print(result)
+#except ZeroDivisionError:
+#    print("除0错误")
+except ValueError:
+    print("请输入正确的整数")
+
+except Exception as result:
+    print("未知错误 %s" %  result)
+    
+
+2.3 异常捕获完整语法
+·在实际开发中,为了能够处理复杂的异常情况,完整的异常语法如下:
+
+提示:
+·有关完整语法的应用场景,在后续学习中,结合实际的案例会更好理解
+·现在先对这个语法结构有个印象即可
+ 
+try:
+    #尝试执行的代码
+     pass
+except错误类型1:
+    #针对错误类型1,对应的代码处理
+    pass
+except错误类型2:
+    #针对错误类型2,对应的代码处理
+    pass
+except(错误类型3,错误类型4):
+    #针对错误类型3和4,对应的代码处理
+    pass
+except Exception as result:
+    #打印错误信息
+    print(result)
+else:
+    #没有异常才会执行的代码
+    pass
+finally:
+    #无论是否有异常,都会执行的代码
+    print(无论是否有异常,都会执行的代码)
+
+。else 只有在没有异常时才会执行的代码
+。finally 无论是否有异常,都会执行的代码
+
+。之前一个演练的完整捕获异常的代码如下:
+
+try:
+    #提示用户输入一个整数
+    num = int(input("输入一个整数\n"))
+
+
+    #使用 8 除以用户输入的整数并且输出
+    result = 8 / num
+
+    print(result)
+#except ZeroDivisionError:
+#    print("除0错误")
+except ValueError:
+    print("请输入正确的整数")
+except Exception as result:
+    print("未知错误 %s" %  result)
+else:
+    print("尝试成功")
+finally:
+    print("无论是否出现错误都会执行的代码")
+    
+
+print("-" * 50)
+
+
+
+03.异常的传递
+·异常的传递--当 函数/方法 执行出现异常，会将异常传递给函数方法的调用一方
+·如果传递到主程序,仍然没有异常处理,程序才会被终止
+
+提示
+在开发中,可以在主函数中增加异常捕获
+·而在主函数中调用的其他函数,只要出现异常,都会传递到主函数的异常捕获中
+·这样就不需要在代码中,增加大量的异常捕获,能够保证代码的整洁
+
+需求
+1.定义函数demo1()提示用户输入一个整数并且返回
+,
+2.定义函数demo2()调用demo1()
+3.在主程序中调用demo2()
+ 
+def demol():
+    return int(input("请输入一个整数:"))
+def demo2():
+    return demol()
+
+try:
+    print(demo2())
+except ValueError:
+    print(请输入正确的整数")
+except Exception as result:
+    print("未知错误 result)
+
+eg:异常的传递性
+
+def demo1():
+    return int(input("输入整数:"))
+
+def demo2():
+    return demo1()
+
+#利用异常的传递性，在主程序捕获异常
+try:
+    print(demo2())
+except Exception as result:
+    print("未知错误 %s" % result)
+
+    
+04.抛出 raise异常
+4.1应用场景
+·在开发中,除了代码执行出错 Python解释器会抛出异常之外
+·还可以根据应用程序特有的业务需求主动抛出异常
+示例
+·提示用户输入密码,如果长度少于8,抛出异常
+
+注意
+当前函数 只负责提示用户输入密码，如果密码长度不正确，需要其他的函数进行额外处理
+因此可以抛出异常，由其他需要处理的函数捕获异常
+
+
+4.2 抛出异常
+Python中提供了一个 Exception异常类
+·在开发时,如果满足特定业务需求时,希望抛出异常,可以
+1.创建一个 Exception的对象
+2.使用 raise关键字抛出异常对象
+需求
+·定义input_password函数,提示用户输入密码
+如果用户输入长度<8,抛出异常
+·如果用户输入长度>=8,返回输入的密码
+
+eg1:抛出异常
+
+def input_password():
+
+    #1.提示用户输入密码
+    pwd = input("请输入密码\n")
+
+    #2.判断密码长度 >= 8,返回用户输入的密码
+    if len(pwd) >= 8:
+        return pwd
+
+    #3.如果 < 8 主动抛出异常
+    print("主动抛出异常")
+
+    #1>创建异常对象 - 可以使用错误信息字符串作为参数
+    ex = Exception("密码长度不够")
+
+    #2>主动抛出异常
+    raise ex
+
+# 提示用户输入密码
+try:
+    print(input_password())
+except Exception as result:
+     print("未知错误 %s" % result)
+
+eg2:
+def demo1():
+    return int(input("输入整数:"))
+
+def demo2():
+    return demo1()
+
+#利用异常的传递性，在主程序捕获异常
+try:
+    print(demo2())
+except Exception as result:
+    print("未知错误 %s" % result)
+
+
+3. 模块
+
+1.1模块的概念
+模块是 Python程序架构的一个核心概念
+·每一个以扩展名py结尾的 Python源代码文件都是一个模块
+·模块名同样也是一个标识符,需要符合标识符的命名规则
+·在模块中定义的全局变量、函数、类都是提供给外界直接使用的工具
+·模块就好比是工具包,要想使用这个工具包中的工具,就需要先导入这个模块
+
+1.2模块的两种导入方式
+1)import导入
+import  模块名1,模块名2
+提示:在导入模块时,每个导入应该独占一行
+ import模块名1
+ import模块名2
+导入之后
+通过 模块名. 使用模块提供的工具-全局变量、函数、类
+
+
+使用as指定模块的别名
+如果模块的名字太长,可以使用 as 指定模块的名称,以方便在代码中的使用
+
+import   模块名1   as    模块别名
+
+注意:模块别名应该符合大驼峰命名法
+
+
+
+
+
+
