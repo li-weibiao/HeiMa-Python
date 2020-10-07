@@ -1,0 +1,563 @@
+1. TCP简介
+TCP介绍
+TCP协议,传输控制协议(英语Transmission Control Protocol,缩写为TCP)是一种面向连接的
+可靠的、基于字节流的传输层通信协议,由ETF的RFC793定义
+TCP通信需要经过创建连接数据传送终止连接三个步骤
+TCP通信模型中,在通信开始之前,一定要先建立相关的链接,才能发送数据类似于生活中打电话
+
+
+TCP特点
+1.面向连接
+通信双方必须先建立连接才能进行数据的传输,双方都必须为该连接分配必要的系统内核资源以管理连
+接的状态和连接上的传输
+双方间的数据传输都可以通过这一个连接进行。
+完成数据交换后,双方必须断开此连接,以释放系统资源
+这种连接是一对一的,因此TCP不适用于广播的应用程序,基于广播的应用程序请使用UDP协议。
+
+2.可靠传输
+1)TCP采用发送应答机制
+TCP发送的每个报文段都必须得到接收方的应答才认为这个TCP报文段传输成功
+
+2)超时重传
+发送端发出一个报文段之后就启动定时器,如果在定时时间内没有收到应答就重新发送这个报文段
+TCP为了保证不发生丢包,就给每个包一个序号,同时序号也保证了传送到接收端实体的包的按序接收
+然后接收端实体对已成功收到的包发回一个相应的确认(ACK);如果发送端实体在合理的往返时延
+(RTT)内未收到确认,那么对应的数据包就被假设为已丢失将会被进行重传
+
+3)错误校验
+TCP用一个校验和函数来检验数据是否有错误;在发送和接收时都要计算校验和。
+
+4)流量控制和阻塞管理
+流量控制用来避免主机发送得过快而使接收方来不及完全收下
+
+TCP与UDP的不同点
+·面向连接(确认有创建三方交握,连接已创建才作传输)
+·有序数据传输
+·重发丢失的数据包
+.舍弃重复的数据包
+·无差错的数据传输
+.阻塞/流量控制
+
+
+
+udp通信模型
+udp通信模型中，在通信开始之前，不需要建立相关的链接，只需要发送数据即可，类似于生活中
+的写信。
+
+
+
+TCP通信模型
+tcp通信模型中，在通信开始之前，一定要先建立相关的链接，才能发送数据，类似于生活中打电话
+
+
+
+tcp客户端
+tcp客户端,并不是像之前一个段子:一个顾客去饭馆吃饭,这个顾客要点菜,就问服务员咱们饭店有客户
+端么,然后这个服务员非常客气的说道:先生我们饭店不用客户端,我们直接送到您的餐桌上
+如果,不学习网络的知识是不是说不定也会发生那样的笑话哈哈
+所谓的服务器端:就是提供服务的一方而客户端就是需要被服务的一方
+
+tcp客户端构建流程
+tcp的客户端要比服务器端简单很多,如果说服务器端是需要自己买手机查手机卡设置铃声等待别人
+打电话流程的话,那么客户端就只需要找一个电话亭,拿起电话拨打即可,流程要少很多
+
+示例代码:
+from socket import *
+#创建socket
+tcp_client_socket = socket(AF_INET, SOCK_STREAM)
+#目的信息
+server_ip= input("请输入服务器ip:)
+server_port=int(input("请输入服务器port:"))
+#链接服务器
+tcp_client_socket.connect( (server_ip, server_port))
+#提示用户输入数据
+senddata= input("请输入要发送的数据:")
+tcp_client_socket.send(send_data.encode("gbk"))
+#接收对方发送过来的数据最大接收1024个字节
+recvData = tcp_client_socket.recv(1024)
+print("接收到的数据为: ", recvDate.decode('gbk'))
+
+#关闭套接字
+tcp_client_socket.close()
+
+
+eg: tcp客户端
+
+import socket
+
+
+def main():
+	# 1. 创建tcp的套接字
+	tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	
+	# 2. 连接服务器
+	# tcp_socket.connect(("192.168.33.11", 7890))  # 输入的是元组的值
+	server_ip = input("请输入要链接的服务器的ip:")
+	server_port = int(input("请输入要链接的服务器的port:"))
+	server_addr = (server_ip, server_port)
+	tcp_socket.connect(server_addr)
+
+	# 3. 发送数据/接收数据
+	send_data = input("请输入要发送的数据:")
+	tcp_socket.send(send_data.encode("gbk"))
+
+	# 4. 关闭套接字
+	tcp_socket.close()
+
+
+if __name__ == "__main__":
+	main()
+
+
+
+tcp服务器
+生活中的电话机
+如果想让别人能更够打通咱们的电话获取相应服务的话,需要做以下几件事情:
+1.买个手机
+2.插上手机卡
+3.设计手机为正常接听状态(即能够响铃)
+4.静静的等着别人拨打
+
+tcp服务器
+如同上面的电话机过程一样,在程序中,如果想要完成一个tcp服务器的功能,需要的流程如下:
+1. socket创建一个套接字
+2. bind绑定ip和port
+3. listen使套接字变为可以被动链接
+4. accept等待客户端的链接
+5. recv/send接收发送数据
+
+一个很简单的tcp服务器如下
+from socket import *
+
+#创建socket
+tcp_server_socket = socket(AF_INET,  SOCK_STREAM)
+
+#本地信息
+address=("", 7788)
+
+#绑定
+tcp_server_socket.bind(address)
+
+#使用 socket创建的套接字默认的属性是主动的,使用 listen将其变为被动的这样就可以接收别人的链接了
+tcp_server_socket.listen(128)       # 128可以认为是同一时间可以有128个客户端来链接
+
+#如果有新的客户端来链接服务器,那么就产生一个新的套接字专门为这个客户端服务
+# client_socket用来为这个客户端服务
+# tcp_server_socket就可以省下来专门等待其他新客户端的链接
+client_socket, clientAddr = tcp_server_socket. accept()       #返回值是一个元组，所以才用多变量赋值
+
+
+#接收对方发送过来的数据
+recv_data= client sockt.recv(1024)           #接收1024个字节
+print('接收到的数据为:', recv_data.decode('gbk'))
+
+#发送一些数据到客户端
+client_socket.send("thank you !".encode('gbk'))
+
+#关闭为这个客户端服务的套接字,只要关闭了,就意味着为不能再为这个客户端服务了如果还需要服务只能再次链接
+client_socket. close()
+
+
+
+(监听套接字负责等待有新的客户端进行链接，accept产生的新的套接字用来为客户端服务)
+
+
+
+eg: 服务端
+
+import socket
+
+
+def main():
+	# 1. 创建套接字(买个手机 socket)
+	tcp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	
+	# 2. 绑定本地信息(插入手机卡 bind)
+	tcp_server_socket.bind(("", 7890))
+	
+	# 3. 将手机设置为正常的 响铃模式(让默认的套接字由主动变为被动 listen)
+	tcp_server_socket.listen(128)
+	
+	print("-----1------")
+	# 4. 等待别人的电话到来(等待客户端的链接 accept)
+	new_client_socket, client_addr = tcp_server_socket.accept()
+	print("------2-------")
+	
+	print(client_addr)
+
+	# 接收客户端发送过来的请求
+	recv_data = new_client_socket.recv(1024)
+	print(recv_data)
+
+	# 建立链接后，服务器回送一部分数据给客户端
+	new_client_socket.send("hahahaha".encode("utf-8"))
+
+	# 关闭套接字
+	new_client_socket.close()
+	tcp_server_socket.close()
+
+
+if __name__ == "__main__":
+	main()
+
+
+
+eg:  循环为多个客户端服务器
+
+import socket
+
+
+def main():
+	# 1. 创建套接字(买个手机 socket)
+	tcp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	
+	# 2. 绑定本地信息(插入手机卡 bind)
+	tcp_server_socket.bind(("", 7890))
+	
+	# 3. 将手机设置为正常的 响铃模式(让默认的套接字由主动变为被动 listen)
+	tcp_server_socket.listen(128)
+	
+	while True:
+		print("等待一个新的客户端的到来...")
+		# 4. 等待别人的电话到来(等待客户端的链接 accept)
+		new_client_socket, client_addr = tcp_server_socket.accept()
+		 
+		
+		print("一个新的客户端已经到来%s" % str(client_addr))
+
+		# 接收客户端发送过来的请求
+		recv_data = new_client_socket.recv(1024)
+		print("客户端发送过来的请求是: %s" % recv_data.decode("gbk"))
+
+		# 建立链接后，服务器回送一部分数据给客户端
+		new_client_socket.send("谢谢光临".encode("gbk"))
+
+		# 关闭套接字
+		# 关闭accept返回的套接字，意味着不会再为这个客户端服务
+		new_client_socket.close()
+		print("已经服务完毕了...")
+
+	# 如果将监听套接字关闭了，那么会导致不能再次等待新客户端的到来，即xxxx.accept就会失败
+	tcp_server_socket.close()
+
+
+if __name__ == "__main__":
+	main()
+
+
+
+eg: 循环为多个客户端服务并且多次服务一个客户端
+
+import socket
+
+
+def main():
+	# 1. 创建套接字(买个手机 socket)
+	tcp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	
+	# 2. 绑定本地信息(插入手机卡 bind)
+	tcp_server_socket.bind(("", 7890))
+	
+	# 3. 将手机设置为正常的 响铃模式(让默认的套接字由主动变为被动 listen)
+	tcp_server_socket.listen(128)
+	
+	while True:
+		print("等待一个新的客户端的到来...")
+		# 4. 等待别人的电话到来(等待客户端的链接 accept)
+		new_client_socket, client_addr = tcp_server_socket.accept()
+		 
+		
+		print("一个新的客户端已经到来%s" % str(client_addr))
+
+		while True:
+			# 接收客户端发送过来的请求
+			recv_data = new_client_socket.recv(1024)
+			print("客户端发送过来的请求是: %s" % recv_data.decode("gbk"))
+
+			# 如果recv解堵塞，那么有2种方式：
+			# 1. 客户端发送过来数据
+			# 2. 客户端调用close导致 这里 recv解堵塞
+			
+			if recv_data:       # recv_data的值不为空，则执行回送数据，为空则执行else语句
+				# 建立链接后，服务器回送一部分数据给客户端
+				new_client_socket.send("谢谢光临".encode("gbk"))
+			else:
+				break
+
+		# 关闭套接字
+		# 关闭accept返回的套接字，意味着不会再为这个客户端服务
+		new_client_socket.close()
+		print("已经为这个客户端服务完毕了...")
+
+	# 如果将监听套接字关闭了，那么会导致不能再次等待新客户端的到来，即xxxx.accept就会失败
+	tcp_server_socket.close()
+
+
+if __name__ == "__main__":
+	main()
+
+
+
+
+2. 案例文件下载器
+服务器参考代码如下:
+
+from socket import *
+import sys
+
+def get_file_content(file_name):
+    '''获取文件的内容'''
+    try:
+        with open(file_name, "rb") as f:
+        content = f. read()
+        return content
+    except:
+        print("没有下载的文件: %s" % file_name)
+ 
+def main():
+    if len(sys.argv) != 2:
+        print("请按照如下方式运行: python3 xxx.py 7890")
+        return
+    else:
+       #运行方式为python3 xxx.py 7890
+        port = int(sys.argv[1])
+
+
+     # 创建socket
+     tcp_server_socket = socket(AF_INET, SOCK_STREAM)
+     # 本地信息
+     address = ('', port)
+     # 绑定本地信息
+     tcp_server_socket.bind(address)
+     #将主动套接字为被动套接字
+      tcp_server_socket.listen(128)
+ 
+     while True:
+        #待客户端的键接,即为这个客户端发送文件
+        client_socket, clientAddr = tcp_server_socket.accept()
+        #接收对方发送过来的数据
+        recv_data = client_socket.recv(1024)    #接收1024个字节
+        file_name = recv_data.decode("utf-8")
+        print("对方请求下载的文件名为: file_name)
+        file_content = get_file_content(file_name)
+       #发送文件的数据给客户端
+       #因为获取打开文件时是以rb方式打开,所以 file_content中的数据已经是二进制的格式·因此不需要e
+        if file_content:
+            client_socket.send(file_content)
+        #关闭这个套接字
+        client_socket.close()
+
+    #关闭监听套接字
+    tcp_server_socket.close()
+
+if __name_ == "__main_":
+    main()
+
+
+
+
+客户端参考代码如下:
+ 
+from socket import *
+ 
+def main():
+    #创建socket
+    tcp_client_socket = socket(AF_INET, SOCK_STREAM)
+    #目的信息
+    server_ip = input("请输入服务器ip:")
+    server_port =int(input("请输入服务器port:"))
+    #链接服务器
+    tcp_client_socket. connect((server_ip, server_port))
+
+    #输入需要下载的文件名
+    file_name = input("请输入要下载的文件名:")
+    #发送文件下载请求
+    tcp_client_socket.send(file_name.encode("utf-8"))
+    #接收对方发送过来的数据,最大接收1024个字节(1K)
+    recv_data=tcp_clientsocket.recv(1024)
+    # print接收到的数据为:,recv_ata. decode'utf-8
+    #如果接收到数据再创建文件·否则不创建
+    if recv_data:
+        with open("[接收]"+file_name, "wb") as f:         #with 在打得开文件的情况下，相当于 try...except来捕获异常的用法，出错就直接调用.close()，打不开文件就会直接报错。
+            f.write(recv_data)
+
+    #关闭套接字
+    tcp_client_socket. close()
+
+
+
+
+eg: 08-案例：文件下载-client.py(老版，往下有修改版)
+
+import socket
+
+
+def main():
+	# 1. 创建套接字
+	tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	
+	# 2. 获取服务器的 ip, port
+	dest_ip = input("请输入下载服务器的ip:")
+	dest_port = int(input("请输入下载服务器的port:"))
+
+	# 3. 链接服务器
+	tcp_socket.connect((dest_ip,dest_port))
+
+	# 4. 获取下载的文件名字
+	download_file_name = input("请输入要下载的文件名字:")
+
+	# 5. 将文件名字发送到服务器
+	tcp_socket.send(download_file_name.encode("gbk"))
+
+	# 6. 接收文件中的数据
+	recv_data = tcp_socket.recv(1024)  # 1024 -->1k  1024*1024 -->1k*1024=1M  1024*1024*1024 -->1G
+
+	# 7. 保存接收到的数据到一个文件中
+	with open("[新]" + download_file_name, "wb") as f:
+		f.write(recv_data)
+
+	# 8. 关闭套接字
+	tcp_socket.socket.close()
+
+
+if __name__ == "__main__":
+	main()
+
+
+
+（文件下载客户端修改版：增加判断要下载的东西存不存在，不存在就不会新建文件，另外
+解决了'AttributeError: 'socket' object has no attribute 'socket''报错的问题，原因是
+关闭客户端套接字时，多了一个socket：
+
+import socket
+
+
+def main():
+	# 1. 创建套接字
+	tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	
+	# 2. 获取服务器的 ip, port
+	dest_ip = input("请输入下载服务器的ip:")
+	dest_port = int(input("请输入下载服务器的port:"))
+
+	# 3. 链接服务器
+	tcp_socket.connect((dest_ip,dest_port))
+
+	# 4. 获取下载的文件名字
+	download_file_name = input("请输入要下载的文件名字:")
+
+	# 5. 将文件名字发送到服务器
+	tcp_socket.send(download_file_name.encode("gbk"))
+
+	# 6. 接收文件中的数据
+	recv_data = tcp_socket.recv(1024)  # 1024 -->1k  1024*1024 -->1k*1024=1M  1024*1024*1024 -->1G
+
+	if recv_data:    #有数据再创建，没数据就不创建
+		# 7. 保存接收到的数据到一个文件中
+		with open("[新]" + download_file_name, "wb") as f:
+			f.write(recv_data)
+
+	# 8. 关闭套接字
+	tcp_socket.close()
+
+
+if __name__ == "__main__":
+	main()
+
+）
+
+
+
+
+eg: 09-案例：文件下载-server.py :
+
+import socket
+
+
+def send_file_2_client(new_client_socket, client_addr):   # 2 在开发中表示to,或者是too,two
+	# 1. 接收客户端 需要下载的文件名
+	# 接收客户端发送过来的 要下载的文件名
+	file_name = new_client_socket.recv(1024).decode("utf-8")
+	print("客户端(%s)需要下载文件是： %s" % (str(client_addr), file_name))
+
+	file_content = None
+	# 2. 打开这个文件， 读取数据
+	try:
+		f = open(file_name, "rb")
+		file_content = f.read()
+		f.close
+	except Exception as ret:
+		print("没有要下载的文件(%s)" % file_name)
+	
+	# 3. 发送文件的数据给客户端
+	if file_content:
+		# new_client_socket.send("hahahaha".encode("utf-8"))
+		new_client_socket.send(file_content)
+
+
+def main():
+	# 1. 创建套接字(买个手机 socket)
+	tcp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	
+	# 2. 绑定本地信息(插入手机卡 bind)
+	tcp_server_socket.bind(("", 7890))
+	
+	# 3. 将手机设置为正常的 响铃模式(让默认的套接字由主动变为被动 listen)
+	tcp_server_socket.listen(128)
+	
+	while True:
+		# 4. 等待别人的电话到来(等待客户端的链接 accept)
+		new_client_socket, client_addr = tcp_server_socket.accept()
+
+		# 5. 调用发送文件函数，完成为客户端服务
+		send_file_2_client(new_client_socket, client_addr)
+
+		# 6. 关闭套接字
+		new_client_socket.close()
+	
+	# 关闭服务端套接字
+	tcp_server_socket.close()
+
+
+if __name__ == "__main__":
+	main()
+
+
+
+
+tcp注意点
+1.tcp服务器一般情况下都需要绑定,否则客户端找不到这个服务器
+2.tcp客户端一般不绑定,因为是主动链接服务器,所以只要确定好服务器的 ip port等信息就好,本地
+客户端可以随机
+3.tcp服务器中通过 listen可以将socket创建出来的主动套接字变为被动的,这是做tcp服务器时必须要做
+的
+4.当客户端需要链接服务器时,就需要使用connect进行链接·udp是不需要链接的而是直接发送,但是
+tcp必须先链接, 只有链接成功才能通信
+5.当一个tcp客户端连接服务器时,服务器端会有1个新的套接字,这个套接字用来标记这个客户端,单
+独为这个客户端服务
+6. listen后的套接字是被动套接字·用来接收新的客户端的链接请求的,而 accept返回的新套接字是标记
+这个新客户端的
+7.关闭 listen后的套接字意味着被动套接字关闭了会导致新的客户端不能够链接服务器,但是之前已经
+链接成功的客户端正常通信
+8.关闭 accept返回的套接字意味着这个客户端已经服务完毕
+9.当客户端的套接字调用 close后,服务器端会 recv 解堵塞,并且返回的长度为0，因此服务器可以通过
+返回数据的长度，来区别客户端是否已经下线
+
+
+
+
+（udp和tcp对比：
+udp                       tcp-client             tcp-server
+socket                      socket                 socket
+bind()                      connect()              bind()
+sendto/recvfrom             send/recv              listen
+close                       close                  accept()
+                                                   recv/send
+                                                     close
+）
+
+
+
+
+
+
