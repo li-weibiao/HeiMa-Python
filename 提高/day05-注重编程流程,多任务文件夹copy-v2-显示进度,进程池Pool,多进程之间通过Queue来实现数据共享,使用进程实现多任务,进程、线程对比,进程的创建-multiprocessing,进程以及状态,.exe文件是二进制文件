@@ -418,7 +418,7 @@ def main():
 		file_name = q.get()
 		# print("已经完成copy: %s" % file_name)
 		copy_ok_num += 1
-		print("\r拷贝的进度为: %.2f %%" % (copy_ok_num*100/all_file_num), end='')
+		print("\r拷贝的进度为: %.2f %%" % (copy_ok_num*100/all_file_num), end='')   # \r 表示将光标的位置回退到本行的开头位置
 		if copy_ok_num >= all_file_num:
 			break
 
@@ -432,9 +432,12 @@ if __name__ == "__main__":
 
 ***注意： 思维转换，注重编程流程***
 
+===================================================
+\r和\b的用法:
 
+\r 表示将光标的位置回退到本行的开头位置
+\b表示将光标的位置回退一位
 
-
-
+参考: https://www.cnblogs.com/zzliu/p/10156658.html
 
 
