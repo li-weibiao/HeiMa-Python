@@ -739,7 +739,7 @@ if __name__ == "__main__":
 
 
 
-eg: 使用互斥锁解决资源竞争的问题-2：
+eg: 使用互斥锁解决资源竞争的问题-2(第二种方法在循环中创建锁，更加有效率，更加人性化)：
 
 import threading
 import time
@@ -887,7 +887,7 @@ def recv_msg(udp_socket):
 	while True:
 		recv_data = udp_socket.recvfrom(1024)
 		print(recv_data[0].decode("gbk"))     # 对方发送过来的数据，包含信息和对方的地址，所以返回的是一个列表，
-                                          # 因此通过索引来取值，再进行解编码
+                                                      # 因此通过索引来取值，再进行解编码
 
 
 def send_msg(udp_socket, dest_ip, dest_port):
