@@ -1,0 +1,314 @@
+1. 正则表达式
+
+r的作用
+ >> mm = "c: \\a\\b\\c"
+ >> mm
+ 'c: \\a\\b\\c'
+ >> print(mm)
+ c: \a\b\c
+ >> re.match("c: \\\\", mm).group()
+ 'c: \\'
+ >> ret = re. match("c: \\\\", mm). group()
+ >> print(ret)
+c:\
+ >> ret = re.match("c: \\\\a", mm).group()
+ >> print(ret)
+ c: \a
+ >> ret = re,match(r"c: \\a", mm).group()
+ >> print(ret)
+c: \a
+ >> ret = re.match(r"c: \a",mm).group()
+ Traceback (most recent call last):
+ File "<stdins", line 1, in smodule>
+ AttributeError: 'NoneType' object has no attribute 'group'
+>>
+说明
+Python中字符串前面加上r表示原生字符串
+与大多数编程语言相同,正则表达式里使用"\"作为转义字符,这就可能造成反斜杠困扰。假如你需要匹配
+文本中的字符"\，那么使用编程语言表示的正则表达式里将需要4个反斜杠"\\"，前两个和后两个分别用于
+在编程语言里转义成反斜杠，转换成两个反斜杠后再在正则表达式里转义成一个反斜杠
+ 
+Python里的原生字符串很好地解决了这个问题,有了原生字符串,你再也不用担心是不是漏写了反斜杠,
+写出来的表达式也更直观。
+
+
+re模块操作
+在 Python中需要通过正则表达式对字符串进行匹配的时候,可以使用一个模块,名字为re
+1.re模块的使用过程
+#coding=utf-8
+#导re模块
+import re
+#使用match方法进行匹配操作
+result = re.match(正则表达式,要匹配的字符串)
+#如果上一步匹配到数据的话,可以使用group方法来提取数据
+result.group()
+
+2.re模块示例(匹配以itcast开头的语句)
+#coding=utf-8
+import re
+result=re.match("itcast", "itcast.cn")
+result.group()
+
+
+
+匹配单个字符
+在上一小节中,了解到通过re模块能够完成使用正则表达式来匹配字符串
+本小节,将要讲解正则表达式的单字符匹配
+字符                                               功能
+.                                            匹配任意1个字符(除了\n,就是除了换行)
+[]                                           匹配[]中列举的字符
+\d                                           匹配数字·即0-9
+\D                                           匹配非数字,即不是数字
+\s                                           匹配空白,即空格,tab键
+\S                                           匹配非空白
+\w                                           匹配单词字符·即a-z, A-Z、0-9、_
+\W                                           匹配非单词字符
+
+示例1:
+#coding=utf-8
+import re
+ret = re.match(".","M")
+print(ret.group())
+
+ret = re.match("t.o","too")
+print(ret.group())
+
+
+匹配非连续：
+re. match(r"速度与激情[1-36-8]","速度与激情3")
+<_sre.sre_Match object;span=,6), match=速度与激情3>
+re. match(r"速度与激情[1-36-8]","速度与激情4")
+re. matchr"速度与激情[1-36-8]""速度与激情5")
+re. match(r"速度与激情[1-36-8]","速度与激情6)
+<_sre.sre_Match object;span=o,6), match=速度与激情6'>
+
+
+匹配数字和字母:
+re.match(r"速度与激情[1-8abcd],"速度与激情8)
+: <_sre.sre_Match object;span=,), match=速度与激情8
+re.match(r"速度与激情[1-8abcd]","速度与激情8).groupO
+: 速度与激情8
+re.match(r"速度与激情[1-8abcd]",“速度与激情a"). groupO
+: 速度与激情a
+
+re. match(r"速度与激情[1-8a-zA-Z],"速度与激情E"). groupO
+速度与激情E
+
+
+re. match(r"速度与激情\w","速度与激情e"). groupO
+速度与激情E
+re. match(r"速度与激情\w","速度与激情e"). groupO
+速度与激情e
+re. match(r"速度与激情\w","速度与激情4"). groupO
+速度与激情4
+
+# \w匹配的更加广泛
+
+
+
+匹配多个字符
+匹配多个字符的相关格式
+字符                                          功能
+*                                  匹配前一个字符出现0次或者无限次,即可有可无
++                                  匹配前一个字符出现1次或者无限次,即至少有1次
+?                                  匹配前一个字符出现1次或者0次,即要么有1次,要么没有
+{m}                                匹配前一个字符出现m次
+{m,n}                              匹配前一个字符出现从m到n次
+
+示例1:*
+需求:匹配出,一个字符串第一个字母为大小字符,后面都是小写字母并且这些小写字母可有可无
+#coding=utf-8
+import re
+ret = re.match("[A-Z][a-z]*", "M")
+print(ret. group())
+ret = re. match("[A-Z][a-z]*","MnnM")
+print(ret. group())
+ret = re.match("[A-Z] [a-z]*", "Aabcdef")
+print(ret.group())
+
+
+匹配前一个数，出现一位数次数或者两位数次数:
+re.match(r"速度与激情\d{1,2}","速度与激情1).group()
+速度与激情1
+re.match(r"速度与激情\d{1,2}","度与激情2). group()
+速度与激情2
+re.match(r"速度与激情\d{1,2}",速度与激情12).group()
+速度与激情12
+
+# 大括号表示出现的位数，比如电话号码总共11位，则在大括号里输入{11}
+
+re.match(r"\d{3}-?\d{8}","021-12345678").group()   # ?表示它前面的那一个字符，可有可没有
+021-12345678
+re.match(r"\d{3,4}-?\d{8}","021-12345678").group()
+021-12345678
+re.match(r"\d{3,4}-?\d{8}","0531-12345678"). group()
+0531-12345678
+re. match(r"\d{3,4}-?\d{8}","0532-12345678"). group()
+0532-12345678
+re.match(r"\d{3,4}-?\d{7,8}",0532-12345678").group()
+0532-12345678
+
+re.match(r".*", html_content, re.S).group()   # 添加re.S之后就可以显示换行后的内容
+"fdsf\nkasdjfkjasdkfjkasdjfjahsdufhawut\nasd"
+
+
+
+
+匹配开头结尾：
+字符                     功能
+^                     匹配字符串开头
+$                     匹配字符串结尾
+
+
+eg:  匹配出变量名是否有效.py
+
+import re
+
+
+def main():
+	names = ["age", "_age", "1age", "age1", "a_age", "age_1_", "age!", "a#123", "_______"]
+	for name in names:
+		# ret = re.match(r"[a-zA-Z_][a-zA-Z0-9_]*", name)
+		ret = re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", name)    # $符号匹配到结尾,match自带匹配开头
+		if ret:
+			print("变量名:%s 符合要求...通过正则匹配出来的数据是:%s" % (name, ret.group()))
+		else:
+			print("变量名:%s 不符合要求..." % name)
+
+
+if __name__ == "__main__":
+	main()
+
+
+# 	python命名规则如下：1、标识符是由字符、下划线和数字组成，且第一个字符不能是数字。
+# 2、标识符不能和Python中的保留字相同。
+# 3、Python中的标识符中，不能包含空格等特殊字符。
+
+
+
+eg: 匹配163邮箱地址.py
+
+import re
+
+
+def main():
+	email = input("请输入一个邮箱地址:")
+	# 如果在正则表达式中需要用到了某些普通的字符，比如 . 比如 ？等，仅仅需要在他们前面添加一个 反斜杠\进行转义
+	ret = re.match(r"[a-zA-Z_0-9]{4,20}@163\.com$", email)
+	if ret:
+		print("%s符合要求..." % email)
+	else:
+		print("%s不符合要求..." % email)
+
+
+if __name__ == "__main__":
+	main()
+
+
+
+匹配多个邮箱,加 | :
+ re.match(r"[a-zA-Z0-9_]{4, 20}@( 163|126)\. com$", "laowange126.com"). group()
+ 'laowange126. com'
+ re.match(r"[a-zA-Z0-9_]{4, 20}@(163|126)\. com$", "laowange163. com"). group()
+ 'laowange163. com'
+
+
+匹配分组
+字符                                        功能
+|                                   匹配左右任意一个表达式
+(ab)                                将括号中字符作为一个分组
+\num                                引用分组num匹配到的字符串
+(?P<name>)                          分组起别名
+(?P=name)                           引用别名为name分组匹配到的字符串
+
+
+分组小括号()，()小括号还有取值的作用:
+re.match(r"([a-zA-Z0-9_]{4, 20})@(163|126)\. com$", "laowange163. com"). group(1)
+'laowang
+re.match(r"([a-zA-Z0-9_]{4, 20})@(163|126)\. com$", "laowang@163. com"). group(2)
+163
+
+
+判断标签成对:
+方法一：
+html_str ="<h1>hahahah</h1>"
+re match(r"<(\w*)>.*</\1>", html_str). group()   # \1 这个代表的就是前面(\w*) 的值
+ <H1>hahahah</h1>'
+
+方法二，分组起别名：
+re.match(r"<(?P<p1>\w*)><(?P<p2>\w*)>.*</(?P=p2)></(?P=p1)>",  html_str). group()
+'<body> <h1>hahahah</h1></body>'
+
+注意：(?P<name>)和(?P=name)中的字母p大写
+
+
+
+re模块的高级用法
+search            # 不会从头开始匹配
+需求:匹配出文章阅读的次数
+#coding=utf-8
+import re
+ret=re.search(r"\d+",“阅读次数为9999")       # + 表示至少有一个
+ret.group()
+运行结果:
+9999
+ 
+findall       # 会找出所有的
+需求:统计出 python CC++相应文章阅读的次数
+#coding=utf-8
+import re
+ret = re.findall(r"\d+", "python =9999,=7890, C++=12345")
+print(ret)
+
+上面运行结果:
+[9999", "7890", "12345"]
+
+
+
+sub将匹配到的数据进行替换
+需求:将匹配到的阅读次数加1
+方法1:
+#coding=utf-8
+import re
+ret=re.sub(r"\d+", '998', "python =997")
+print(ret)
+运行结果:
+python =998
+
+
+方法2:
+#coding=utf-8
+import re
+def add(temp):
+    strNum = temp.group()
+    num = int(strNum) +1
+    return str(num)
+
+ret = re.sub(r"\d+",add,"python=997")
+print(ret)
+
+ret=re.sub(r"d+",add,"python=99")
+print(ret)
+运行结果:
+python =998
+python =100
+
+
+
+split根据匹配进行切割字符串,并返回一个列表
+需求:切割字符串“info: xiaoZhang33 shandong
+#coding=utf-8
+import re
+ret = re. split(r": | " , "info: xiaoZhang 33 shandong")   # | 表示要么按照: 来分割，要么按照空格  来分割
+print(ret)
+
+
+上述运行结果:
+[info", "xiaozhang", "33", "shangdong"]
+
+
+==拉钩网招聘==
+
+
+
+
