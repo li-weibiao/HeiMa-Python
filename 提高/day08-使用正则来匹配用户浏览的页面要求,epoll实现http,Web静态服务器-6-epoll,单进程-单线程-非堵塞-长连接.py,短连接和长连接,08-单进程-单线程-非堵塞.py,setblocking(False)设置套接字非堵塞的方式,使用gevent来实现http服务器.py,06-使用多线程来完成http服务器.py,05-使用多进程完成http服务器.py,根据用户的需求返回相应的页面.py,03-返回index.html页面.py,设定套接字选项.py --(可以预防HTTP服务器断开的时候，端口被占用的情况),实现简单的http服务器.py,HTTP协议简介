@@ -1,0 +1,913 @@
+HTTP协议简介 （超文本传输协议，是网络协议）
+1.使用谷歌/火狐浏览器分析
+在Web应用中,服务器把网页传给浏览器实际上就是把网页的HTML代码发送给浏览器让浏览器显示
+出来·而浏览器和服务器之间的传输协议是HTTP,所以:
+。HTML是一种用来定义网页的文本，会HTML,就可以编写网页;
+。HTTP是在网络上传输HTML的协议，用于浏览器和服务器的通信
+ Chrome浏览器提供了一套完整地调试工具非常适合Web开发
+安装好 ChromeChrome浏览器后,打开在菜单中选择“视图”,“开发者”,“开发者工具就可以显示开发
+者工具
+
+
+eg:  实现简单的http服务器.py
+
+import socket
+
+
+def service_client(new_socket):
+	"""为这个客户端返回数据"""
+
+	# 1. 接收浏览器发送过来的请求，即http请求
+	# GET / HTTP/1.1
+	# ....
+	request = new_socket.recv(1024)
+	print(request)
+
+	# 2. 返回http格式的数据，给浏览器
+	# 2.1 准备发送给浏览器的数据---header
+	response = "HTTP/1.1 200 ok\r\n"    # \r\n表示换行
+	response += "\r\n"         # 空了一行才表示http头部结束
+	# 2.2 准备发送给浏览器的数据---body
+	response += "<h1>hahaha</h1>"
+	new_socket.send(response.encode("utf-8"))
+
+	# 关闭套接字
+	new_socket.close()
+
+
+def main():
+	"""用来完成整体的控制"""
+	# 1. 创建套接字
+	tcp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+	# 2. 绑定
+	tcp_server_socket.bind(("", 7890))
+
+	# 3. 变为监听套接字
+	tcp_server_socket.listen(128)
+
+	while True:
+		# 4. 等待新客户端的链接
+		new_socket, client_addr = tcp_server_socket.accept()
+
+		# 5. 为这个客户端服务
+		service_client(new_socket)
+
+	# 关闭监听套接字
+	tcp_server_socket.close()
+
+
+if __name__ == "__main__":
+	main()
+
+
+
+
+eg:  设定套接字选项.py --(可以预防HTTP服务器断开的时候，端口被占用的情况)
+
+import socket
+
+
+def service_client(new_socket):
+	"""为这个客户端返回数据"""
+
+	# 1. 接收浏览器发送过来的请求，即http请求
+	# GET / HTTP/1.1
+	# ....
+	request = new_socket.recv(1024)
+	print(request)
+
+	# 2. 返回http格式的数据，给浏览器
+	# 2.1 准备发送给浏览器的数据---header
+	response = "HTTP/1.1 200 ok\r\n"    # \r\n表示换行
+	response += "\r\n"         # 空了一行才表示http头部结束
+	# 2.2 准备发送给浏览器的数据---body
+	response += "<h1>hahaha</h1>"
+	new_socket.send(response.encode("utf-8"))
+
+	# 关闭套接字
+	new_socket.close()
+
+
+def main():
+	"""用来完成整体的控制"""
+	# 1. 创建套接字
+	tcp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	tcp_server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)    # 写上这句，就不会导致服务器调用close时，端口被占用
+
+	# 2. 绑定
+	tcp_server_socket.bind(("", 7890))
+
+	# 3. 变为监听套接字
+	tcp_server_socket.listen(128)
+
+	while True:
+		# 4. 等待新客户端的链接
+		new_socket, client_addr = tcp_server_socket.accept()
+
+		# 5. 为这个客户端服务
+		service_client(new_socket)
+
+	# 关闭监听套接字
+	tcp_server_socket.close()
+
+
+if __name__ == "__main__":
+	main()
+
+
+
+eg: 03-返回index.html页面.py
+
+import socket
+
+
+def service_client(new_socket):
+	"""为这个客户端返回数据"""
+
+	# 1. 接收浏览器发送过来的请求，即http请求
+	# GET / HTTP/1.1
+	# ....
+	request = new_socket.recv(1024)
+	print(">>>" * 50)
+	print(request)
+
+	# 2. 返回http格式的数据，给浏览器
+	# 2.1 准备发送给浏览器的数据---header
+	response = "HTTP/1.1 200 ok\r\n"    # \r\n表示换行
+	response += "\r\n"         # 空了一行才表示http头部结束
+	# 2.2 准备发送给浏览器的数据---body
+	# response += "<h1>hahaha</h1>"
+
+	f = open("./html/index.html", "rb")    # 打开对应的html目录
+	html_content = f.read()
+	f.close()
+
+	# 将response header发送给浏览器
+	new_socket.send(response.encode("utf-8"))
+
+	# 将response body发送给浏览器
+	new_socket.send(html_content)
+
+	# 关闭套接字
+	new_socket.close()
+
+
+def main():
+	"""用来完成整体的控制"""
+	# 1. 创建套接字
+	tcp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	tcp_server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+	# 2. 绑定
+	tcp_server_socket.bind(("", 7890))
+
+	# 3. 变为监听套接字
+	tcp_server_socket.listen(128)
+
+	while True:
+		# 4. 等待新客户端的链接
+		new_socket, client_addr = tcp_server_socket.accept()
+
+		# 5. 为这个客户端服务
+		service_client(new_socket)
+
+	# 关闭监听套接字
+	tcp_server_socket.close()
+
+
+if __name__ == "__main__":
+	main()
+
+
+
+eg:  ***根据用户的需求返回相应的页面.py***(放在标题第一个位置)
+
+import socket
+import re
+
+
+def service_client(new_socket):
+	"""为这个客户端返回数据"""
+
+	# 1. 接收浏览器发送过来的请求，即http请求
+	# GET / HTTP/1.1
+	# ....
+	request = new_socket.recv(1024).decode("utf-8")
+	# print(">>>" * 50)
+	# print(request)
+
+	request_lines = request.splitlines()   # 将接收到的请求拆分成多行
+	print("")
+	# print(">"*20)
+	print(request_lines)    # 返回的是列表的值
+
+	# GET /index.html HTTP/1.1
+	# 以后可能还会出现 get post put del
+	# 用户请求的东西通过正则得知
+	file_name = ""
+	ret = re.match(r"[^/]+(/[^ ]*)", request_lines[0])  # +表示前一个字符至少有一次，*表示前一个字符出现0次或者无限次
+	if ret:
+		file_name = ret.group(1)
+		# print(file_name)
+		if file_name == "/":
+			file_name = "/index.html"
+
+
+	# 2. 返回http格式的数据，给浏览器
+	
+
+	try:
+		f = open("./html" + file_name, "rb")
+	except:
+		response = "HTTP/1.1 404 NOT FOUND\r\n"
+		response += "\r\n"
+		response += "-----file not found-----"
+		new_socket.send(response.encode("utf-8"))
+	else:
+		html_content = f.read()
+		f.close()
+		# 2.1 准备发送给浏览器的数据---header
+		response = "HTTP/1.1 200 ok\r\n"    # \r\n表示换行
+		response += "\r\n"         # 空了一行才表示http头部结束
+		# 2.2 准备发送给浏览器的数据---body
+		# response += "<h1>hahaha</h1>"
+		# 将response header发送给浏览器
+		new_socket.send(response.encode("utf-8"))
+		# 将response body发送给浏览器
+		new_socket.send(html_content)
+	
+	
+
+	# 关闭套接字
+	new_socket.close()
+
+
+def main():
+	"""用来完成整体的控制"""
+	# 1. 创建套接字
+	tcp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	tcp_server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+	# 2. 绑定
+	tcp_server_socket.bind(("", 7890))
+
+	# 3. 变为监听套接字
+	tcp_server_socket.listen(128)
+
+	while True:
+		# 4. 等待新客户端的链接
+		new_socket, client_addr = tcp_server_socket.accept()
+
+		# 5. 为这个客户端服务
+		service_client(new_socket)
+
+	# 关闭监听套接字
+	tcp_server_socket.close()
+
+
+if __name__ == "__main__":
+	main()
+
+
+
+eg: 05-使用多进程完成http服务器.py
+
+import socket
+import re
+import multiprocessing
+
+
+def service_client(new_socket):
+	"""为这个客户端返回数据"""
+
+	# 1. 接收浏览器发送过来的请求，即http请求
+	# GET / HTTP/1.1
+	# ....
+	request = new_socket.recv(1024).decode("utf-8")
+	# print(">>>" * 50)
+	# print(request)
+
+	request_lines = request.splitlines()   # 将接收到的请求拆分成多行
+	print("")
+	# print(">"*20)
+	print(request_lines)    # 返回的是列表的值
+
+	# GET /index.html HTTP/1.1
+	# 以后可能还会出现 get post put del
+	# 用户请求的东西通过正则得知
+	file_name = ""
+	ret = re.match(r"[^/]+(/[^ ]*)", request_lines[0])  # +表示前一个字符至少有一次，*表示前一个字符出现0次或者无限次
+	if ret:
+		file_name = ret.group(1)
+		# print(file_name)
+		if file_name == "/":
+			file_name = "/index.html"
+
+
+	# 2. 返回http格式的数据，给浏览器
+	
+
+	try:
+		f = open("./html" + file_name, "rb")
+	except:
+		response = "HTTP/1.1 404 NOT FOUND\r\n"
+		response += "\r\n"
+		response += "-----file not found-----"
+		new_socket.send(response.encode("utf-8"))
+	else:
+		html_content = f.read()
+		f.close()
+		# 2.1 准备发送给浏览器的数据---header
+		response = "HTTP/1.1 200 ok\r\n"    # \r\n表示换行
+		response += "\r\n"         # 空了一行才表示http头部结束
+		# 2.2 准备发送给浏览器的数据---body
+		# response += "<h1>hahaha</h1>"
+		# 将response header发送给浏览器
+		new_socket.send(response.encode("utf-8"))
+		# 将response body发送给浏览器
+		new_socket.send(html_content)
+	
+	
+
+	# 关闭套接字
+	new_socket.close()
+
+
+def main():
+	"""用来完成整体的控制"""
+	# 1. 创建套接字
+	tcp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	tcp_server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+	# 2. 绑定
+	tcp_server_socket.bind(("", 7890))
+
+	# 3. 变为监听套接字
+	tcp_server_socket.listen(128)
+
+	while True:
+		# 4. 等待新客户端的链接
+		new_socket, client_addr = tcp_server_socket.accept()
+
+		# 5. 为这个客户端服务
+		p = multiprocessing.Process(target=service_client, args=(new_socket,))
+		p.start()
+		
+		new_socket.close()  # 主进程调用close，简而言之和子线程共享一份资源，子线程会copy一份资源，但是子线程关闭后，主线程不关闭则会一直占据资源，所以浏览器会一直转圈
+		
+
+	# 关闭监听套接字
+	tcp_server_socket.close()
+
+
+if __name__ == "__main__":
+	main()
+
+
+
+
+eg: 06-使用多线程来完成http服务器.py
+
+import socket
+import re
+import threading
+
+
+def service_client(new_socket):
+	"""为这个客户端返回数据"""
+
+	# 1. 接收浏览器发送过来的请求，即http请求
+	# GET / HTTP/1.1
+	# ....
+	request = new_socket.recv(1024).decode("utf-8")
+	# print(">>>" * 50)
+	# print(request)
+
+	request_lines = request.splitlines()   # 将接收到的请求拆分成多行
+	print("")
+	# print(">"*20)
+	print(request_lines)    # 返回的是列表的值
+
+	# GET /index.html HTTP/1.1
+	# 以后可能还会出现 get post put del
+	# 用户请求的东西通过正则得知
+	file_name = ""
+	ret = re.match(r"[^/]+(/[^ ]*)", request_lines[0])  # +表示前一个字符至少有一次，*表示前一个字符出现0次或者无限次
+	if ret:
+		file_name = ret.group(1)
+		# print(file_name)
+		if file_name == "/":
+			file_name = "/index.html"
+
+
+	# 2. 返回http格式的数据，给浏览器
+	
+
+	try:
+		f = open("./html" + file_name, "rb")
+	except:
+		response = "HTTP/1.1 404 NOT FOUND\r\n"
+		response += "\r\n"
+		response += "-----file not found-----"
+		new_socket.send(response.encode("utf-8"))
+	else:
+		html_content = f.read()
+		f.close()
+		# 2.1 准备发送给浏览器的数据---header
+		response = "HTTP/1.1 200 ok\r\n"    # \r\n表示换行
+		response += "\r\n"         # 空了一行才表示http头部结束
+		# 2.2 准备发送给浏览器的数据---body
+		# response += "<h1>hahaha</h1>"
+		# 将response header发送给浏览器
+		new_socket.send(response.encode("utf-8"))
+		# 将response body发送给浏览器
+		new_socket.send(html_content)
+	
+	
+
+	# 关闭套接字
+	new_socket.close()
+
+
+def main():
+	"""用来完成整体的控制"""
+	# 1. 创建套接字
+	tcp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	tcp_server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+	# 2. 绑定
+	tcp_server_socket.bind(("", 7890))
+
+	# 3. 变为监听套接字
+	tcp_server_socket.listen(128)
+
+	while True:
+		# 4. 等待新客户端的链接
+		new_socket, client_addr = tcp_server_socket.accept()
+
+		# 5. 为这个客户端服务
+		p = threading.Thread(target=service_client, args=(new_socket,))
+		p.start()
+		
+		# new_socket.close()  # 主进程调用close，简而言之和子线程共享一份资源，子线程会copy一份资源，但是子线程关闭后，主线程不关闭则会一直占据资源，所以浏览器会一直转圈
+		# 这句话是在多进程的时候使用，用线程的时候不要调用close,否则主进程一挂，线程必挂
+
+	# 关闭监听套接字
+	tcp_server_socket.close()
+
+
+if __name__ == "__main__":
+	main()
+
+
+
+
+eg: 使用gevent来实现http服务器.py
+
+import socket
+import re
+import gevent
+from gevent import monkey
+
+monkey.patch_all()
+
+
+def service_client(new_socket):
+	"""为这个客户端返回数据"""
+
+	# 1. 接收浏览器发送过来的请求，即http请求
+	# GET / HTTP/1.1
+	# ....
+	request = new_socket.recv(1024).decode("utf-8")
+	# print(">>>" * 50)
+	# print(request)
+
+	request_lines = request.splitlines()   # 将接收到的请求拆分成多行
+	print("")
+	# print(">"*20)
+	print(request_lines)    # 返回的是列表的值
+
+	# GET /index.html HTTP/1.1
+	# 以后可能还会出现 get post put del
+	# 用户请求的东西通过正则得知
+	file_name = ""
+	ret = re.match(r"[^/]+(/[^ ]*)", request_lines[0])  # +表示前一个字符至少有一次，*表示前一个字符出现0次或者无限次
+	if ret:
+		file_name = ret.group(1)
+		# print(file_name)
+		if file_name == "/":
+			file_name = "/index.html"
+
+
+	# 2. 返回http格式的数据，给浏览器
+	
+
+	try:
+		f = open("./html" + file_name, "rb")
+	except:
+		response = "HTTP/1.1 404 NOT FOUND\r\n"
+		response += "\r\n"
+		response += "-----file not found-----"
+		new_socket.send(response.encode("utf-8"))
+	else:
+		html_content = f.read()
+		f.close()
+		# 2.1 准备发送给浏览器的数据---header
+		response = "HTTP/1.1 200 ok\r\n"    # \r\n表示换行
+		response += "\r\n"         # 空了一行才表示http头部结束
+		# 2.2 准备发送给浏览器的数据---body
+		# response += "<h1>hahaha</h1>"
+		# 将response header发送给浏览器
+		new_socket.send(response.encode("utf-8"))
+		# 将response body发送给浏览器
+		new_socket.send(html_content)
+	
+	
+
+	# 关闭套接字
+	new_socket.close()
+
+
+def main():
+	"""用来完成整体的控制"""
+	# 1. 创建套接字
+	tcp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	tcp_server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+	# 2. 绑定
+	tcp_server_socket.bind(("", 7890))
+
+	# 3. 变为监听套接字
+	tcp_server_socket.listen(128)
+
+	while True:
+		# 4. 等待新客户端的链接
+		new_socket, client_addr = tcp_server_socket.accept()
+
+		# 5. 为这个客户端服务
+		gevent.spawn(service_client, new_socket)
+		
+		# new_socket.close()  # 主进程调用close，简而言之和子线程共享一份资源，子线程会copy一份资源，但是子线程关闭后，主线程不关闭则会一直占据资源，所以浏览器会一直转圈
+		# 这句话是在进程的时候使用，用线程的时候不要调用close,否则主进程一挂，线程必挂
+
+	# 关闭监听套接字
+	tcp_server_socket.close()
+
+
+if __name__ == "__main__":
+	main()
+
+
+
+注意：tcp_server_tcp.setblocking(False)   # 设置套接字非堵塞的方式
+
+
+验证单进程-单线程-非堵塞：(主要是分成了两个互不干扰的部分，同时引用了列表，
+将客户的请求存入到列表中，列表中有值，则第二个for循环在遍历的时候，就能确
+保新建立的链接能够发送过来数据)
+tcp_server_tcp = socket(....)
+tcp_server_tcp.setblocking(False)   # 设置套接字非堵塞的方式)
+client_ socket_list=list()
+while True:
+    try:
+        new_socket,new_addr=tcp_server_tcp. accept()
+    except Exception as ret:
+         print("---没有新的客户端到来---")
+    else: 
+         print("--只要没有产生异常,那么也就意味着来了一个新的客户端---)
+         new_socket. setblocking( False)     #设置套接字为非堵塞的方式
+         client_socket_list. append(new_socket)
+ 
+for client_socket in client_ socket_list:
+       try:
+            recv_data = client_ socket.recv()
+       except Exception as ret:
+            print("----这个客户端没有发送过来数据----")
+       else:
+             if recv_data:
+                  # 对方发送过来数据
+                   print("----客户端发送过来了数据---)
+              else:
+                   # 对方调用了close 导致了 recv返回
+                   client_socket_list.remove(client_socket)
+                   client_socket.close()
+
+
+(在linux里用命令：subl   文件名 ， 就能在sublime里打开文件 )
+
+
+eg:  08-单进程-单线程-非堵塞.py
+
+import socket
+import time
+
+tcp_server_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+tcp_server_tcp.bind(("", 7899))
+tcp_server_tcp.listen(128)
+tcp_server_tcp.setblocking(False)  # 设置套接字为非堵塞的方式
+
+client_socket_list = list()
+
+while True:
+
+    # time.sleep(0.5)
+
+    try:
+        new_socket, new_addr = tcp_server_tcp.accept()
+    except Exception as ret:
+        print("---没有新的客户端到来---")
+    else:
+        print("---只要没有产生异常，那么也就意味着 来了一个新的客户端----")
+        new_socket.setblocking(False)  # 设置套接字为非堵塞的方式
+        client_socket_list.append(new_socket)
+        
+    for client_socket in client_socket_list:
+        try:
+            recv_data = client_socket.recv(1024)
+        except Exception as ret:
+            print(ret)
+            print("----这个客户端没有发送过来数据----")
+        else:
+            print("-----没有异常-----")
+            print(recv_data)
+            if recv_data:
+                # 对方发送过来数据
+                print("----客户端发送过来了数据-----")
+            else:
+                # 对方调用close 导致了 recv返回
+                client_socket.close()
+                client_socket_list.remove(client_socket)
+                print("---客户端已经关闭----")
+        
+
+
+
+3.1  短连接的操作步骤：
+建立连接--数据传输--关闭连接--建立连接--数据传输--关闭连接
+
+
+3.2 长连接的操作步骤：
+建立连接--数据传输...(保持连接)...数据传输--关闭连接
+
+
+
+
+eg: 单进程-单线程-非堵塞-长连接.py
+
+import socket
+import re
+
+
+def service_client(new_socket, request):
+	"""为这个客户端返回数据"""
+
+	# 1. 接收浏览器发送过来的请求，即http请求
+	# GET / HTTP/1.1
+	# ....
+	# request = new_socket.recv(1024).decode("utf-8")  # 这里注释掉了，就避免了再次收数据， 就直接引用了套接字
+	# print(">>>" * 50)
+	# print(request)
+
+	request_lines = request.splitlines()   # 将接收到的请求拆分成多行
+	print("")
+	# print(">"*20)
+	print(request_lines)    # 返回的是列表的值
+
+	# GET /index.html HTTP/1.1
+	# 以后可能还会出现 get post put del
+	# 用户请求的东西通过正则得知
+	file_name = ""
+	ret = re.match(r"[^/]+(/[^ ]*)", request_lines[0])  # +表示前一个字符至少有一次，*表示前一个字符出现0次或者无限次
+	if ret:
+		file_name = ret.group(1)
+		# print(file_name)
+		if file_name == "/":
+			file_name = "/index.html"
+
+	# 2. 返回http格式的数据，给浏览器
+	
+	try:
+		f = open("./html" + file_name, "rb")  # 打开文件
+	except:
+		response = "HTTP/1.1 404 NOT FOUND\r\n"
+		response += "\r\n"
+		response += "-----file not found-----"
+		new_socket.send(response.encode("utf-8"))
+	else:
+		html_content = f.read()  # 打开文件后再读
+		f.close()  # 最后关闭
+
+		response_body = html_content  # 把response_body放在前面的原因，是为了下方len()调用,要不然len调用不到就会报错
+
+		response_header = "HTTP/1.1 200 ok\r\n"    # \r\n表示换行
+		response_header += "Content-Length:%d\r\n" % len(response_body)  # 用这个来传递body的长度，有多少传多少，传完后浏览器就不会再转圈圈，从而达到长连接的效果
+		response_header += "\r\n"         # 空了一行才表示http头部结束
+		 
+		response = response_header.encode("utf-8") + response_body
+		# 2.1 准备发送给浏览器的数据---header
+		# 2.2 准备发送给浏览器的数据---body
+		
+		# 将response header发送给浏览器
+		# new_socket.send(response.encode("utf-8"))
+		# 将response body发送给浏览器
+		new_socket.send(response)  # 这里的response就已经等于头部和身体了
+	
+	# 关闭套接字
+	# new_socket.close()    # 以上步骤实现后，就不需要再关闭套接字了,如果这个套接字打开了，那实现的还是短连接
+
+
+def main():
+	"""用来完成整体的控制"""
+	# 1. 创建套接字
+	tcp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	tcp_server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+	# 2. 绑定
+	tcp_server_socket.bind(("", 7890))
+
+	# 3. 变为监听套接字
+	tcp_server_socket.listen(128)
+	tcp_server_socket.setblocking(False)  # 将套接字变为非堵塞,就不用等着接收数据
+
+	client_socket_list = list()
+	while True:
+		# 4. 等待新客户端的链接
+		try:
+			new_socket, client_addr = tcp_server_socket.accept()
+		except Exception as ret:
+			pass
+		else:
+			new_socket.setblocking(False)
+			client_socket_list.append(new_socket)
+
+
+		for client_socket in client_socket_list:
+			try:
+				recv_data = client_socket.recv(1024).decode("utf-8")  # 建立的新的套接字来收发数据
+			except Exception as ret:
+				pass
+			else:
+				if recv_data:
+					service_client(client_socket, recv_data)  # 为了避免重新再收数据，导致没有数据，所以便把数据也一起传过去了
+				else:
+					client_socket.close()
+					client_socket_list.remove(client_socket)
+
+	# 关闭监听套接字
+	tcp_server_socket.close()
+
+
+if __name__ == "__main__":
+	main()
+
+
+
+
+Web静态服务器-6- epoll
+多路复用
+就是我们说的 select ，poll, epoll,有些地方也称这种方式为 event driven IO。
+select/epoll的好处就在于单个process就可以同时处理多个网络连接的IO。
+它的基本原理就是 select, poll ,epoll这个function会不断的轮询所负责的所有,当某个 socket有数
+据到达了就通知用户进程
+
+nginx用的就是epoll
+
+小总结
+I/O多路复用的特点:
+通过一种机制使一个进程能同时等待多个文件描述符·而这些文件描述符(套接字描述符)其中的任意一
+个进入读就绪状态· epoll函数就可以返回所以,IO多路复用·本质上不会有并发的功能·因为任何时候
+还是只有一个进程或线程进行工作·它之所以能提高效率是因为 select\epoll把进来的 socket放到他们的
+监视列表里面·当任何 socket有可读可写数据立马处理·那如果 select\epoll手里同时检测着很多
+ socket一有动静马上返回给进程处理总比一个一个 socket过来,阻塞等待处理高效率
+当然也可以多线程/多进程方式,一个连接过来开一个进程/线程处理,这样消耗的内存和进程切换页会耗
+掉更多的系统资源所以我们可以结合多路复用和多进程/多线程来高性能并发,IO复用负责提高接受
+ socket的通知效率,收到请求后,交给进程池线程池来处理逻辑
+参考资料
+·如果想了解下epollLinux在中的实现过程可以参
+考 : http: //blog.csdn.net/xiajun07061225/article/d/9250579
+
+
+eg: epoll实现http.py
+
+import socket
+import re
+import select
+
+
+def service_client(new_socket, request):
+	"""为这个客户端返回数据"""
+
+	# 1. 接收浏览器发送过来的请求，即http请求
+	# GET / HTTP/1.1
+	# ....
+	# request = new_socket.recv(1024).decode("utf-8")  # 这里注释掉了，就避免了再次收数据， 就直接引用了套接字
+	# print(">>>" * 50)
+	# print(request)
+
+	request_lines = request.splitlines()   # 将接收到的请求拆分成多行
+	print("")
+	# print(">"*20)
+	print(request_lines)    # 返回的是列表的值
+
+	# GET /index.html HTTP/1.1
+	# 以后可能还会出现 get post put del
+	# 用户请求的东西通过正则得知
+	file_name = ""
+	ret = re.match(r"[^/]+(/[^ ]*)", request_lines[0])  # +表示前一个字符至少有一次，*表示前一个字符出现0次或者无限次
+	if ret:
+		file_name = ret.group(1)
+		# print(file_name)
+		if file_name == "/":
+			file_name = "/index.html"
+
+	# 2. 返回http格式的数据，给浏览器
+	
+	try:
+		f = open("./html" + file_name, "rb")  # 打开文件
+	except:
+		response = "HTTP/1.1 404 NOT FOUND\r\n"
+		response += "\r\n"
+		response += "-----file not found-----"
+		new_socket.send(response.encode("utf-8"))
+	else:
+		html_content = f.read()  # 打开文件后再读
+		f.close()  # 最后关闭
+
+		response_body = html_content  # 把response_body放在前面的原因，是为了下方len()调用,要不然len调用不到就会报错
+
+		response_header = "HTTP/1.1 200 ok\r\n"    # \r\n表示换行
+		response_header += "Content-Length:%d\r\n" % len(response_body)  # 用这个来传递body的长度，有多少传多少，传完后浏览器就不会再转圈圈，从而达到长连接的效果
+		response_header += "\r\n"         # 空了一行才表示http头部结束
+		 
+		response = response_header.encode("utf-8") + response_body
+		# 2.1 准备发送给浏览器的数据---header
+		# 2.2 准备发送给浏览器的数据---body
+		
+		# 将response header发送给浏览器
+		# new_socket.send(response.encode("utf-8"))
+		# 将response body发送给浏览器
+		new_socket.send(response)  # 这里的response就已经等于头部和身体了
+	
+	# 关闭套接字
+	# new_socket.close()    # 以上步骤实现后，就不需要再关闭套接字了,如果这个close打开了，那实现的还是短连接
+
+
+def main():
+	"""用来完成整体的控制"""
+	# 1. 创建套接字
+	tcp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	tcp_server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+	# 2. 绑定
+	tcp_server_socket.bind(("", 7890))
+
+	# 3. 变为监听套接字
+	tcp_server_socket.listen(128)
+	tcp_server_socket.setblocking(False)  # 将套接字变为非堵塞,就不用等着接收数据
+
+	# 创建一个epoll对象
+	epl = select.epoll()
+
+	# 将监听套接字对应的fd注册到epoll中
+	epl.register(tcp_server_socket.fileno(), select.EPOLLIN)
+
+	client_socket_list = list()
+	
+	fd_event_dict = dict()
+
+	while True:
+
+		fd_event_list = epl.poll()  # 默认会堵塞，直到os监测到数据到来，通过事件通知方式 告诉这个程序，此时才会解堵塞
+		
+		# [(fd, event), (套接字对应的文件描述符， 这个文件描述到底是什么事件 例如 可以调用recv接收等)]
+		for fd, event in fd_event_list:  # 列表里返回的是元组，所以用多变量赋值来拆开
+			# 等待新客户端的链接
+			if fd == tcp_server_socket.fileno():
+				new_socket, client_addr = tcp_server_socket.accept()
+				epl.register(new_socket.fileno(), select.EPOLLIN)
+				fd_event_dict[new_socket.fileno()] = new_socket
+			elif event == select.EPOLLIN:
+				# 判断已经连接的客户端是否有数据发送过来
+				recv_data = fd_event_dict[fd].recv(1024).decode("utf-8")  # 建立的新的套接字来收发数据
+				if recv_data:
+					service_client(fd_event_dict[fd], recv_data)  # 为了避免重新再收数据，导致没有数据，所以便把数据也一起传过去了
+				else:
+					fd_event_dict[fd].close()
+					epl.unregister(fd)
+					del fd_event_dict[fd]
+					
+	# 关闭监听套接字
+	tcp_server_socket.close()
+
+
+if __name__ == "__main__":
+	main()
+
+
+
+
+
+
+
+
