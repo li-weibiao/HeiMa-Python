@@ -1,0 +1,375 @@
+深拷贝、浅拷贝
+1.浅拷贝
+浅拷贝是对于一个对象的顶层拷贝，通俗的理解是：拷贝了引用，并没有拷贝内容。
+
+
+当一个变量=xxx的时候，约定为这个是指向了这个xxx。
+
+
+a = [11, 22]
+
+
+完成浅拷贝copy.copy(特点：列表会重新生成一个列表，但列表里的内容是引用，元组很特殊，不会有任何变化)
+
+
+完成深拷贝copy.deepcopy(特点：完完全全的重新弄一份，和原来的id查看到的数据完全不一样)
+
+
+
+如果copy.copy拷贝的是元组，那么它不会进行浅拷贝，仅仅是指向。原因：因为元组是不可变类型，那么意味着数据一定不能修改，因此用copy.copy的时候它会自动判断，如果是元组它就是指向了它。
+
+
+
+如果用copy.copy、copy.deepcopy对一个全部都是不可变类型的数据进行拷贝，那么它们结果相同，都是引用指向。
+
+
+如果拷贝的是一个拥有可变类型的数据，几时元组是最顶层，那么deepcopy依然是深拷贝，而copy.copy还是指向。
+
+
+
+
+验证带有元组的深浅拷贝:
+
+In[81]:a=[11,22]
+In[82]:b=[33,44]
+In[83]:c=(a,b)
+In[84]:d = copy.copy(c) 
+In[85]: id(c)
+Out[85]:139639779833800
+In[86]: id(d)
+Out[86]:139639779833800
+In[87]
+In [87]: e =copy.deepcopy(c)
+In [88]: id(e)
+ut[88]:139639779840136   # 这里发生了变化，因为含有列表这样的可变数据    
+In[89]:c
+ut89:([11,22],[33,44])
+ In [90]: e
+out90([11,22],[33,44])
+ In [91]: a.append(55)
+In[92]:c
+ut[92]:([11,22,55],[33,44])
+In[93]:e
+Out[93]:([11,22],[33,44])
+
+
+
+
+
+2. 拷贝的其他方式
+分片表达式可以赋值一个序列:
+d = c[:](切片) 与 d = copy.copy(c)一样属于浅拷贝。
+
+
+
+字典的copy方法可以拷贝一个字典:
+d = dict(name="zhangsan", age=27)
+co = d.copy   # 注意，字典是无序的
+
+
+
+
+
+私有化
+xx:公有变量
+_x:单前置下划线私有化属性或方法，from somemodule import * 禁止导入类对象和子类可以访问。
+__xx:双前置下划线避免与子类中的属性命名冲突·无法在外部直接访问(名字重整所以访问不到)
+__xx__:双前后下划线用户名字空间的魔法对象或属性。例如:__init__，__不要自己发明这样的名
+字。
+xx_:单后置下划线,用于避免与 Python关键词的冲突
+通过 name mangling(名字重整(目的是以防子类意外重写基类的方法或者属性)如: _Class__object)机
+制就可以访问 private了
+
+
+
+
+
+import导入模块
+1.import搜索路径
+几种导入模块的方式：
+from xxx import yyy
+import xxx
+from xxx import *
+import xxx, zzz
+from xxx import yyy,mmm
+import xxx as XXX (as作为别名)
+
+
+import两个含义：一个是从其他地方导入模块，第二个是当前文件中所定义的变量
+
+
+
+验证路径：
+import sys
+
+
+sys.path  #在终端敲回车之后，返回的是个列表，列表里的值便对应了import导入模块对应的路径，从上到下，依次顺序寻找。
+
+
+比如：
+
+ In [1]: import sys
+ In [2]: sys.path
+ Out[2]:
+['',  # 当前路径
+ 'usr/bin',
+ 'usr/lib/python35.zip',
+ 'usr/lib/python3.5',
+ 'usr/lib/python3. 5/plat-x86_64-linux-gnu'
+ 'usr/lib/python3. 5/lib-dynload',
+ 'usr/local/lib/python3.5/dist-packages',
+ 'usr/lib/python3/dist-packages',
+ '/usr/lib/python3/dist-packages /IPython/extensions'
+ '/home/python/.ipython']
+
+
+
+程序执行时添加新的模块路径：
+sys.path.append('/home/itcast/xxx')
+sys.path.insert(0, /home/itcast/xxx')  # 可以确保先搜索这个路径
+ 
+In [37]: sys.path.insert(0,  "/home/python/xxxx")
+In38:sys.path
+ut38:
+ ['/home/python/xxxx',
+ /usr/bin'.
+ '/usr/lib/python35.zip',
+ /usr/lib/python3.5',
+ /usr/lib/python3.5/plat-x86_64-linux-gnu',
+ /usr/lib/python3.5/Lib-dynload',
+ '/usr/local//python3.5/dist-packages',
+ '/usr/lib/python3/dist-packages',
+ '/usr/lib/python3/dist-packagesIPython/extensions',
+ '/home/python/.ipython']
+
+
+
+
+2.重新导入模块
+模块被导入后，import module不能重新导入模块，重新导入需用reload。
+
+比如：
+from imp import reload
+
+reload(aa)
+
+
+
+
+
+3.多模块开发时的注意点
+recv_msg.py模块
+
+用from xxx import yyy 的时候，要注意，如果xxx里定义了一个值，在from xxx import yyy的当前文件中用了=，则会创建一个新的指向，append的用法则不会。
+
+
+
+
+4.封装、继承、多态是面向对象的3大特性
+
+
+
+
+好处
+1.在使用面向过程编程时,当需要对数据处理时,需要考虑用哪个模板中哪个函数来进行操作·但
+是当用面向对象编程时,因为已经将数据存储到了这个独立的空间中,这个独立的空间(即对
+象)中通过一个特殊的变量(__class__)能够获取到类(模板)而且这个类中的方法是有一定
+数量的,与此类无关的将不会出现在本类中,因此需要对数据处理时,可以很快速的定位到需要
+的方法是谁这样更方便
+2.全局变量是只能有1份的,多很多个函数需要多个备份时,往往需要利用其它的变量来进行储存
+而通过封装会将用来存储数据的这个变量变为了对象中的一个“全局”变量,只要对象不一样那么
+这个变量就可以再有1份所以这样更方便
+3.代码划分更清晰
+
+
+
+
+为啥要继承：
+继承能够提升代码的重用率，即开发一个类，可以在多个子功能中直接使用。  继承能够有效的进行代码的管理，当某个类有问题只要修改这个类就行，而其继承这个类的子类往往不需要修改。
+
+
+
+
+多态：多种形态。子类可以在自己的定义中修改父类的方法，以达到符合自己期望的方法。
+
+
+
+函数名其实就是变量名
+
+
+
+多继承以及MRO顺序
+
+1.单独调用父类的方法
+
+
+2.多继承中super调用有所父类的被重写的方法
+
+
+
+
+
+
+结论：
+当在一个子类中使用super().xxx()的时候，到底调用哪个类，不要简单的认为是父类，这不一定，要看通过类名.__mro__这个c3算法结果的元组中，当前调用super的类名所处在的位置。
+
+
+
+
+
+*args,**kwargs既可以当做形参，也可以放在实例里。
+eg:
+
+def test2(a, b, *args, **kwargs):
+    print("------")
+    print(a)
+    print(b)
+    print(args)
+    print(kwargs)
+
+
+def test1(a, b, *args, **kwargs):
+    print(a)
+    print(b)
+    print(args)
+    print(kwargs)
+
+    # test2(a, b, args, kwargs)  # 相当于test2(11, 22, (33, 44, 55, 66), {"name":"laowang", "age":18})
+    # test2(a, b, *args, kwargs)  # 相当于test2(11, 22, 33, 44, 55, 66, {"name":"laowang", "age":18})
+    test2(a, b, *args, **kwargs)  # 相当于test2(11, 22, 33, 44, 55, 66, name="laowang", age=18)
+
+
+test1(11, 22, 33, 44, 55, 66, name="laowang", age=18)
+
+
+
+
+
+3.单继承中super
+总结：
+1.super().__init__相对于类名.__init__，在单继承上用法基本无差。
+2.但在多继承上有区别，super方法能保证每个父类的方法只会执行一次，而使用类名的方法会导致方法被执行多次，具体看前面的 输出结果。
+3.多继承时，使用super方法，对父类的传参数，应该是由于python中super的算法导致的原因，必须把参数全部传递，否则会报错。
+4.单继承时，使用super方法，则不能全部传递，只能传父类方法所需的参数，否则会报错。
+5.多继承时，相对于使用类名.__init__方法，要把每个父类全部写一遍，而使用super方法，只需写一句话便执行了全部父类的方法，这也是为何多继承需要全部传参的一个原因。
+
+
+
+
+
+静态方法和类方法：
+1.类属性、实例属性
+它们在定义和使用中有所区别，而最本质的区别是内存中保存的位置不同。
+。实例属性属于对象
+。类属性属于类
+【实例属性需要通过对象来访问】【类属性通过类访问】，在使用上可以看出实例属性和类属性的归属是不同的。
+比如：
+class Province(object):
+	#类属性
+	country=中国
+
+	def __init__(self, name):
+	#实例属性
+	self.name = name
+
+
+
+#创建一个实例对象
+obj = Province(山东省)
+#直接访问实例属性  
+print(obj.name)  # 实例属性用实例来调用
+#直接访问类属性
+Province.country  # 类属性用类来调用
+
+
+由上例可以看出：
+。类属性在内存中只保存一份
+。实力属性在每个对象中都要保存一份
+
+
+应用场景：
+。通过类创建实例对象时，如果每个对象需要具有相同名字的属性，那么就使用类属性，用一份即可。
+
+
+1.__new__ -->创建对象，通俗点说：有个内存空间
+2.__init__ -->对刚刚申请的空间进行初始化
+
+
+
+
+
+2.实例方法静态方法和类方法
+方法包括:实例方法、静态方法和类方法,三种，三种方法在内存中都归属于类，区别在于调用方式不同。
+实例方法:由对象调用;至少一个self参数;执行实例方法时,自动将调用该方法的对象赋值给self；
+类方法:由类调用；至少一个cls参数执行类方法时,自动将调用该方法的类赋值给cls；
+静态方法:由类调用;无默认参数;
+
+
+
+（类方法可以直接修改类属性）
+
+
+
+对比：
+
+相同点：对于所有的方法而言，均属于类，所以在内存中也只保存一份。
+
+不同点：方法调用者不同，调用方法时，自动传入的参数不同。
+
+
+
+
+
+property属性
+1.什么是 property属性
+一种用起来像是使用的实例属性一样的特殊属性·可以对应于某个方法
+
+定义：
+class Foo:
+	def func(self):
+		pass
+	
+	#定义 property属性
+	@property
+	def prop(self):
+		pass
+
+# 调用
+foo_obj = Foo()
+foo_obj.func()  # 调用实例方法
+foo_obj.prop  # 调用 property属性
+
+
+
+
+property属性的定义和调用要注意一下几点:
+.定义时,在实例方法的基础上添加@property装饰器;并且仅有一个self参数
+.调用时,无需括号
+
+方法:foo_obj.func()
+     property属性:foo_obj.prop
+
+
+比如：
+class Pager:
+	def __init__(self, current_page):
+	#用户当前请求的页码(第一页第二页)
+	self.current_page = current_page
+	#每页默认显示10条数据
+	self.per_items = 10
+ 
+	@property
+	def start(self):
+	val =(self. current_page 1)* self. per_items
+ 	return val
+ 
+	@property
+ 	def end(self)
+	val = self.current_pageself.per_items
+ 	return val
+
+########调用############
+p = Pager(1)
+p.start   #就是起始值·即:m
+p.end     #就是结束值即n
+
