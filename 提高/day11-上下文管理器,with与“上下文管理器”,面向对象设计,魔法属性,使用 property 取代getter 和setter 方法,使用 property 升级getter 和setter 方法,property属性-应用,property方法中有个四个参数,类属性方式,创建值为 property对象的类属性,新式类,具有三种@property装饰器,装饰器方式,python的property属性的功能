@@ -1,0 +1,369 @@
+python的property属性的功能是：property属性内部进行一系列的洛基计算，最终将计算结果返回。
+
+
+
+3. property属性的有两种方式
+装饰器即:在方法上应用装饰器
+类属性即:在类中定义值为 property对象的类属性
+
+3.1装饰器方式
+在类的实例方法上应用@property装饰器
+ Python中的类有经典类和新式类，新式类的属性比经典类的属性丰富。(如果类继 object,那么该
+类是新式类)
+经典类,具有一种@ property装饰器
+######定义########
+class Goods:
+	@property
+	def price(self):
+	return "laowang"
+####调用##########
+obj= Goods()
+result=obj.price  # 自动执行 @property修饰的 price方法·并获取方法的返回值
+print(result)
+
+
+
+
+新式类,具有三种@property装饰器
+#coding=utf-8
+##########定义####
+class Goods:
+"""
+python3中默认继承object类
+以 python2、3执行此程序的结果不同，因为只有在 python3中才有@xxx.setter  @xxx.deleter
+""" 
+@property
+def price(self):
+	print('@property')
+
+
+@price.setter
+def price(self, value):
+	print("@price.setter")
+
+
+@price.deleter
+def price(self):
+	print("@price.deleter")
+
+
+##############调用#################
+obj = Goods()
+obj.price   # 自动执行 @property 修饰的price 方法，并获取方法的返回值
+obj.price = 123  # 自动执行 @price.setter 修饰的price 方法， 并将123赋值给方法的参数
+del obj.price  # 自动执行 @price.deleter 修饰的price方法
+
+
+
+注意：
+。经典类中的属性只有一种访问方式，其对应被@property修饰的方法。
+。新式类中的属性有三种访问方式，并分别对应了三个被@property、@方法名.setter、@方法名.deleter
+修饰的方法
+
+由于新式类中具有三种访问方式，我们可以根据它们几个属性的访问特点，分别将三个方法定义为对同一个属性：
+获取、修改、删除。
+
+
+
+
+3.2类属性方式,创建值为 property对象的类属性
+当使用类属性的方式创建property属性时,经典类和新式类无区别
+class Foo:
+	def get_bar(self):
+	return 'laowang'
+	
+	BAR = property(get_bar)
+ obj =Foo()
+ reuslt = obj.BAR  # 自动调用get_bar方法并获取方法的返回值
+ print(reuslt)
+ 
+
+property方法中有个四个参数
+第一个参数是方法名,调用对象.属性时 自动触发执行方法
+第二个参数是方法名,调用对象.属性 = xxx 时自动触发执行方法
+第三个参数是方法名,调用del 对象.属性时，自动触发执行方法
+第四个参数是字符串,调用对象.属性.__doc__，此参数是该属性的描述信息
+
+
+比如：
+
+#coding=utf-8
+class Foo(object):
+	def get_bar(self):
+		print("getter...")
+		return 'laowang'
+ 
+	def set_bar(self,  value):
+		"""必须两个参数"""
+ 		print("setter...")
+ 		return 'set value' + value
+ 
+	def del_bar(self):
+		print("deleter...")
+		return 'laowang'
+ 
+	BAR = property(get_bar, set_bar, del_bar, "description...")
+ 
+obj =Foo()
+
+obj.BAR  # 自动调用第一个参数中定义的方法:getbar
+obj.BAR = "alex"  # 自动调用第二个参数中定义的方法: set_bar方法,并将"alex"当作参数传入
+desc = Foo.bar.__doc__  # 自动获取第四个参数中设置的值: description...
+print(desc)
+del obj.BAR   # 自动调用第三个参数中定义的方法: del_bar方法
+
+
+
+由于 类属性方式 创建property属性具有3种访问方式，我们可以根据它们几个属性的访问特点，分别将三个方式定义为
+对同一个属性：获取、修改、删除
+
+
+
+综上所述：
+。定义property属性共有两种方式，分别是【装饰器】和【类属性】，而【装饰器】方式针对经典类和
+新式类又有所不同。
+。通过使用property属性，能够简化调用者在获取数据的流程。
+
+
+
+
+property属性-应用
+1.私有属性添加getter 和setter 方法(python里不太建议这种方法，但其他语言在用)
+class Money(object):
+	def __init__(self):  # 实例属性
+		self. __money = 0   # 私有属性，不想让对方直接在外部引用
+ 
+	def getMoney(self):  # 一个私有属性配两个方法，分别是取和设置，是编程语言里的套路
+		return self. __money
+ 
+	def setMoney(self,  value):
+		if isinstance(value,  int):  # isinstance() 函数来判断一个对象是否是一个已知的类型(比如:>>>a = 2  >>> isinstance (a,int),>>>True)
+			self.__money =value
+ 		else:
+ 			print("error:不是整型数字)
+
+
+
+
+
+2.使用 property 升级getter 和setter 方法
+class Money(object):
+ 	def __init__(self):
+ 		self.__money = 0
+ 
+	def getMoney(self):
+ 		return self.__money
+ 
+	def setMoney(self,  value):  # 因为这里设置了value参数，所以下方传递数字参数时，便会调用setMoney方法
+ 		if isinstance(value,  int):
+			self. money= value
+		 else:
+ 			print("error:不是整型数字")
+
+	#定义一个属性, 当对这个money设置值时，调用setMoney，当获取值时调用 getMoney
+	money = property(getMoney, setMoney)
+
+a= Money()
+a.money=100    # 调用setMoney方法
+print(a.money)  # 调用getMoney方法
+#100
+
+
+
+
+
+3.使用 property 取代getter 和setter 方法
+。重新实现一个属性的设置和读取方法，可做边界判定
+class Money(object):
+ 	def __init__(self):
+ 		self.__money =0
+	
+	#使用装饰器对money进行装饰·那么会自动添加个叫 money的属性，当调用获取money的值时调用装饰的方法
+ 	@property
+ 	def money(self):
+ 		return self.__money
+
+	#使用装饰器对money进行装饰，当对money设置值时调用装饰的方法
+ 	@money.setter
+ 	def money(self, value):
+ 		if isinstance(value,  int):
+ 			self.__money = value
+ 		else:
+			print("error:不是整型数字")
+
+a= Money()
+a. money =100
+print(a. money)
+
+
+
+
+魔法属性
+无论人或事物往往都有不按套路出牌的情况, Python的类属性也是如此,存在着一些具有特殊含义的属
+性详情如下:
+ 1.__doc__
+. 表示类的描述信息
+class Foo:
+	"""描述类信息,这是用于看片的神器"""
+ 
+	def func(self):
+ 		pass
+
+print(Foo.__doc__)
+# 输出类的描信息
+
+
+2. __module__和 __class__
+__module__ 表示当前操作的对象在那个模块
+__class__ 表示当前操作的对象的类是什么
+
+
+3.__init__
+。初始化方法，通过类创建对象时，自动出发执行
+
+
+
+4.__del__
+。当对象在内存中被释放时，自动触发执行
+注：此方法一般无须定义，因为Python是一门高级语言，程序员在
+使用时无须关心内存的分配和释放，因为此工作都是交给Python解释器来执行
+，所以，__del__的调用是由解释器在进行垃圾回收时自动出发执行的。
+
+
+
+5. __call__
+。对象后面加括号，触发执行。
+注意：__init__方法的执行是由创建对象触发的，即：对象 = 类名()；而对于 __call__方法
+的执行是由对象加括号触发的，即：对象() 或者 类()()
+
+
+
+6. __dict__
+。类或对象中的所有属性
+类的实例属性属于对象；类中的类属性和方法等属于类。
+
+
+
+7. __str__
+。如果一个类中定义了__str__方法，那么在打印对象时，默认输出该方法的返回值。
+
+
+
+8.__getitem__、__setitem__、__delitem__
+。用于索引操作，比如字典。以上分别表示获取，设置，删除数据
+
+
+
+9.__getslice__、__setslice__、__delslice__
+。该三个方法用于分片操作，如：列表
+
+
+
+
+面向对象设计
+·继承-是基于Python中的属性查找(如X.name)
+·多态-在X.method方法中, method的意义取决于X的类型(比如子类重写父类方法)
+.封装-方法和运算符实现行为,数据隐藏默认是一种惯例
+
+
+
+
+with与“上下文管理器”
+如果你有阅读源码的习惯,可能会看到一些优秀的代码经常出现带有“with”关键字的语句,它通常用在什
+么场景呢?今
+对于系统资源如文件·数据库连接 socket而言·应用程序打开这些资源并执行完业务逻辑之后·必须做
+的一件事就是要关闭(断开)该资源
+比如 Python程序打开一个文件,往文件中写内容,写完之后,就要关闭该文件,否则会出现什么情况
+呢?极端情况下会出现Too many open files的错误,因为系统允许你打开的最大文件数量是有限的
+同样,对于数据库,如果连接数过多而没有及时关闭的话,就可能会出现Can not connect to MySQL
+ server Too many connections",因为数据库连接是一种非常昂贵的资源,不可能无限制的被创建
+来看看如何正确关闭一个文件
+
+普通版:
+def m1():
+ 	f = open("output.txt", "w")
+	f.write("python之禅")
+ 	f.close()
+这样写有一个潜在的问题,如果在调用 write的过程中,出现了异常进而导致后续代码无法继续执行,
+close方法无法被正常调用,因此资源就会一直被该程序占用者释放·那么该如何改进代码呢?
+
+  
+进阶版:
+def m2():
+ 	f = open("output. txt", "w")
+ 	try:
+		f. write("python之禅)
+ 	except IOError:
+ 		print("oops error")
+ 	finally:
+ 		f.close()
+改良版本的程序是对可能发生异常的代码处进行try捕获,使用try/finally语句,该语句表示如果在try代
+码块中程序出现了异常,后续代码就不再执行,而直接跳转到 except代码块而无论如何 finally 块的代
+码最终都会被执行·因此,只要把close放在 finally代码中,文件就一定会关闭.
+
+
+高级版:
+def m3():
+ 	with open("output. txt", "") as f:
+		f.write("Python之禅")
+一种更加简洁优雅的方式就是用with关键字open方法的返回值赋值给变量f,当离开with代码块的
+时候,系统会自动调用f. close()方法,with的作用和使用 try/finally语句是一样的那么它的实现原理是
+什么?在讲with的原理前要涉及到另外一个概念就是上下文管理器(Context Manager)
+
+
+
+上下文管理器
+任何实现了 __enter__0和__exit__()方法的对象都可称之为上下文管理器,上下文管理器对象可以使用
+with关键字·显然,文件(file)对象也实现了上下文管理器
+那么文件对象是如何实现这两个方法的呢?我们可以模拟实现一个自己的文件类,让该类实现__enter__0
+和__exit__0方法。
+class File():
+ 	def __init__(self, filename, mode):
+		self.filename = filename
+ 		self.mode = mode
+ 
+	def enter(self):
+ 		print("entering")
+		self.f = open(self. filename,self.mode)
+ 		return self. f
+ 
+	def __exit__(self, *args):
+ 		print("will exit")
+ 		self.f.close()
+__enter__0方法返回资源对象,这里就是你将要打开的那个文件对象,__exit__0方法处理一些清除工作
+因为File类实现了上下文管理器,现在就可以使用with语句了
+with File('out.txt', 'w') as f:
+ 	print("writing")
+ 	f.write('hello, python')
+这样,你就无需显示地调用close方法了,由系统自动去调用,哪怕中间遇到异常close方法也会被调
+用
+
+
+
+实现上下文管理器的另外方式
+Python还提供了一个contextmanager的装饰器，更进一步简化了上下文管理器的实现方式。通过yield
+将函数分割成两部分, yield之前的语句在__enter__方法中执行, yield之后的语句在__exit__方法中执
+行。紧跟在 yield后面的值是函数的返回值
+from contextlib import contextmanager
+ 
+@contextmanager
+def my_open(path, mode):
+ 	f = open(path, mode)
+ 	yield f
+ 	f. close()
+调用
+with my_open('out. txt', 'w') as f:
+	f. write("hello, the simplest context manager")
+
+
+总结
+ Python提供了with语法用于简化资源操作的后续清除操作,是try/finally的替代方法实现原理建立在上
+下文管理器之上·此外, Python还提供了一个contextmanager装饰器,更进一步简化上下管理器的实现
+万式。
+
+
+
+
+
+
+
