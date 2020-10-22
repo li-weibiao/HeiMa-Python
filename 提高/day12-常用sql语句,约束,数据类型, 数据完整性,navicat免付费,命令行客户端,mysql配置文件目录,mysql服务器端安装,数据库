@@ -1,0 +1,409 @@
+数据库
+。持久化存储
+。读写速度极高
+。保证数据的有效性
+。对程序支持性非常好，容易扩展
+
+
+
+ubantu: sudo -s     # 切换超级管理员
+
+
+在mysql数据库里:
+如果能够唯一标记某个字段：那么这就是主键
+
+关系型数据库核心元素：
+数据列-->字段
+数据行-->记录
+数据表-->数据行的集合
+数据库-->数据表的集合
+
+
+RDBMS包括关系型数据库和非关系型数据库
+
+
+
+SQL是结构化查询语言，对于web程序员来讲，重点是数据的crud(增删改查)，
+必须熟练编写DQL,DML能够编写DDL完成数据库、表的操作，其他语言如TPL,DCL,CCL了解即可
+
+SQL是一门特殊的语言，专门用来操作关系数据库，不区分大小写
+
+
+
+mysql服务器端安装
+·安装服务器端:在终端中输入如下命令回车后然后按照提示输入
+ sudo apt-get install mysql-server
+当前使用的ubuntu镜像中已经安装好了mysql服务器端,无需再安装,并且设置成了开机自启动
+服务器用于接收客户端的请求,执行sql语句管理数据库
+·服务器端一般以服务方式管理,名称为mysql
+启动服务
+sudo service mysql start
+·查看进程中是否存在mysql服务
+ps ajxlgrep mysql
+停止服务
+sudo service mysql stop
+重启服务
+sudo service mysql restart
+
+
+
+w10安装mysql: https://blog.csdn.net/qq_37172528/article/details/80459490?utm_medium=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-3.channel_param&depth_1-utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-3.channel_param
+
+
+
+mysql配置文件目录为: /etc/mysql/mysql.cnf
+进入mysql.conf.d目录，打开mysql.cnf，可以看到配置项
+主要配置项如下:
+bind -address表示服务器绑定的ip默认为127.0.0.1
+port表示端口,默认为3306
+datadir表示数据库目录默认为/var/lib/mysql
+general_log_file表示普通日志,默认为/var/log//mysql.log
+log_error表示错误日志·默认为/var/log/mysql/error.log
+
+
+
+
+客户端
+·客户端为开发人员与dba使用,通过 socket方式与服务端通信,常用的有 navicat、命令行mysql
+图形化界面客户端 navicat
+可以到Navicat官网下载
+·将压缩文件拷贝到ubuntu虚拟机中,放到桌面上解压
+ tar zxvf navicat112_mysql_cs_x64.tar.gz
+进入解压的目录运行如下命令
+ ./start_navicat
+
+
+
+命令行客户端
+·在终端运行如下命令,按提示填写信息
+ sudo apt-get install mysql-client
+当前使用的ubuntu镜像中已经安装好了mysql客户端无需再安装
+详细连接的命令可以查看帮助文档
+ mysql --help
+最基本的连接命令如下,输入后回车
+ mysql -u root -pmysql
+
+
+navicat免付费：
+进入家目录:    cd ~
+查看当前文件: ls -a
+删除navicat64: rm -rf navicat64
+
+
+
+
+数据完整性
+·一个数据库就是一个完整的业务单元，可以包含多张表，数据被存储在表中
+·在表中为了更加准确的存储数据保证数据的正确有效,可以在创建表的时候为表添加一些强制性
+的验证,包括数据字段的类型约束
+
+数据类型
+可以通过查看帮助文档查阅所有支持的数据类型
+·使用数据类型的原则是:够用就行,量使用取值范围小的,而不用大的·这样可以更多的节省存储
+空间
+常用数据类型如下:
+整数:int,bit
+小数: decimal
+字符串: varchar，char
+日期时间:date,time, datetime
+枚举类型(enum)
+特别说明的类型如下:
+decimal表示浮点数如 decimal(5，2)示共存5位数，小数占2位
+char表示固定长度的字符串如 char(3),如果填充 'ab'时会补一个空格为'ab'
+varchar表示可变长度的字符串,如 varchar(3),填充ab时就会存储ab
+字符串text表示存储大文本,当字符大于4000时推荐使用
+对于图片音频视频等文件不存储在数据库中,而是上传到某个服务器上,然后在表中存储
+这个文件的保存路径
+·更全的数据类型可以参考 .http: //blog. csdn.net/anxpp/article/details/51284106
+
+约束
+主键 primary key: 物理上存储的顺序
+非空not null: 此字段不允许填写空值
+唯一unique: 此字段的值不允许重复
+·默认default: 当不填写此值时会使用默认值,如果填写时以填写为准
+外键foreign key: 对关系字段进行约束,当为关系字段填写值时,会到关联的表中查询此值是否存在（如果一个表里的值是另一个表的主键，则这个表里的值被称为外键）
+说明：虽然外键约束可以保证数据的有效性，但是在进行数据的crud(增删改查)时，都会降低数据库的性能，所以
+不推荐使用，那么数据的有效性怎么保证呢？答：可以在逻辑层进行控制。
+
+
+
+
+命令行连接
+·在工作中主要使用命令操作方式,要求熟练编写
+·打开终端,运行命令
+mysgl  -uroot   -p
+回车后输入密码,当前设置的密码为 mysql
+
+
+退出登陆：
+quit 和 exit
+或
+ctrl + d
+
+登陆成功后，输入如下命令查看效果
+查看版本：select version()；
+显示当前时间：select now();
+
+
+unsigned能存储的数据范围则是0~65535
+
+
+
+
+数据库
+·查看所有数据库
+show databases;
+使用数据库
+use   数据库名
+查看当前使用的数据库
+select database();
+创建数据库
+create database  数据库名 charset=utf8；
+例:
+ create database python charset=utf8;
+删除数据库
+drop database    数据库名;
+例:
+drop database python;
+
+
+修改表添加字段
+alter table  表名  add  列名类型;
+例:
+ alter table students add birthday datetime;
+
+修改表修改字段:重命名版
+alter table  表名 change  原名  新名   类型及约束;
+例:
+alter table students change birthday birth datetime not null;
+
+·修改表修改字段:不重命名版
+alter table  表名 modify  列名   类型及约束;
+例:
+alter table students modify birthday  datetime   not   null;
+
+·修改表删除字段
+alter table 表名  drop  列名
+例:
+alter table students drop birthday;
+
+删除表
+drop table  表名
+例:
+ drop table students;
+
+
+
+
+
+
+常用sql语句:
+【
+-- 数据库的操作
+
+    -- 链接数据库
+    mysql -uroot -p
+    mysql -uroot -pmysql
+
+    -- 退出数据库
+    exit/quit/ctrl+d
+    
+
+    -- sql语句最后需要有分号;结尾
+    -- 显示数据库版本
+    select version();
+
+    -- 显示时间
+    select now();
+
+    -- 查看所有数据库
+    show databases;
+    
+
+    -- 创建数据库
+    -- create database 数据库名 charset=utf8;
+    create database python04;
+    create database python04new charset=utf8;
+
+
+    -- 查看创建数据库的语句
+    -- show crate database ....
+    show create database python04;
+    
+
+    -- 查看当前使用的数据库
+    select database();
+
+    -- 使用数据库
+    -- use 数据库的名字
+    use python04new;
+
+    -- 删除数据库
+    -- drop database 数据库名;
+    drop database python04;
+
+
+-- 数据表的操作
+
+    -- 查看当前数据库中所有表
+    show tables;
+    
+
+    -- 创建表
+    -- auto_increment表示自动增长
+    -- not null 表示不能为空
+    -- primary key 表示主键
+    -- default 默认值
+    -- create table 数据表名字 (字段 类型 约束[, 字段 类型 约束]);
+    create table xxxxx(id int, name varchar(30));
+    create table yyyyy(id int primary key not null auto_increment, name varchar(30));
+    create table zzzzz(
+        id int primary key not null auto_increment,
+        name varchar(30)
+    );
+
+    -- 查看表结构
+    -- desc 数据表的名字;
+    desc xxxxx;
+
+    -- 创建students表(id、name、age、high、gender、cls_id)
+    create table students(
+        id int unsigned not null auto_increment primary key,
+        name varchar(30),
+        age tinyint unsigned default 0,
+        high decimal(5,2),
+        gender enum("男", "女", "中性", "保密") default "保密",
+        cls_id int unsigned
+    );
+
+    insert into students values(0, "老王", 18, 188.88, "男", 0);
+    select * from students;
+
+    -- 创建classes表(id、name)
+    create table classes(
+        id int unsigned not null auto_increment primary key,
+        name varchar(30)
+    );
+
+    insert into classes values(0, "python04大神");
+    select * from classes;
+
+    -- 查看表的创建语句
+    -- show create table 表名字;
+    show create table students;
+
+
+    -- 修改表-添加字段
+    -- alter table 表名 add 列名 类型;
+    alter table students add birthday datetime;
+    
+
+    -- 修改表-修改字段：不重命名版
+    -- alter table 表名 modify 列名 类型及约束;
+    alter table students modify birthday date;
+
+
+    -- 修改表-修改字段：重命名版
+    -- alter table 表名 change 原名 新名 类型及约束;
+    alter table students change birthday birth date default "2000-01-01";
+
+
+    -- 修改表-删除字段
+    -- alter table 表名 drop 列名;
+    alter table students drop high;
+
+
+    -- 删除表
+    -- drop table 表名;
+    -- drop database 数据库;
+    -- drop table 数据表;
+    drop table xxxxx;
+
+    
+-- 增删改查(curd)
+
+    -- 增加
+        -- 全列插入
+        -- insert [into] 表名 values(...)
+        -- 主键字段 可以用 0  null   default 来占位
+        -- 向classes表中插入 一个班级
+        insert into classes values(0, "菜鸟班");
+
+
+        +--------+-------------------------------------+------+-----+------------+----------------+
+        | Field  | Type                                | Null | Key | Default    | Extra          |
+        +--------+-------------------------------------+------+-----+------------+----------------+
+        | id     | int(10) unsigned                    | NO   | PRI | NULL       | auto_increment |
+        | name   | varchar(30)                         | YES  |     | NULL       |                |
+        | age    | tinyint(3) unsigned                 | YES  |     | 0          |                |
+        | gender | enum('男','女','中性','保密')       | YES  |     | 保密       |                |
+        | cls_id | int(10) unsigned                    | YES  |     | NULL       |                |
+        | birth  | date                                | YES  |     | 2000-01-01 |                |
+        +--------+-------------------------------------+------+-----+------------+----------------+
+
+        -- 向students表插入 一个学生信息
+        insert into students values(0, "小李飞刀", 20, "女", 1, "1990-01-01");
+        insert into students values(null, "小李飞刀", 20, "女", 1, "1990-01-01");
+        insert into students values(default, "小李飞刀", 20, "女", 1, "1990-01-01");
+
+        -- 失败
+        -- insert into students values(default, "小李飞刀", 20, "第4性别", 1, "1990-02-01");
+
+        -- 枚举中 的 下标从1 开始 1---“男” 2--->"女"....
+        insert into students values(default, "小李飞刀", 20, 1, 1, "1990-02-01");
+
+        -- 部分插入
+        -- insert into 表名(列1,...) values(值1,...)
+        insert into students (name, gender) values ("小乔", 2);
+
+
+        -- 多行插入
+        insert into students (name, gender) values ("大乔", 2),("貂蝉", 2);
+        insert into students values(default, "西施", 20, "女", 1, "1990-01-01"), (default, "王昭君", 20, "女", 1, "1990-01-01");
+
+
+    -- 修改
+    -- update 表名 set 列1=值1,列2=值2... where 条件;
+        update students set gender=1; -- 全部都改
+        update students set gender=1 where name="小李飞刀"; -- 只要name是小李飞刀的 全部的修改
+        update students set gender=1 where id=3; -- 只要id为3的 进行修改
+        update students set age=22, gender=1 where id=3; -- 只要id为3的 进行修改
+    
+    -- 查询基本使用
+        -- 查询所有列
+        -- select * from 表名;
+        select * from students;
+
+        ---定条件查询
+        select * from students where name="小李飞刀"; -- 查询 name为小李飞刀的所有信息
+        select * from students where id>3; -- 查询 name为小李飞刀的所有信息
+
+
+        -- 查询指定列
+        -- select 列1,列2,... from 表名;
+        select name,gender from students;
+
+
+        -- 可以使用as为列或表指定别名
+        -- select 字段[as 别名] , 字段[as 别名] from 数据表 where ....;
+        select name as 姓名,gender as 性别 from students;
+
+
+        -- 字段的顺序
+        select id as 序号, gender as 性别, name as 姓名 from students;
+    
+
+    -- 删除
+        -- 物理删除
+        -- delete from 表名 where 条件
+        delete from students; -- 整个数据表中的所有数据全部删除
+        delete from students where name="小李飞刀";
+
+        -- 逻辑删除
+        -- 用一个字段来表示 这条信息是否已经不能再使用了
+        -- 给students表添加一个is_delete字段 bit 类型
+        alter table students add is_delete bit default 0;
+        update students set is_delete=1 where id=6;
+
+】
+
