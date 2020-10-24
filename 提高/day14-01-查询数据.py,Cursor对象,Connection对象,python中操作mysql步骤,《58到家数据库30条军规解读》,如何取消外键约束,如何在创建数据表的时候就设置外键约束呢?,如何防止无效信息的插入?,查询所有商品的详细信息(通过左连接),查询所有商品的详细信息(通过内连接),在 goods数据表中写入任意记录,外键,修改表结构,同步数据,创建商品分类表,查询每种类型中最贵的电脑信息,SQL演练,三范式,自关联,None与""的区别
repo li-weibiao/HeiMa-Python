@@ -1,0 +1,419 @@
+a = None  # 什么都没有指向
+a = ""   # 虽然没有，但是占了空间
+
+自关联
+·设计省信息的表结构provinces
+ o id
+ o ptitle
+·设计市信息的表结构citys
+ o id
+ o ctitle
+ o proid
+ citys表的proid表示城市所属的省,对应着 provinces表的id值
+问题:
+能不能将两个表合成一张表呢?
+思考:
+观察两张表发现, citys表比province表多一个proid列,其它列的类型都是一样的
+意义:
+存储的都是地区信息,而且每种信息的数据量有限,没必要增加一个新表,或者将来还要存储区乡镇信息,
+都增加新表的开销太大
+
+
+
+答案:
+定义表 areas,结构如下
+ .id
+ atitle
+ pid
+说明:
+·因为省没有所属的省份,所以可以填写为null
+·城市所属的省份pid,填写省所对应的编号id
+这就是自关联,表中的某一列,关联了这个表中的另外一列,但是它们的业务逻辑含义是不一样的,城市信息
+的pid引用的是省信息的id
+·在这个表中,结构不变,可以添加区县、乡镇街道丶村社区等信息
+
+
+创建 areas表的语句如下:
+create table areas(
+ 	aid int primary key,
+ 	atitle varchar(20),
+ 	pid int
+);
+
+从sq文件中导入数据
+source areas.sql;
+
+·查询一共有多少个省
+select count(*) from areas where pid is null;
+
+·例1:查询省的名称为“山西省”的所有城市
+select city.* from areas as city
+inner join areas as province on city.pid=province.aid
+where province.atitle=山西省';
+
+·例2:查询市的名称为“广州市"的所有区县
+select dis.* from areas as dis
+inner join areas as city on city.aid=dis.pid
+where city.atitle='广州市';
+
+
+
+数据库设计
+·关系型数据库建议在E-R模型的基础上,我们需要根据产品经理的设计策划,抽取出来模型与关系,制定出表
+结构这是项目开始的第一步
+·在开发中有很多设计数据库的软件,常用的如 power designer, db desinger等这些软件可以直观的看到实体
+及实体间的关系
+·设计数据库,可能是由专门的数据库设计人员完成,也可能是由开发组成员完成,一般是项目经理带领组员来
+完成
+·现阶段不需要独立完成数据库设计,但是要注意积累一些这方面的经验
+
+三范式
+经过研究和对使用中问题的总结对于设计数据库提出了一些规范,这些规范被称为范式(Normal Form)
+·目前有迹可寻的共有8种范式,一般需要遵守3范式即可
+◆第一范式(1NF):强调的是列的原子性即列不能够再分成其他几列
+考虑这样一个表:【联系人】(姓名性别,电话)如果在实际场景中,一个联系人有家庭电话和公司电
+话,那么这种表结构设计就没有达到1NF要符合1NF我们只需把列(电话)分即:【联系人】
+(姓名,性别,家庭电话,公司电话)·1NF很好辨别,但是2NF和3NF就容易搞混淆
+◆第二范式(2NF):首先是1NF另外包含两部分内容,一是表必须有一个主键;二是没有包含在主键中的
+列必须完全依赖于主键,而不能只依赖于主键的一部分
+考虑一个订单明细表:【OrderDetail
+OrderID ProductID UnitPrice Discount Quantity ProductName)因为我们知道在一个订单中
+可以订购多种产品,所以单单一个 OrderlD是不足以成为主键的,主键应该是(OrderlD ProductID)
+显而易见 Discount(折扣), Quantity(数量)完全依赖(取决)于主键(, ProductID),而
+ UnitPrice ProductName只依赖于 ProductID.所以 OrderDetail表不符合2NF不符合2NF的设计容
+易产生冗余数据。
+可以把【OrderDetail】表折分为【OrderDetail】( ProductID Discount Quantity)和
+Product】(ProductID UnitPriceProductName)来消除原订单表中UnitPrice ProductName多次
+重复的情况
+◆第三范式(3NF):首先是2NF,另外非主键列必须直接依赖于主键,不能存在传递依赖即不能存在:非
+主键列A依赖于非主键列B,非主键列B依赖于主键的情况
+考虑一个订单表【Order】
+ (OrderID, OrderDate, CustomerlD,CustomerName, CustomerAddr CustomerCity)
+)其中OrderDate CustomerlD CustomerName CustomerAddr CustomerCity等非主
+键列都完全依赖于主键(OrderID),所以符合2NF不过问题是
+ CustomerName CustomerAddr CustomerCity直接依赖的是 CustomerlD(非主键列),而不是直接
+依赖于主键,它是通过传递才依赖于主键,所以不符合3NF·通过折分【 Order】为【Order
+(OrderlD OrderDate CustomerlD)和【Customer】
+CustomerlD CustomerNameCustomerAddrCustomerCity)从而达到3nf第二范式(2n
+
+
+
+
+准备数据
+创建数据表
+一创建“京东数据库
+create database jing_dong charset=utf8;
+使用“京东”数据库
+use jing_dong;
+创建一个商品 goods数据表
+create table goods(
+ id int unsigned primary key auto increment not null,
+ name varchar(150) not null,
+ cate_name varchar(40) not null,
+ brand_name varchar(40) not null,
+ price decimal(10, 3) not null default 0,    # 当我们需要存储小数，并且有精度要求，比如存储金额时，通常会考虑使用DECIMAL字段类型,参考地址：https://www.cnblogs.com/kunjian/p/12083943.html
+ is_show bit not null default 1,
+ is_saleoff bit not null default 0
+);
+
+
+插入数据
+向 goods表中插入数据
+ insert into goods values(0, 'r510vc 15.6英寸笔记本','笔记本','华硕','3399',default, default);    
+ insert into goods values(0,'y400n 14.0英寸笔记本电脑','笔记本','联想','4999', default, default);
+ insert into goods values(0,'g150th15.6英寸游戏本','游戏本','雷神','8499', default, default);
+ insert into goods values(0,'x550cc 15.6英寸笔记本','笔记本','华硕','2799', default, default);
+ insert into goods values(0,'x240超极本','超级本','联想','4880',default, default);
+
+
+
+
+SQL演练：
+1.SQL语句的强化
+·查询类型cate_name为超极本的商品名称价格
+ select name, price from goods where cate_name='超级本'
+显示商品的种类
+ select cate_name from goods group by cate_name;
+·求所有电脑产品的平均价格并且保留两位小数
+ select round(avg(price), 2) as avg_price from goods;
+·显示每种商品的平均价格
+ select cate_name, avg (price) from goods group by cate_name;
+·查询每种类型的商品中最贵、最便宜、平均价、数量
+ select cate_name, max(price), min(price), avg(price), count( * ) from goods group by cate_name;
+·查询所有价格大于平均价格的商品,并且按价格降序排序
+ select id, name, price from goods
+ where price >(select round(avg(price,2) as avg_price from goods)
+ order by price desc;
+
+
+select distinct cate_name from goods;    # 去掉重复的，然后显示
+
+
+select cate_name,group_concat(name) from goods group by cate_name;  # 分组，并且显示每个组里的成员
+
+
+
+select cate_name from goods group by cate_name;  # 分组
+
+
+select * from goods where price>(select avg(price) from goods);  # 子查询，从中添加了另外的查询语句
+
+
+·查询每种类型中最贵的电脑信息
+select * from goods
+inner join
+(
+ select
+ cate_name,
+ max(price) as max_price,
+ min(price) as min_price,
+ avg(price) as avg_price,
+ count(*) from goods group by cate_name
+) as goods new_info
+on goods.cate_name=goods_new_info.cate_name and goods.price=goods_new_info.max_price;
+
+
+
+
+
+2.创建商品分类表
+一创建商品分类表
+create table if not exists goods_cates(
+ id int unsigned primary key auto_increment,
+ name varchar(40) not null
+);
+
+·查询goods表中商品的种类
+ select cate_name from goods group by cate_name;
+·将分组结果写入到goods_cates数据表
+ insert into goods_cates (name) select cate_name from goods group by cate_name;
+3.同步表数据
+·通过 goods_cates数据表来更新goods表
+ update goods as g inner join goods_cates as c on g.cate_name=c.name set g.cate_name=c.id;
+4.创建商品品牌表表
+·通过create...select来创建数据表并且同时写入记录一步到位
+select brand_name from goods group by brand_name;
+在创建数据表的时候一起插入数据
+注意:需要对 brand_name 用as起别名, 否则name字段就没有值
+create table goods_brands(
+ id int unsigned primary key auto_increment,
+ name varchar(40) not null) select brand_name as name from goods group by brand_name;
+
+
+5.同步数据
+·通过goods_brands数据表来更新 goods数据表
+ update goods as g inner join goods_brands as b on g.brand_name=b.name set g.brand_name=b.id;
+6.修改表结构
+·查看goods的数据表结构会发现 cate_name和 brand_name对应的类型为 varchar但是存储的都是数字
+ desc goods;
+通过alter table语句修改表结构
+ alter table goods
+ change cate_name cate_id int unsigned not null,
+ change brand_name brand_id int unsigned not null;
+7.外键
+·分别在goods_cates和 goods_brands表中插入记录
+ insert into goods_cates(name) values('路由器'),('交换机'),('网卡');
+ insert into goods_brands(name) values('海尔'),('清华同方'),('神舟');
+·在 goods数据表中写入任意记录
+ insert into goods (name, cate_id, brand_id, price)
+ values('LaserJet Pro P11606dn 黑白激光打印机', 12, 4, '1849');
+·查询所有商品的详细信息(通过内连接)
+ select g.id,g.name,c.name,b.name,g.price from goods as g
+ inner join goods_cates as c on g.cate_id=c.id
+ inner join goods_brands as b on g.brand_id=b.id;
+
+
+·查询所有商品的详细信息(通过左连接)
+ select g.id, g.name,c.name, b.name, g.price from goods as g
+ left join goods_cates as c on g.cate_id=c.id
+ left join goods_brands as b on g.brand_id=b.id;
+
+如何防止无效信息的插入就是可以在插入前判断类型或者品牌名称是否存在呢?可以使用之前讲过的外键来解
+决
+·外键约束对数据的有效性进行验证
+·关键字: foreign key,只有 innodb数据库引擎支持外键约束
+·对于已经存在的数据表如何更新外键约束
+--给brand_id添加外键约束成功
+ alter table goods add foreign key (brand_id) references goods_brands(id);
+--给cate_id添加外键失败
+--会出现1452错误
+--错误原因:已经添加了一个不存在的 cate_id值12,因此需要先删除
+ alter table goods add foreign key (cate_id) references goods_cates(id);
+
+
+如何在创建数据表的时候就设置外键约束呢?
+注意: goods中的cate_id的类型一定要和 goods_cates中的id类型一致
+ create table goods(
+ id int primary key auto_increment not null,
+ name varchar(40) default '',
+ price decimal(5,2),
+ cate_id int unsigned,
+ brand_id int unsigned,
+ is_ show bit default 1,
+ is_saleoff bit default 0,
+ foreign key(cate_id) references goods_cates(id),
+ foreign key(brand_id) references goods_brands(id)
+);
+
+如何取消外键约束
+一需要先获取外键约束名称,该名称系统会自动生成,可以通过查看表创建语句来获取名称
+ show create table goods;
+--获取名称之后就可以根据名称来删除外键约束
+ alter table goods drop foreign key 外键名称
+
+***注意还有一个很好用的用法***
+show create table goods;     # 查创建表的语句，以及外键名称
+
+一在实际开发中,很少会使用到外键约束,会极大的降低表更新的效率
+
+资料：《58到家数据库30条军规解读》
+
+
+
+
+python中操作mysql步骤：
+使用Python DB API访问数据库流程
+
+引入模块：
+在py文件中引入pymysql模块
+from pymysql import *
+
+
+ Connection对象
+·用于建立与数据库的连接
+·创建对象:调用connect()方法
+conn=connect(参数列表)
+·参数host：连接的 mysql主机,如果本机是'localhost'
+·参数port：连接的mysql主机的端口,默认是3306
+参数database：数据库的名称
+参数user：连接的用户名
+参数password：连接的密码
+·参数charset：通信采用的编码方式,推荐使用utf8
+
+对象的方法
+close()关闭连接
+commit()提交
+cursor()返回 Cursor对象，用于执行sql语句并获得结果
+
+
+Cursor对象
+用于执行sql语句,使用频度最高的语句为 select , insert, update, delete
+获取Cursor对象: 调用Connection对象的cursor()方法
+ cs1=conn.cursor()
+对象的方法
+。close()关闭
+。execute(operation[, parameters])执行语句,返回受影响的行数,主要用于执行 insert，update，delete语
+句,也可以执行create， alter ，drop等语句
+。fetchone()执行查询语句时,获取查询结果集的第一个行数据，返回一个元组
+。fetchall()执行查询时,获取结果集的所有行,一行构成一个元组,再将这些元组装入一个元组返回
+
+对象的属性
+rowcount只读属性,表示最近一次execute()执行后受影响的行数
+connection获得当前连接对象
+
+
+增删改：
+查询一行数据
+from pymysql import *
+def main():
+	#创建Connection连接
+ 	conn = connect(host='localhost', port=3306, user=' root', password='mysql', database='jing_dong',
+	#获得Cursor对象
+ 	cs1 = conn.cursor()
+	#执行select语句,并返回受影响的行数:查询一条数据
+ 	count = cs1.execute('select id,name from goods where id>=4')
+	#打印受影响的行数
+ 	print("查询到%d条数据:"  %  count)
+ 	
+	for i in range(count):
+		#获取查询的结果
+ 		result = cs.fetchone()
+		#打印查询的结果
+ 		print(result)
+		#获取查询的结果
+		#关闭Cursor对象
+		 cs1.close()
+ 		conn.close()
+ 	
+	if __name__ == '__main__':
+ 		main()
+
+
+
+
+
+eg: 01-查询数据.py（未完成，更多内容请看02-用面相对象的思想来实现.py）
+
+from pymysql import connect
+
+
+class JD(object):
+	def __init__(self):
+		pass
+
+	def show_all_items(self):
+		'''显示所有的商品'''
+		# 创建Connection链接
+		conn = connect(host='localhost',port=3306,user='root',password='mysql',database='jing_dong',charset='utf8')
+		# 获得Cursor对象
+		cursor = conn.cursor()
+		sql = "select * from goods;"
+		cursor.execute(sql)  # 执行sql语句
+		for temp in cursor.fetchall():  # 返回值是个元组
+			print(temp)
+		# 关闭Cursor对象
+		cursor.close()
+		conn.close()
+
+	def show_cates(self):
+		# 创建Connection链接
+		conn = connect(host='localhost',port=3306,user='root',password='mysql',database='jing_dong',charset='utf8')
+		# 获得Cursor对象
+		cursor = conn.cursor()
+		sql = "select name from goods_cates;"
+		cursor.execute(sql)  # cursor执行sql语句
+		for temp in cursor.fetchall():  # 返回值是个元组
+			print(temp)
+		# 关闭Cursor对象
+		cursor.close()
+		conn.close()
+
+
+	def run(self):
+		while True:
+			print("--------京东--------")
+			print("1:所有的商品")
+			print("2:所有的商品分类")
+			print("3:所有的商品品牌分类")
+			num = input("请输入功能对应的序号:")
+
+			if num == "1":
+				# 查询所有商品
+				self.show_all_items()
+			elif num == "2":
+				# 查询分类
+				self.show_cates()
+			elif num == "3":
+				# 查询品牌分类
+				pass
+			else:
+				print("输入有误，重新输入...")
+			
+
+
+
+
+def main():	
+	# 1. 创建一个京东商城对象
+	jd = JD()
+
+	# 2. 调用这个对象的run方法，让其运行
+	jd.run()
+
+
+
+if __name__ == "__main__":
+	main()
+  
+  
+  
