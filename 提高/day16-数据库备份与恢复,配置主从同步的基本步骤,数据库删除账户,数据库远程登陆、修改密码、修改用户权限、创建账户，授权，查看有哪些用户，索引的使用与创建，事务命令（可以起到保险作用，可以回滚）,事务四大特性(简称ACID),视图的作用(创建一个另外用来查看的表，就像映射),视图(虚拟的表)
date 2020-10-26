@@ -1,0 +1,407 @@
+视图(虚拟的表)
+1.问题
+对于复杂的查询,往往是有多个数据表进行关联查询而得到,如果数据库因为需求等原因发生了改变为
+了保证查询出来的数据与之前相同,则需要在多个地方进行修改,维护起来非常麻烦
+解决办法:定义视图
+2.视图是什么
+通俗的讲视图就是一条 SELECT语句执行后返回的结果集所以我们在创建视图的时候,主要的工作就
+落在创建这条SQL查询语句上
+视图是对若张基本表的引用,一张虚表查询语句执行的结果,不存储具体的数据(基本表数据发生了
+改变,视图也会跟着改变);
+方便操作,特别是查询操作,减少复杂的SQL语句增强可读性;
+3.定义视图
+建议以v开头
+create view 视图名称 as select 语句;
+4.查看视图
+查看表会将所有的视图也列出来
+show tables;
+5.使用视图
+视图的用途就是查询
+select * from v_stu_score;
+6.删除视图
+drop view 视图名称;
+例：
+drop view v_stu_sco;
+
+
+
+
+执行的sql语句:
+select * from goods as g left join goods_cates as c on g.cate_id=c.id left join goods_brands as b on g.brand_id=b.id;
+
+select g.*, c.name as cate_name, b.name as brand_name from goods as g left join goods_cates as c on g.cate_id=c.id left join goods_brands as b on g.brand_id=b.id;  # 去掉没必要的id一栏
+
+create view v_goods_info as select g.*, c.name as cate_name, b.name as brand_name from goods as g left join goods_cates as c on g.cate_id=c.id left join goods_brands as b on g.brand_id=b.id;  # 创建视图，取名以v开头
+
+show tables;
+
+select * from v_goods_info;
+
+select * from v_goods_info limit 5;
+
+(视图方便查数据，并不是为了改数据)
+
+
+
+
+8.视图的作用(创建一个另外用来查看的表，就像映射)
+1. 提高了重用性，就像一个函数
+2. 对数据库重构，却不能影响程序的运行
+3. 提高了安全性能，可以对不同的用户
+4. 让数据更加清晰
+
+
+
+
+事务
+1.为什么要有事务
+事务广泛的运用于订单系统银行系统等多种场景
+例如:
+A用户和B用户是银行的储户,现在A要给B转账500元,那么需要做以下几件事:
+1.检查A的账户余额>500元；
+2.A账户中扣除500元;
+3.B账户中增加500元
+正常的流程走下来,A账户扣了500，B账户加了500,皆大欢喜
+那如果A账户扣了钱之后系统出故障了呢?A白白损失了500,而B也没有收到本该属于他的500。
+以上的案例中隐藏着一个前提条件:A扣钱和B加钱,要么同时成功,要么同时失败·事务的需求就在于
+此
+所谓事务,它是一个操作序列·这些操作要么都执行,要么都不执行,它是一个不可分割的工作单位
+例如,银行转帐工作:从一个帐号扣款并使另一个帐号增款,这两个操作要么都执行,要么都不执行所
+以,应该把他们看成一个事务·事务是数据库维护数据一致性的单位,在每个事务结束时都能保持数据
+一致性
+
+事务四大特性(简称ACID)
+。原子性(Atomicity）（要么成功，要么不成功）
+。一致性(Consistency)（出现问题，不会出现数据丢失）
+。隔离性(lsolation)（相当于上厕所，锁了门，其他人要想进来，就只能等别人用完后，开门）
+。持久性(Durability)（即使系统崩溃，修改的数据也不会丢失）
+
+
+
+
+事务命令（可以起到保险作用，可以回滚）
+表的引擎类型必须是 innodb类型才可以使用事务,这是mysql表的默认引擎
+查看表的创建语句,可以看到 engine=innodb
+选择数据库
+use jing_dong;
+一查看goods表
+show create table goods;
+开启事务,命令如下:
+开启事务后执行修改命令,变更会维护到本地缓存中,而不维护到物理表中
+begin;
+或者
+start transaction;
+提交事务,命令如下
+·将缓存中的数据变更维护到物理表中
+commit;
+回滚事务,命令如下:
+·放弃缓存中变更的数据
+rollback;
+
+
+
+注意：
+1. 修改数据的命令会自动的触发事务，包括insert,update,delete
+2. 而在sql语句中有手动开启事务的原因是：可以进行多次数据的修改，如果成功一起成功，否则一起会回滚到之前的数据。
+
+
+
+
+提交
+为了演示效果,需要打开两个终端窗口,使用同一个数据库,操作同一张表(用到之前的 jing_dong数
+据,可以回到mysql第3天中查看)
+step1:连接
+终端1:查询商品分类信息
+select * from goods_cates;
+
+step2:增加数据
+终端2:开启事务插入数据
+begin;
+insert into goods_cates (name) values('小霸王游戏机');
+·终端2:查询数据,此时有新增的数据
+ select * from goods_cates;
+
+step3:查询
+终端1:查询数据,发现并没有新增的数据
+select * from goods_cates;
+
+
+step4:提交
+commit
+
+
+(数据库的增删改用了锁的思想)
+
+
+
+
+索引
+1.思考
+在图书馆中是如何找到一本书的?
+一般的应用系统对比数据库的读写比例在10:1右(即有10次查询操作时有1次写的操作),
+而且插入操作和更新操作很少出现性能问题,
+遇到最多最容易出问题还是一些复杂的查询操作,所以查询语句的优化显然是重中之重
+2.解决办法
+当数据库中数据量很大时,查找数据会变得很慢
+优化方案:索引
+
+3.索引是什么
+索引是一种特殊的文件(InnoDB数据表上的索引是表空间的一个组成部分)·它们包含着对数据表里所有记
+录的引用指针·
+更通俗的说,数据库索引好比是一本书前面的目录·能加快数据库的查询速度
+4.索引目的
+索引的目的在于提高查询效率,可以类比字典,如果要查“mysql这个单词,我们肯定需要定位到m字母,
+然后从下往下找到y字母,再找到剩下的sql，如果没有索引那么你可能需要把所有单词看一遍才能找到
+你想要的,如果我想找到m开头的单词呢?或者ze开头的单词呢?是不是觉得如果没有索引这个事情根
+本无法完成?
+
+5.索引原理
+除了词典生活中随处可见索引的例子如火车站的车次表,图书的目录等。它们的原理都是一样的,通
+过不断的缩小想要获得数据的范围来筛选出最终想要的结果,同时把随机的事件变成顺序的事件也就是
+我们总是通过同一种查找方式来锁定数据
+数据库也是一样,但显然要复杂许多因为不仅面临着等值查询,还有范围查询(>，<， between ，in)模
+糊查询(like)，并集查询(or)等等·数据库应该选择怎么样的方式来应对所有的问题呢?我们回想字典的例
+子,能不能把数据分成段,然后分段查询呢?最简单的如果1000条数据,1到00分成第一段,101到200
+分成第二段,201到300分第三段这样查第250条数据,只要找第三段就可以了,一下子去除了90%
+的无效数据
+
+
+6.索引的使用
+查看索引
+show index from 表名；
+创建索引
+。如果指定字段是字符串,需要指定长度，建议长度与定义字段时的长度一致
+。字段类型如果不是字符串,可以不填写长度部分
+create index 索引名称 on 表名(字段名称(长度))
+。删除索引
+drop index 索引名称 on 表名;
+
+7.索引demo
+7.1.创建测试表testindex
+create table test_index(title varchar(10));
+
+7.2使用程序(ipython也可以)通过 pymsql模块向表中加入十万条数据
+from pymysql import connect
+def main():
+	#创建Connection连接
+ 	conn = connect(host=' localhost', port=3306, database='jing_dong',user='root', password=
+	#获得Cursor对象
+ 	cursor = conn. cursor()
+	#插10万次数据
+ 	for i in range(100000):
+ 		cursor.execute("insert into test_index values( 'ha-%d')" % i)
+	#提交数据
+	 conn. commit()
+if __name__ ==  "__main__ ":
+	main()
+
+7.3.查询
+开启运行时间监测
+set profiling=l;
+查找第1万条数据ha-9999
+select * from test_index where title='ha-99999':
+
+查看执行的时间
+show profiles;
+为表title_index的title列创建索引:
+create index title_index on test_index(title(10))
+执行查询语句:
+select * from test_index where title='ha-99999';
+再次查看执行的时间：
+show profiles;
+
+
+(用了索引查的快，不用索引查的慢)
+
+
+8.注意:
+要注意的是,建立太多的索引将会影响更新和插入的速度,因为它需要同样更新每个索引文件对于
+一个经常需要更新和插入的表格,就没有必要为一个很少使用的 where字句单独建立索引了,对于比
+较小的表,排序的开销不会很大,也没有必要建立另外的索引
+建立索引会占用磁盘空间
+
+
+
+
+账户管理
+·在生产环境下操作数据库时,绝对不可以使用root账户连接,而是创建特定的账户授予这个账户特
+定的操作权限,然后连接进行操作,主要的操作就是数据的crud
+ MySQL账户体系:根据账户所具有的权限的不同, MySQL的账户可以分为以下几种
+服务实例级账号 mysqld:动了一个即为一个数据库实例;如果某用户如root拥有服务实例
+级分配的权限,那么该账号就可以删除所有的数据库连同这些库中的表
+数据库级别账号:对特定数据库执行增删改查的所有操作
+数据表级别账号:对特定表执行增删改查等所有操作
+字段级别的权限:对某些表的特定字段进行操作
+存储程序级别的账号:对存储程序进行增删改查的操作
+账户的操作主要包括创建账户删除账户修改密码授权权限等
+注意:
+1.进行账户操作时,需要使用root账户登录,这个账户拥有最高的实例级权限
+2.通常都使用数据库级操作权限
+
+
+
+
+授予权限
+需要使用实例级账户登录后操作,以root为例
+主要操作包括:
+查看所有用户
+·修改密码
+删除用户
+1.查看所有用户
+·所有用户及权限信息存储在mysql数据库的user表中
+·查看user表的结构
+ desc user;
+主要字段说明
+。Host表示允许访问的主机
+。User表示用户名
+。authentication_string表示密码，为加密后的值
+查看所有用户
+select host, user, authentication_string from user;   # 查看mysql用户和密码
+
+
+2.创建账户，授权
+·需要使用实例级账户登录后操作,以root为例
+常用权限主要包括: create ，alter ，drop ，update ，delete，select
+·如果分配所有权限,可以使用all privileges
+2.1创建账户&授权
+grant 权限列表 on 数据库 to '用户名'@'访问主机' identified by '密码';
+2.2示例1
+创建一个 laowang的账号，密码为123456.只能通过本地访问,并且只能对 jing_dong数据库中的所
+有表进行读操作
+step1:使用root登录
+mysql -uroot -p
+回车后写密码,然后回车
+step2:创建账户并授予所有权限
+grant select on jing_dong.* to 'laowang'@'Localhost' identified by '123456;
+说明
+·可以操作python数据库的所有表,方式为:jing_dong.*
+·访问主机通常使用百分号%表示此账户可以使用任何ip的主机登录访问此数据库
+·访问主机可以设置成 localhost或具体的ip，表示只允许本机或特定主机访问
+·查看用户有哪些权限
+show grants for laowang@localhost;
+
+step3: 退出root登陆
+quit
+
+
+step4: 使用laowang账号登陆
+mysql -ulaowang -p123456
+
+
+
+
+账户操作
+1. 修改权限
+grant 权限名称 on 数据库 to 账户@主机 with grant option;
+
+修改权限后，刷新：flush privileges;
+
+
+2.修改密码
+使用root登录, 修改mysql数据库的user表
+·使用password()函数进行密码加密
+update user set authentication_string=password('新密码') where user=用户名
+例:
+update user set authentication_string=password('123') where user='laowang';
+注意：修改完成后需要刷新权限
+flush privileges;
+
+
+3.远程登录(危险慎用)
+如果向在一个 Ubuntu中使用msyql命令远程连接另外一台mysq服务器的话,通过以下方式即可完成,但是
+此方法仅仅了解就好了,不要在实际生产环境中使用
+修改/etc/mysql/mysql.conf.d/mysqld.cnf文件
+vim /etc/mysql/mysql.conf.d/mysqld. cnf
+
+在bind-addr = 127.0.0.1 前用#注释
+
+
+然后重启mysql
+service mysql restart
+
+
+如果其他电脑依然连不上数据库,可能原因:
+1)网络不通
+通过 ping Kxx.x可以发现网络是否正常
+2)查看数据库是否配置了 bind_address参数
+本地登录数据库查看 my.cnf文件和数据库当前参数 show variables like 'bind_address';
+如果设置了 bind_address=127.0.0.1那么只能本地登录
+3)查看数据库是否设置了skip_networking参数
+如果设置了该参数,那么只能本地登录mysq数据库
+4)端口指定是否正确
+
+
+4.删除账户
+·语法1:使用root登录
+drop user '用户名'@'主机';
+例:
+drop user 'laowang'@'%';
+·语法2:使用root登录, mysql删除数据库的user表中数据
+delete from user where user='用户名';
+例:
+delete from user where user='laowang';
+操作结束之后需要刷新权限
+flush privileges;
+
+推荐使用语法1删除用户，如果使用语法1删除失败，采用语法2方式
+
+
+
+
+
+ MySQL主从同步配置
+1.主从同步的定义
+主从同步使得数据可以从一个数据库服务器复制到其他服务器上,在复制数据时,一个服务器充当主服务
+器(master),其余的服务器充当从服务器(save)·因为复制是异步进行的,所以从服务器不需要一直
+连接着主服务器,从服务器甚至可以通过拨号断断续续地连接主服务器·通过配置文件,可以指定复制所
+有的数据库,某个数据库,甚至某个数据库上的某个表
+使用主从同步的好处
+通过增加从服务器来提高数据库的性能,在主服务器上执行写入和更新在从服务器上向外提供读功
+能,可以动态地调整从服务器的数量,从而调整整个数据库的性能
+提高数据安全,因为数据已复制到从服务器,从服务器可以终止复制进程,所以,可以在从服务器上
+备份而不破坏主服务器相应数据
+·在主服务器上生成实时数据,而在从服务器上分析这些数据从而提高主服务器的性能
+
+
+
+
+读写分离，数据备份，负载均衡
+
+
+
+
+3.配置主从同步的基本步骤
+有很多种配置主从同步的方法,可以总结为如下的步骤:
+1.在主服务器上,必须开启二进制日志机制和配置一个独立的ID
+2.在每一个从服务器上,配置一个唯一的ID创建一个用来专门复制主服务器数据的账号
+3.在开始复制进程前,在主服务器上记录二进制文件的位置信息
+4.如果在开始复制之前,数据库中已经有数据,就必须先创建一个数据快照(可以使用 mysqldump导出
+数据库,或者直接复制数据文件)
+5.配置从服务器要连接的主服务器的IP地址和登陆授权二进制日志文件名和位置
+4.详细配置主从同步的方法
+主和从的身份可以自己指定,我们将虚拟机 UbuntuMySQL中作为主服务器,将WindowsMySQL中的作为
+从服务器·在主从设置前,要保证 Ubuntu与Windows间的网络连通
+4.1备份主服务器原有数据到从服务器
+如果在设置主从同步前主服务器上已有大量数据,可以使用 mysqldump进行数据备份并还原到从服务器
+以实现数据的复制
+4.1.1在主服务器 Ubuntu上进行备份,执行命令:
+mysqldump -uroot -pmysql --all-databases --lock-all-tables > ~/master_db.sql
+
+说明
+-u：用户名
+-p：示密码
+--all-databases:导出所有数据库
+--lock-all-tables:执行操作时锁住所有表防止操作时有数据修改
+~/master_db.sql：导出的备份数据(sql文件)位置，可自己指定
+
+
+备份
+·运行mysqldump命令
+mysqldump -uroot -p数据库名 > python.sql;
+#按提示输入mysq的密码
+
+恢复
+连接mysql创建新的数据库
+·退出连接,执行如下命令
+mysql -uroot -p新数据库名< python.sql
+#根据提示输入mysql密码
