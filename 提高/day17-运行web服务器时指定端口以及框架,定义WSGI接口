@@ -1022,7 +1022,7 @@ def index():
 
     my_stock_info = "哈哈哈哈 这是你的本月名称....."
 
-    content = re.sub(r"\{%content%\}", my_stock_info, content)
+    content = re.sub(r"\{%content%\}", my_stock_info, content)  # 在templates里的index.html里有｛%content%｝，所以是匹配的它，\ 是转义{}符
 
     return content
      
