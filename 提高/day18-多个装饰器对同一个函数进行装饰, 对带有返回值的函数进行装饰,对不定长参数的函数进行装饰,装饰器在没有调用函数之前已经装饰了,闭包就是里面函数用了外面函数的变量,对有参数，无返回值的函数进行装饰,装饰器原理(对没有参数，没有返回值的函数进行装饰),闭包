@@ -1,0 +1,427 @@
+闭包
+1.函数引用
+def test1():
+ 	print("--- in test1 func---")
+#调用函数
+test1()
+#引用函数
+ret = test1
+print(id(ret))
+print(id(test1))
+#通过引用调用函数
+ret()
+
+运行结果:
+--- in test1 func---
+140212571149040
+140212571149040
+---in test1 func---
+
+
+
+
+#第5种:实例对象(通过面向对象的方式，来实现)
+class Line5(object):
+ 	def __init__(self, k, b):
+ 		self.k =k
+ 	
+	def __call__(self, x):   # 有了__call__方法，就可以实现下方，对象()直接调用方法
+ 		print(self.k * x + self.b)
+line_5_1 = Line(1, 2)
+#对象,方法() 来调用方法
+#对象()，来调用方法，通过__call__来实现
+line_5_1(0)
+ine_5_1(1)
+ine_5_1(2)
+ine_5_2=line5(11,22)
+line_5_2(0)
+line_5_2(1)
+ine_5_2(2)
+# 缺点：为了计算多条线上的y值，所以需要保存多个k, b的值，因此用了很多个实例对象，浪费资源
+
+
+#第6种:闭包
+def line_6(k, b):
+ 	def create_y(x):
+ 		print(k*x+b)
+ 	return create_y
+
+ine_6_1 = line_6(1, 2)
+line_6_1(0)
+line_6_1(1)
+line_6_1(2)
+line_6_2 = line_6(11, 22)
+line_6_2(0)
+line_6_2(1)
+line_6_2(2)
+
+
+# 一个函数里套着另一个函数的定义，称为闭包，也就是多层函数嵌套定义，好处是比实例对象更加节约空间
+
+
+
+#思考:函数、匿名函数、闭包、对象当做实参时有什么区别?
+#1.匿名函数能够完成基本的简单功能,,,传递是这个函数的引用    只有功能
+#2.普通函数能够完成较为复杂的功能,,,传递是这个函数的引用    只有功能
+#3.闭包能够将较为复杂的功能,,,传递是这个闭包中的函数以及数据,   因此传递是功能+数据
+#4.对象能够完成最为复杂的功能,,,传递是很多数据+很多功能,      因此传递是功能+数据
+
+
+
+对于闭包内的变量：
+x = 300
+def test1():
+	x = 200
+ 	def test2():
+ 		nonlocal x  # 如果是要引用，或者修改全局变量就用global，如果是函数内的变量，就用nonlocal
+ 		print("----1----X="%x)
+		x = 100
+ 		print("----2----x="%x)
+ 	return test2
+t1= test1()
+t1()
+
+
+上述代码执行后为：
+----1-----x=200
+----2-----x=100
+
+
+
+
+装饰器：
+装饰器是程序开发中经常会用到的一个功能,用好了装饰器,开发效率如虎添翼,所以这也是Python面试
+中必问的问题,但对于好多初次接触这个知识的人来讲,这个功能有点绕自学时直接绕过去了,然后面
+试问到了就挂了,因为装饰器是程序开发的基础知识,这个都不会,别跟人家说你会 Python,看了下面的
+文章保证你学会装饰器
+1先明白这段代码
+###第一波####
+def foo():
+ 	print('foo')
+foo   # 表示是函数
+foo()  # 表示执行foo函数
+####第二波####
+def foo():
+ 	print('foo')
+foo = lambda x: x + 1  # lambda表示匿名函数
+foo()  # 执行lambda表达式,而不再是原来的foo函数,因为foo这个名字被重新指向了另外一个匿名函数
+
+函数名仅仅是个变量,只不过指向了定义的函数而已, 所以才能通过函数名() 调用,如果 函数名=xxx 被修
+改了,那么当在执行函数名()时,调用的就不知之前的那个函数了
+
+2需求来了
+初创公司有N个业务部门,基础平台部门负责提供底层的功能,如:数据库操作 redis调用，监控API等功
+能·业务部门使用基础功能时,只需调用基础平台提供的功能即可。如下
+###基础平台提供的功能如下#####
+def f1():
+ 	print('f1')
+def f2():
+ 	print('f2')
+def f3():
+ 	print('f3')
+def f4():
+ 	print('f4')
+#######业务部门A调用基础平台提供的功能##########
+f1()
+f2()
+f3()
+f4()
+#########业务部门B调用基础平台提供的功能###########
+f1()
+f2()
+f3()
+f4()
+目前公司有条不紊的进行着,但是,以前基础平台的开发人员在写代码时候没有关注验证相关的问题,
+即:基础平台的提供的功能可以被任何人使用。现在需要对基础平台的所有功能进行重构,为平台提供的
+所有功能添加验证机制,即:执行功能前,先进行验证。
+
+老大说:
+写代码要遵循 开放封闭 原则,虽然在这个原则是用的面向对象开发,但是也适用于函数式编程，简单来
+说,它规定已经实现的功能代码不允许被修改,但可以被扩展,即
+
+封闭:已实现的功能代码块
+开放:对扩展开发
+
+如果将开放封闭原则应用在上述需求中,那么就不允许在函数f1、f2、f3、f4的内部进行修改代码老板
+就给了 Low BBB一个实现方案:
+def wl(func):
+	def inner():
+		#验证1
+		#验证2
+		#验证3
+ 		func()
+ 	return inner
+@w1
+def f1()：
+ 	print('f1')
+@w1
+def f2():
+ 	print('f2')
+@w1
+def f3():
+ 	print('f3')
+@w1
+def f4()
+ 	print('f4')
+对于上述代码,也是仅仅对基础平台的代码进行修改,就可以实现在其他人调用函数f2f3f4之前都进
+行【验证】操作,并且其他业务部门无需做任何操作
+ 
+Low BBB心惊胆战的问了下,这段代码的内部执行原理是什么呢?
+老大正要生气,突然 ow BBB的手机掉到地上,恰巧屏保就是Low BBB的女友照片,老大一看一紧一抖,
+喜笑颜开,决定和 Low BBB交个好朋友
+
+
+装饰器原理(对没有参数，没有返回值的函数进行装饰)：
+def set_func(func):
+ 	def call_func():
+ 		print("---这是权限验证1----")
+ 		print("---这是权限验证2----")
+ 		func()
+	 return call_func
+@set_func    # 等价于test1 =set_func(test1)
+def test1()：
+ 	print("-----test1---")
+# ret= set func(test1)
+# ret 
+# test1 = set_func(test1)
+test1()
+ 
+test1()
+
+
+
+***个人理解，装饰器就是把下面的函数传递到另一个函数中，起修饰的作用，并且函数名等于返回值的变量名，如 @set_func    # 等价于test1 = set_func(test1) ，具体代码看本文例子***
+
+
+
+装饰器的作用，来统计一个函数的运行时间：
+import time
+def set_func(func):
+ 	def call_func():
+ 		start_time = time.time()
+ 		func()
+		stop_time = time.time()
+ 		print("alltimeis %f"  % (stop_time -start_time))
+ 	return call_func
+@set_func   #等价于test1=set_func(test1)
+def test1():
+ 	print("-----test1----")
+# test1 = set_func(test1)
+test1()
+test1()
+
+
+eg:对有参数，无返回值的函数进行装饰：
+
+def set_func(func):
+	def call_func(num):
+		print("---这是权限验证1----")
+		print("---这是权限验证2----")
+		func(num)
+	return call_func
+
+@set_func    # 等价于test1 = set_func(test1)
+def test1(num):
+	print("-----test1---%d" % num)
+
+# ret = set func(test1)
+# ret 
+# test1 = set func(test1)
+test1(100)
+ 
+
+
+# 闭包就是里面函数用了外面函数的变量
+
+
+eg:同一个装饰器对多个函数进行装饰：
+
+def set_func(func):
+	def call_func(a):
+		print("---这是权限验证1----")
+		print("---这是权限验证2----")
+		func(a)
+	return call_func
+
+
+@set_func  # 相当于 test1 = set_func(test1)
+def test1(num):
+	print("-----test1----%d" % num)
+
+
+@set_func  # 相当于 test2 = set_func(test2)
+def test2(num):
+	print("-----test2----%d" % num)
+
+
+test1(100)
+test2(200)
+
+
+
+eg:  装饰器在没有调用函数之前已经装饰了
+
+def set_func(func):
+	print("---开始进行装饰")
+	def call_func(a):
+		print("---这是权限验证1----")
+		print("---这是权限验证2----")
+		func(a)
+	return call_func
+
+
+@set_func  # 相当于 test1 = set_func(test1)
+def test1(num):
+	print("-----test1----%d" % num)
+
+
+@set_func  # 相当于 test2 = set_func(test2)
+def test2(num):
+	print("-----test2----%d" % num)
+
+# 装饰器在调用函数之前，已经被python解释器执行了，所以要牢记 当调用函数之前 其实已经装饰好了，尽管调用就可以了
+# test1(100)
+# test2(200)
+
+
+
+eg: 对不定长参数的函数进行装饰：
+
+def set_func(func):
+	print("---开始进行装饰")
+	def call_func(*args, **kwargs):
+		print("---这是权限验证1----")
+		print("---这是权限验证2----")
+		# func(args, kwargs)  # 不行，相当于传递了2个参数 ：1个元组，1个字典
+		func(*args, **kwargs)  # 拆包
+	return call_func
+
+
+@set_func  # 相当于 test1 = set_func(test1)
+def test1(num, *args, **kwargs):
+	print("-----test1----%d" % num)
+	print("-----test1----" , args)  # 打印-----test1----，然后打印元祖
+	print("-----test1----" , kwargs)  # 打印-----test1----，然后打印字典
+
+
+test1(100)
+test1(100, 200)
+test1(100, 200, 300, mm=100)
+
+
+
+
+eg: 对带有返回值的函数进行装饰
+
+def set_func(func):
+	print("---开始进行装饰")
+	def call_func(*args, **kwargs):
+		print("---这是权限验证1----")
+		print("---这是权限验证2----")
+		# func(args, kwargs)  # 不行，相当于传递了2个参数 ：1个元组，1个字典
+		return func(*args, **kwargs)  # 拆包
+	return call_func
+
+
+@set_func  # 相当于 test1 = set_func(test1)
+def test1(num, *args, **kwargs):
+	print("-----test1----%d" % num)
+	print("-----test1----" , args)
+	print("-----test1----" , kwargs)
+	return "ok"  # 这个return “ok”其实是返回给调它的函数，也就是func(*args, **kwargs)，只有return func(*args, **kwargs)才会返回给ret。
+
+
+@set_func
+def test2():
+	pass
+
+ret = test1(100)
+print(ret)
+
+ret = test2()
+print(ret)
+
+
+
+
+eg: 多个装饰器对同一个函数进行装饰
+
+def add_qx(func):
+	print("---开始进行装饰权限1的功能---")
+	def call_func(*args, **kwargs):
+		print("---这是权限验证1----")
+		return func(*args, **kwargs)
+	return call_func
+
+
+def add_xx(func):
+	print("---开始进行装饰xxx的功能---")
+	def call_func(*args, **kwargs):
+		print("---这是xxx的功能----")
+		return func(*args, **kwargs)
+	return call_func
+
+
+@add_qx  # 先运行下面的装饰器，当下面的转换成函数后，便再将结果传递给这个装饰器，再运行这个装饰器
+@add_xx   # 等价于 test1 = add_xx(test1)
+def test1():
+	print("------test1------")
+
+
+test1()
+
+
+
+
+eg: 应用：多个装饰器对同一个函数进行装饰-02
+
+def set_func_1(func):
+	def call_func():
+		# "<h1>haha</h1>"
+		return "<h1>" + func() + "</h1>"  # 这个返回的值，最终效果是：<h1><td> haha</td></h1>
+	return call_func
+
+def set_func_2(func):
+	def call_func():
+		return "<td>" + func() + "</td>"   # 先执行的装饰器，这个整体的值，会上传到上面
+	return call_func
+
+
+@set_func_1  # 这两个装饰器的效果见上面
+@set_func_2  # 先运行这个装饰器
+def get_str():
+	return "haha"
+
+print(get_str())
+
+
+
+
+eg: 使用类当作装饰器(了解)
+
+# def set_func_1(func):
+# 	def call_func():
+# 		# "<h1>haha</h1>"
+# 		return "<h1>" + func() + "</h1>"
+# 	return call_func
+
+
+class Test(object):
+	def __init__(self, func):
+		self.func = func
+
+	def __call__(self):
+		print("这里是装饰器添加的功能.....")
+		return self.func()
+
+
+@Test  # 相当于get_str = Test(get_str)
+def get_str():
+	return "haha"
+
+print(get_str())  # 调用__call__方法
+
+
+
+# ***个人理解：装饰器就是套用了闭包这样的一个方法，来实现了对代码的优化***
+
