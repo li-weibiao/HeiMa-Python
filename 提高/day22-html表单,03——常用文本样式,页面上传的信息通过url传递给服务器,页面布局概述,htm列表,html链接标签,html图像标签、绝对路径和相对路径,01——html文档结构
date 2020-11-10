@@ -1,0 +1,760 @@
+前端开发概述
+什么是前端开发?
+前端开发也叫做web前端开发,它指的是基于web的互联网产品的页面(也可叫界面)开发及功能开发。
+什么互联网产品?
+互联网产品就是指网站为满足用户需求而创建的用于运营的功能及服务,百度搜索、淘宝、QQ微博、网
+易邮箱等都是互联网产品。
+
+
+01——html文档结构
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>个人主页</title>
+</head>	
+
+<body>
+	
+	<!-- 
+	
+		html注释
+
+	 -->
+	你好！欢迎访问我的个人网页！
+
+</body>
+
+</html>
+
+
+
+
+03——h标签
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>标题标签</title>
+</head>
+<body>
+	
+	<h1>个人主页</h1>
+
+	<h2>二级标题</h2>
+	<h3>三级标题</h3>
+	<h4>四级标题</h4>
+	<h5>五级标题</h5>
+	<h6>六级标题</h6>
+
+
+
+</body>
+</html>
+
+
+
+
+04——p标签
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+</head>
+<body>
+	<h1>html简介</h1>
+	<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;HTML是 HyperText Mark-up Language 的&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;首字母简写，意思是超文本标记语言，超文本指的是超链接，标记指的是标签，<br />
+	是一种用来制作网页的语言，这种语言由一个个的标签组成，用这种语言制作<br />
+	的文件保存的是一个文本文件，文件的扩展名为html或者htm，一个html文件<br />
+	就是一个网页，html文件用编辑器打开显示的是文本，可以用文本的方式编辑<br />
+	它，如果用浏览器打开，浏览器会按照标签描述内容将文件渲染成网页，显示<br />
+	的网页可以从一个网页链接跳转到另外一个网页。</p>
+
+
+	<p>10&gt;5</p>    # > 大于符号
+
+	<p>2&lt;8</p>  # <  小于符号
+
+</body>
+</html>
+
+
+
+05——块标签
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>块标签</title>
+</head>
+<body>
+	<p>
+
+	HTML是 <span>HyperText Mark-upLanguage</span>的首字母简写，意思是超文本标记语言，超文本指的是超链接，标记指的是标签，
+	是一种用来制作网页的语言，这种语言由一个个的标签组成，用这种语言制作
+	就是一个网页，html文件用编辑器打开显示的是文本，可以用文本的方式编辑
+	它，如果用浏览器打开，浏览器会按照标签描述内容将文件渲染成网页，显示
+	的网页可以从一个网页链接跳转到另外一个网页。</p>
+
+	<p>HTML是 <em>HyperText Mark-up Language</em> 的首字母简写，意思是超文本标记语言，超文本指的是超链接，标记指的是标签，
+	是一种用来制作网页的语言，这种语言由一个个的标签组成，用这种语言制作
+	就是一个网页，html文件用编辑器打开显示的是文本，可以用文本的方式编辑
+	它，如果用浏览器打开，浏览器会按照标签描述内容将文件渲染成网页，显示
+	的网页可以从一个网页链接跳转到另外一个网页。</p>
+	
+	
+	<div>HTML是 <i>HyperText Mark-up Language</i> 的首字母简写，意思是超文本标记语言，超文本指的是超链接，标记指的是标签，
+	是一种用来制作网页的语言，这种语言由一个个的标签组成，用这种语言制作
+	就是一个网页，html文件用编辑器打开显示的是文本，可以用文本的方式编辑
+	它，如果用浏览器打开，浏览器会按照标签描述内容将文件渲染成网页，显示
+	的网页可以从一个网页链接跳转到另外一个网页。</div>
+
+
+	<div>
+		<h1>html概述</h1>
+		<p>HTML是 <b>HyperText Mark-up Language</b> 的首字母简写，意思是超文本标记语言，超文本指的是超链接，标记指的是标签，
+		是一种用来制作网页的语言，这种语言由一个个的标签组成，用这种语言制作
+		就是一个网页，html文件用编辑器打开显示的是文本，可以用文本的方式编辑
+		它，如果用浏览器打开，浏览器会按照标签描述内容将文件渲染成网页，显示
+		的网页可以从一个网页链接跳转到另外一个网页。</p>
+
+	</div>
+
+	<p><strong>HTML是 HyperText Mark-up Language的首字母简写，意思是超文本标记语言，超文本指的是超链接，标记指的是标签，
+		是一种用来制作网页的语言，这种语言由一个个的标签组成，用这种语言制作
+		就是一个网页，html文件用编辑器打开显示的是文本，可以用文本的方式编辑
+		它，如果用浏览器打开，浏览器会按照标签描述内容将文件渲染成网页，显示
+		的网页可以从一个网页链接跳转到另外一个网页。</strong></p>
+
+
+	<div>
+		<div>html概述</div>
+		<div>HTML是 HyperText Mark-up Language</div>
+	</div>
+
+
+
+</body>
+</html>
+
+
+# <div>标签 块元素，表示一块内容，没有具体的语义
+# <span>标签 行内元素，表示一行中的一小段内容，没有具体的语义
+
+
+含样式和语义的标签
+1、<em>标签行内元素,表示语气中的强调词
+2标签行内元素,表示专业词汇
+3、<b>标签行内元素,表示文档中的关键字或者产品名
+4、<strong>标签行内元素,表示非常重要的内容
+语义化的标签
+语义化的标签,就是在布局的时候多使用有语义的标签,搜索引擎在爬网的时候能认识这些标签,理解文档
+的结构,方便网站的收录。比如:h1标签是表示标题,p标签是表示段落,u、l标签是表示列表,a标签表示
+链接,dl、dt、dd表示定义列表等,语义化的标签不多。
+
+
+
+html图像标签、绝对路径和相对路径
+html图像标签
+<img>标签可以在网页上插入一张图片,它是独立使用的标签,它的常用属性有:
+src属性定义图片的引用地址
+alt属性定义图片加载失败时显示的文字,搜索引擎会使用这个文字收录图片、盲人读屏软件会读取这个
+文字让盲人识别图片,所以此属性非常重要。
+<img src=images/pic. jpg alt="产品图片
+
+绝对路径和相对路径
+像网页上插入图片这种外部文件,需要定义文件的引用地址,引用外部文件还包括引用外部样式表,
+ javascript等等,引用地址分为绝对地址和相对地址。
+·绝对地址:相对于磁盘的位置去定位文件的地址
+·相对地址:相对于引用文件本身去定位被引用的文件地址
+
+绝对地址在整体文件迁移时会因为磁盘和顶层目录的改变而找不到文件,相对路径就没有这个问题。相对路
+径的定义技巧:
+"./"表示当前文件所在目录下,比如:pic.jpg表示当前目录下的pic.jpg的图片,这个使用时可以省
+略。
+"../"表示当前文件所在目录下的上一级目录,比如:"../images/pic.jpg”表示当前目录下的上一级目录
+下的 images文件夹中的pic.jpg的图片。
+
+
+
+06——网页插入图片
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>网页插入图片</title>
+</head>
+<body>
+	<h1>图片</h1>
+	<!-- 完整的写法是：src="./images/002.jpg"  (./ 表示当前目录，可以省略)   -->
+
+	<img src="images/002.jpg" alt="水果图片"  />
+	<img src="images/003-02.gif" alt="loading动画">
+	
+	<a href="008链接.html">去到网页8</a>
+	
+</body>
+</html>
+
+
+
+html链接标签
+<a>标签可以在网页上定义一个链接地址,它的常用属性有:
+href属性定义跳转的地址
+ title属性定义鼠标悬停时弹出的提示文字框
+ targe属性定义链接窗口打开的位置
+ target="_self缺省值,新页面替换原来的页面,在原来位置打开
+ target=" _blank"新页面会在新开的一个浏览器窗口打开
+ 
+<a href="#"></a><!--#表示链接到页面顶部 -->
+<a href="http: //www.itcast. cn/"   title="跳转的传智播客网站>传智播客</a>
+< a href="2.html"   target="_blank>测试页面2</a>
+
+鼠标悬停时的文字框示例:
+传智插客
+
+
+
+08——链接
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>链接</title>
+</head>
+<body>
+	<h1>网页一的标题</h1>
+	<a href="006网页插入图片.html">去到图片的网页</a>
+
+	<a href="http://www.itcast.cn" title="去到传智的网站" target="_blank">
+		<img src="images/logo.png" alt="传智logo">
+	</a>
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+	<br />
+
+	<a href="#">缺省的链接</a>
+
+</body>
+</html>
+
+
+
+
+htm列表
+有序列表
+在网页上定义一个有编号的内容列表可以用<、<配合使用来实现,代码如下:
+ <ol>
+<1i>列表文字</1i
+<1i>列表文字二</1i
+<1i>列表文字三</1i>
+</o>
+在网页上生成的列表,每条项目上会按1、2、3编号,有序列表在实际开发中较少使用。
+
+
+
+10——表格
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>表格</title>
+</head>
+<body>
+	<h1>表格</h1>
+
+	<table border="1" cellpadding="20" cellspacing="20">
+		<tr>
+			<td>1</td>
+			<td>2</td>
+			<td>3</td>
+			<td>4</td>
+		</tr>
+		<tr>
+			<td>1</td>
+			<td>2</td>
+			<td>3</td>
+			<td>4</td>
+		</tr>
+		<tr>
+			<td>1</td>
+			<td>2</td>
+			<td>3</td>
+			<td>4</td>
+		</tr>
+		<tr>
+			<td>1</td>
+			<td>2</td>
+			<td>3</td>
+			<td>4</td>
+		</tr>
+	</table>
+
+	<table border="1" width="300" height="200" align="center">
+		<tr>
+			<th>1</th>
+			<th>2</th>
+			<th>3</th>
+		</tr>
+
+		<tr>
+			<td align="center">1</td>
+			<td align="center">2</td>
+			<td align="center">3</td>
+		</tr>
+
+		<tr>
+			<td valign="top" align="center">1</td>
+			<td>2</td>
+			<td>3</td>
+		</tr>
+
+		<tr>
+			<td>1</td>
+			<td>2</td>
+			<td>3</td>
+		</tr>
+
+	</table>
+
+	<br />
+	<br />
+	<br />
+
+	<!-- table>(tr>td*5)*6 -->
+	<table border="1" width="700" height="300" align="center">
+		<tr>
+			<td colspan="5">基本情况</td>			
+		</tr>
+		<tr>
+			<td width="15%"></td>
+			<td width="25%"></td>
+			<td width="15%"></td>
+			<td width="25%"></td>
+			<td rowspan="5"><img src="images/person.png" alt="人物图片"></td>
+		</tr>
+		<tr>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>			
+		</tr>
+		<tr>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+			
+		</tr>
+		<tr>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+			
+		</tr>
+		<tr>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+			
+		</tr>
+	</table>
+
+</body>
+</html>
+
+
+
+
+
+11——简历布局
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>个人简历</title>
+</head>
+<body topmargin="0">
+
+	<table width="800" height="800" border="0" cellpadding="0" cellspacing="0" align="center">
+		<tr>
+			<td width="260" valign="top" bgcolor="#f2f2f2">
+
+				
+				<table width="200" border="0" cellpadding="0" cellspacing="0" align="center">
+					<tr>
+						<td height="100"></td>
+					</tr>
+					<tr>
+						<td align="right"><img src="images/person.png"></td>
+					</tr>
+					<tr>
+						<td align="right">张达山 </td>
+					</tr>
+					<tr>
+						<td align="right">18210898888 </td>
+					</tr>
+					<tr>
+						<td align="right">zhangdasan@126.com</td>
+					</tr>
+				</table>
+
+
+			</td>
+			<td width="30"></td>
+			<td width="480" valign="top">
+				
+				<table width="480" border="0" cellpadding="0" cellspacing="0">
+					<tr><td height="80"></td></tr>
+					<tr>
+						<td align="right"><img src="images/resume.png"></td>
+					</tr>
+				</table>
+				<br>
+				<hr />
+				<br>
+
+				<table width="480" height="200" border="0" cellpadding="0" cellspacing="0">
+					<tr>
+						<td colspan="2"><b>个人基本情况</b></td>					
+					</tr>
+					<tr>
+						<td><b>姓 名：</b>张达山	</td>
+						<td><b>籍 贯：</b>北京昌平</td>
+					</tr>
+					<tr>
+						<td><b>性 别：</b>男</td>
+						<td><b>身 高：</b>175cm</td>
+					</tr>
+					<tr>
+						<td><b>民 族：</b>汉</td>
+						<td><b>体 重：</b>70kg</td>
+					</tr>
+					<tr>
+						<td><b>出生日期：</b>1992.03.28	</td>
+						<td><b>电 话：</b>18210898888</td>
+					</tr>
+					<tr>
+						<td><b>现居住地：</b>昌平天通苑</td>
+						<td><b>专 业：</b>工业设计</td>
+					</tr>
+				</table>
+				<br>
+				<br>
+
+				<table width="480" height="80" border="0" cellpadding="0" cellspacing="0">
+					<tr>
+						<td><b>教育背景及工作经历</b></td>
+					</tr>
+					<tr>
+						<td><b>2008.09-2011.06</b> 北京邮电大学 工业设计专业</td>
+					</tr>
+					<tr>
+						<td><b>2011.06-2012.09</b>北京微创信息科技有限公司 任前端开发工程师</td>
+					</tr>
+
+
+				</table>
+
+					<br>
+				<br>
+
+				<table width="480" height="80" border="0" cellpadding="0" cellspacing="0">
+					<tr>
+						<td><b>所获证书</b></td>
+					</tr>
+					<tr>
+						<td><b>2009年：</b> 荣获“高级美术设计师”证书</td>
+					</tr>
+					<tr>
+						<td><b>2009年：</b>荣获“优秀班干部”证书</td>
+					</tr>
+
+
+				</table>
+
+			</td>
+			<td width="30"></td>
+		</tr>
+	</table>
+
+
+</body>
+</html>
+
+
+
+
+快捷操作：
+<!-- ol>li*3 -->
+<!-- ul>(li>a{新闻标题})*3 -->  
+
+以上在sublime里按tab
+
+
+
+
+
+页面布局概述
+布局也可以叫做排版,它指的是把文字和图片等元素按照我们的意愿有机地排列在页面上,布局的方式分为
+两种:
+1、 table布局:通过 table元素将页面空间划分成若干个单元格,将文字或图片等元素放入单元格中,隐藏表
+格的边框,从而实现布局。这种布局方式也叫传统布局,目前主要使用在EDM(广告邮件中的页面中,主流
+的布局方式不用这种。
+2、html+css布局(DIV+css):主要通过CSS样式设置来布局文字或图片等元素,需要用到CSS盒子模
+型、盒子类型、CSS浮动、CSS定位、CSS背景图定位等知识来布局,它比传统布局要复杂,目前是主流的
+布局方式。
+
+
+
+
+
+01——表单：
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>表单</title>
+</head>
+<body>
+	<h1>注册表单</h1>
+	<form action="" method="get">		
+		<div>
+			<label for="username">用户名：</label>
+			<input type="text" name="username" id="username" />
+		</div>		
+		<br>
+		<div>
+			<label for="password">密&nbsp;&nbsp;&nbsp;码：</label>
+			<input type="password" name="password" id="password">
+		</div>
+		<br>
+		<div>
+			<label>性&nbsp;&nbsp;&nbsp;别：</label>
+			<input type="radio" name="gender" value="0" id="male"> <label for="male">男</label>
+			<input type="radio" name="gender" value="1" id="female"> <label for="female">女</label>
+		</div>
+		<br>
+		<div>
+			<label>爱&nbsp;&nbsp;&nbsp;好：</label>
+			<input type="checkbox" name="like" value="study"> 学习
+			<input type="checkbox" name="like" value="python"> python
+			<input type="checkbox" name="like" value="frontend"> 前端
+			<input type="checkbox" name="like" value="beauty"> 美少女
+
+		</div>
+
+		<br>
+
+		<div>
+			<label>玉&nbsp;&nbsp;&nbsp;照：</label>
+			<input type="file" name="">
+		</div>
+		<br>
+
+		<div>
+			<label>个人介绍：</label>
+			<textarea name="introduce"></textarea>
+		</div>
+		
+		<br>
+
+		<div>
+			<label>籍&nbsp;&nbsp;&nbsp;贯：</label>
+			<select name="site">
+				<option value="0">北京</option>
+				<option value="1">上海</option>					
+				<option value="2">河南</option>	
+				<option value="3">河北</option>	
+				<option value="4">广州</option>	
+			</select>
+
+		</div>
+		<br>
+
+		<input type="hidden" name="hid01" value="12">
+
+		<div>
+
+
+			<input type="submit" name="" value="提交">
+
+			<!-- <input type="image" src="images/goods.jpg" name=""> -->
+
+
+			<input type="reset" name="" value="重置">
+		</div>
+
+
+	</form>
+</body>
+</html>
+
+
+
+
+***总结****
+页面上传的信息，比如性别呀，年龄呀，通过url传递给服务器。然后服务器通过代码提取这些上传的信息，做得隐蔽些就加post，通过http协议来进行传递
+
+
+
+课程介绍
+为了让网页元素的样式更加丰富,也为了让网页的内容和样式能拆分开,CSs由此思想而诞生,CSS是
+ Cascading Style Sheets的首字母缩写,意思是层叠样式表。有了css,html中大部分表现样式的标签就废
+弃不用了,htm只负责文档的结构和内容,表现形式完全交给CsS,html文档变得更加简洁。
+
+
+css页面引入方法:
+1、外联式:通过link标签,链接到外部样式表到页面中。
+ <link rel="stylesheet" type="text/css" href="css/main. css">
+2、嵌入式:通过 style标签,在网页上创建嵌入的样式表。
+ <style type="text/css">
+ div{ width: 100px; height: 100px; color: red
+ </style>
+3、内联式:通过标签的 style属性,在标签上直接写样式。
+ <div style="width: 100px; height: 100px; color: red ">......</div>
+
+
+
+
+03——常用文本样式
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>常用文本样式</title>
+	<style type="text/css">
+		div{
+			
+			color:green;
+
+			/* font-size:20px;
+			font-family:'Microsoft Yahei';	
+			line-height:40px; */
+
+			font:normal 20px/40px 'Microsoft Yahei';
+
+			/* text-decoration:underline; */
+
+			text-indent:40px;
+
+
+		}
+		em{
+			font-style:normal;
+			color:gold;
+		}
+		span{
+			color:red;
+			font-size:30px;
+		}
+		h1{
+			font-weight:normal;
+		}
+		a{
+			text-decoration:none;
+			text-align:center;
+		}
+
+		p{
+			text-align:center;
+		}
+
+	</style>
+</head>
+<body>
+	<h1>样式演示</h1>
+	<div>
+		<span>HTML</span>是 <em>HyperText Mark-up Language</em> 的首字母简写，意思是超文本标记语言，超文本指的是超链接，标记指的是标签，是一种用来制作网页的语言，这种语言由一个个的标签组成，用这种语言制作的文件保存的是一个文本文件，文件的扩展名为html或者htm，一个html文件就是一个网页，html文件用编辑器打开显示的是文本，可以用文本的方式编辑它，如果用浏览器打开，浏览器会按照标签描述内容将文件渲染成网页，显示的网页可以从一个网页链接跳转到另外一个网页。
+	</div>
+
+	<p>这是一个p标签</p>
+
+	<a href="http://www.baidu.com">百度网的链接</a>
+
+
+</body>
+</html>
+
+
+
+html表单
+表单用于搜集不同类型的用户输入,表单由不同类型的标签组成,相关标签及属性用法如下:
+1、<form>标签定义整体的表单区域
+ action属性定义表单数据提交地址
+· method属性定义表单提交的方式,一般有get方式和post方式
+2、<label>标签为表单元素定义文字标注
+3、<input>标签定义通用的表单元素
+·type属性
+type="text"定义单行文本输入框
+tye = "password"定义密码输入框
+type="radio"定义单选框
+type="checkbox"定义复选框
+type="file"定义上传文件
+type="submit"定义提交按钮
+type=reset定义重置按钮
+type="image"定义图片作为提交按钮,用src属性定义图片地址
+type="hidden"定义一个隐藏的表单域,用来存储值
+ value属性定义表单元素的值
+name属性定义表单元素的名称,此名称是提交数据时的键名
+
+
+
+
+
+
+
+
+
+
+
