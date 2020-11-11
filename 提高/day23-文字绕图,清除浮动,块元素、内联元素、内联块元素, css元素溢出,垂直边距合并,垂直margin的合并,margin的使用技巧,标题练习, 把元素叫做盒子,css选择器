@@ -1,0 +1,731 @@
+css选择器
+常用的选择器有如下几种:
+1、标签选择器
+标签选择器,此种选择器影响范围大,建议尽量应用在层级选择器中。
+举例:
+ *{margin: 0; padding5}
+ div{color:red}
+<div><div><--对应以上两条样式-->
+<div class="box"<div><--对应以上两条样式-->
+2、id选择器
+通过id名来选择元素,元素的id名称不能重复,所以一个样式设置项只能对应于页面上一个元素,不能复
+用,id名一般给程序使用,所以不推荐使用d作为选择器。
+
+
+
+09——盒子模型
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>盒子模型</title>
+	<style type="text/css">
+
+		.box{
+			width:200px;
+			height:200px;
+			background-color:gold;
+			
+			/* border-top-color:#000;
+			border-top-width:10px; */
+
+			/*  实线： solid  虚线：dashed  点线：dotted   */
+			/* border-top-style:solid; */
+
+			/* border-top:10px solid #000;
+			
+			border-left:10px dashed #000;
+			
+			border-right:10px dotted #000;
+			
+			border-bottom:10px solid #000; */
+
+			border:10px solid #000;
+
+			/* padding-top:20px;
+			padding-left:40px;
+			padding-right:80px;
+			padding-bottom:100px; */
+			/*  
+			分别设置盒子的 上边  右边  下边  左边 的padding值
+			 
+			padding:20px 80px 100px 40px;
+ 			*/
+
+
+	       /* 分别设置盒子的 上边  左右  下边的padding值 
+ 			padding:20px 80px 100px;
+		*/
+		
+		/* 分别设置盒子的 上下  左右  的padding值 
+		padding:20px 80px;*/
+
+
+		/* 同时设置四个边的padding是20px*/
+		padding:20px;
+
+		/* margin-top:100px;
+		margin-left:100px; */
+
+		margin:100px 0 0 100px;
+
+
+		}
+
+
+
+
+	</style>
+</head>
+<body>
+	<div class="box">元素在页面中显示成一个方块，类似一个盒子，CSS盒子模型就是使用现实中盒子来做比喻，帮助我们设置元素对应的样式。元素在页面中显示成一个方块，类似一个盒子，CSS盒子模型就是使用现实中盒子来做比喻，帮助我们设置元素对应的样</div>
+</body>
+</html>
+
+
+
+10——盒子练习
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style type="text/css">
+		
+		.box{
+			width:140px;
+			height:140px;
+			background-color:gold;
+			border:10px solid #000;
+			padding:20px;
+		}
+
+	</style>
+</head>
+<body>
+	<div class="box">外边距的设置方法和padding的设置方法相同</div>
+</body>
+</html>
+
+
+
+
+把元素叫做盒子,设置对应的样式分别为:盒子的宽度(width)、盒子的高度(height)、盒子的边框(border)、
+盒子内的内容和边框之间的间距(padding)、盒子与盒子之间的间距(margin
+设置宽高
+ width:200px;/*设置盒子的宽度,此宽度是指盒子内容的宽度,不是盒子整体宽度(难点)*
+ height:200px;/*设置盒子的高度,此高度是指盒子内容的高度,不是盒子整体高度(难点)*
+设置边框
+设置一边的边框,比如顶部边框,可以按如下设置:
+ border--color-top-:red;/*设置顶部边框颜色为红色*
+ border-width-top-:1px;/*设置顶部边框粗细为10px*/
+ border--style-top-: solid;/*设置顶部边框的线为实线,常用的有: solid(实线)
+ dashed(虚线) dotted(点线);*1
+上面三句可以简写成一句:
+ border-top: 10px solid red;
+
+
+
+01——盒子的真实尺寸
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>盒子的真实尺寸</title>
+	<style type="text/css">
+		.box01,.box02,.box03{
+			width:50px;
+			height:50px;
+			background-color:gold;
+		}
+
+		.box02,.box03{
+			border:50px solid #000;
+		}
+
+		.box03{
+			padding:50px;
+		}
+
+
+
+
+
+	</style>
+</head>
+<body>
+
+   <!-- 
+			盒子的真实尺寸：
+
+			盒子的宽度： width+左右border的宽度+左右padding值
+			
+			盒子的高度： height+上下border的宽度+上下padding值
+
+
+
+      -->
+	<div class="box01">1</div>
+	<br />
+	<div class="box02">2</div>
+	<br />
+	<div class="box03">3</div>
+
+</body>
+</html>
+
+
+
+02——标题练习
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style type="text/css">
+		
+		.news_title{
+			width:380px;
+			height:35px;
+			border-top:1px solid #f00;
+			border-bottom:3px solid #666;
+			font-size:20px;
+			color:#333;
+			font-family:'Microsoft Yahei';
+			font-weight:normal;
+			padding-top:15px;
+			line-height:20px;
+			padding-left:20px;
+		}
+
+		.news_title2{
+			width:400px;
+			height:50px;
+			border-top:1px solid #f00;
+			border-bottom:3px solid #666;
+			font-size:20px;
+			color:#333;
+			font-family:'Microsoft Yahei';
+			font-weight:normal;
+			line-height:50px;
+			text-indent:20px;
+		}
+
+
+
+	</style>
+</head>
+<body>
+	<h3 class="news_title">新闻列表</h3>
+
+	<br>
+	<h3 class="news_title2">新闻列表</h3>
+
+
+
+</body>
+</html>
+
+
+
+03——margin的使用技巧
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style type="text/css">
+		.box{
+			width:200px;
+			height:200px;
+			background-color:gold;
+			/* margin:50px auto 100px auto; */
+			margin:50px auto 100px;
+		}
+
+	</style>
+</head>
+<body>
+	<div class="box"></div>
+</body>
+</html>
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style type="text/css">
+		/*  去掉body默认的margin值	 */
+		
+		body{
+			margin:0;
+		}		
+		.box{
+			width:202px;
+			height:156px;
+			background-color:pink;
+			margin:50px auto 0;
+		}
+
+		.box div{
+			width:200px;
+			height:30px;
+			border:1px solid green;
+			background-color:gold;
+			margin-top:-1px;
+
+			/* border-bottom:0px; */
+		}
+
+
+		/* .box .last{
+			border-bottom:1px solid green;
+		} */
+
+
+
+
+	</style>
+</head>
+<body>
+	<div class="box">
+		<div></div>
+		<div></div>
+		<div></div>
+		<div></div>
+		<div class="last"></div>
+	</div>
+</body>
+</html>
+
+
+
+
+
+05——垂直margin的合并
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style type="text/css">
+		.box01,.box02{
+			width:200px;
+			height:200px;
+			background-color:gold;
+		}
+		
+		.box01{
+			margin-bottom:30px;
+		}
+
+		.box02{
+			margin-top:20px;
+		}
+
+
+	</style>
+</head>
+<body>
+	<div class="box01">1</div>
+	<div class="box02">2</div>
+</body>
+</html>
+
+
+
+06——垂直边距合并
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style type="text/css">
+		.box{
+			width:500px;
+			border:1px solid #000;
+			margin:50px auto 0;			
+		}
+		.box div{
+			/* margin-left:20px;
+			margin-right:20px;
+			margin-top:20px;
+			margin-bottom:20px; */
+			margin:20px;
+		}
+	</style>
+</head>
+<body>
+	<div class="box">
+		<div>外边距合并指的是，当两个垂直外边距相遇时，它们将形成一个外边距。合并后的外边距的高度等于两个发生合并的外边距的高度中的较大者。</div>
+		<div>外边距合并指的是，当两个垂直外边距相遇时，它们将形成一个外边距。合并后的外边距的高度等于两个发生合并的外边距的高度中的较大者。</div>
+		<div>外边距合并指的是，当两个垂直外边距相遇时，它们将形成一个外边距。合并后的外边距的高度等于两个发生合并的外边距的高度中的较大者。</div>
+		<div>外边距合并指的是，当两个垂直外边距相遇时，它们将形成一个外边距。合并后的外边距的高度等于两个发生合并的外边距的高度中的较大者。</div>
+	</div>
+</body>
+</html>
+
+
+
+07——margin-top塌陷
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style type="text/css">
+
+		/* 第三种解决塌陷的方法   */
+		.clearfix:before{
+			content:"";
+			display:table;
+		}
+		
+		.con{
+			width:300px;
+			height:300px;
+			background-color:gold;
+			/* border:1px solid #000; 第一种解决塌陷的方法	 */
+			/* overflow:hidden; 第二章解决塌陷的方法 */
+			
+		}
+
+		.box{
+			width:200px;
+			height:100px;
+			background-color:green;
+			margin-top:100px;
+			margin-left:50px;
+		}
+
+
+
+	</style>
+</head>
+<body>
+	<div class="con clearfix">
+		<div class="box"></div>
+	</div>	
+</body>
+</html>
+
+
+
+
+css元素溢出
+当子元素的尺寸超过父元素的尺寸时,需要设置父元素显示溢出的子元素的方式,设置的方法是通过
+ overflow属性来设置。
+ overflow的设置项:
+1、 visible默认值。内容不会被修剪,会呈现在元素框之外。
+2、 hidden内容会被修剪,并且其余内容是不可见的,此属性还有清除浮动、清除 margin--top塌陷的功能。
+3、 scroll内容会被修剪,但是浏览器会显示滚动条以便查看其余的内容。
+4、auto如果内容被修剪,则浏览器会显示滚动条以便查看其余的内容。
+5、 inherit规定应该从父元素继承 overflow属性的值。
+
+
+
+08——元素溢出
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>元素溢出</title>
+	<style type="text/css">
+		
+		.box{
+			width:300px;
+			height:200px;
+			border:1px solid #000;
+			margin:50px auto 0;
+			background-color:gold;
+			line-height:30px;
+			/* 
+				visible:缺省值，溢出的元素可见;
+
+				hidden：将溢出的元素裁切隐藏
+
+				scroll:显示滚动条，不管是否溢出;
+
+				auto：溢出的时候产生滚动条，不溢出的时候不显示滚动条
+				 */
+			overflow:auto;
+		}
+
+
+	</style>
+</head>
+<body>
+	<div class="box">当子元素的尺寸超过父元素的尺寸时，需要设置父元素显示溢出的子元素的方式，设置的方法是通过overflow属性来设置。当子元素的尺寸超过父元素的尺寸时，需要设置父元素显示溢出的子元素的方式，设置的方法是通过overflow属性来设置。当子元素的尺寸超过父元素的尺寸时，需要设置父元素显示溢出的子元素的方式，设置的方法是通过overflow属性来设置。</div>
+</body>
+</html>
+
+
+
+
+块元素、内联元素、内联块元素
+元素就是标签,布局中常用的有三种标签块元素、内联元素、内联块元素,了解这三种元素的特性,才能
+熟练的进行页面布局。
+块元素
+块元素,也可以称为行元素,布局中常用的标签如:div、p、ul、li、h1-h6、dl、dt、dd等等都是块元素,
+它在布局中的行为:
+·支持全部的样式
+如果没有设置宽度,默认的宽度为父级宽度100%
+·盒子占据一行、即使设置了宽度
+内联元素
+内联元素,也可以称为行内元素,布局中常用的标签如:a、span、em、b、 strong、i等等都是内联元素,
+它们在布局中的行为:
+支持部分样式(不支持宽、高、 margin上下、 padding上下)
+·宽高由内容决定
+·盒子并在一行
+·代码换行,盒子之间会产生间距
+子元素是内联元素,父元素可以用text align属性设置子元素水平对齐方式
+
+
+10——内联元素
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style type="text/css">
+		.box{
+			width:500px;
+			height:300px;
+			border:1px solid #000;
+			margin:50px auto 0;
+			font-size: 0;
+		}
+		.box a{
+			background-color:gold;
+			/* width:300px;
+			height:200px; */
+			/* margin:100px 20px; */
+			padding:0 10px;
+			font-size:16px;
+		}
+		.box2{
+			width:500px;
+			height:100px;
+			border:1px solid #000;
+			margin:50px auto 0;
+			text-align:center;
+		}
+	</style>
+</head>
+<body>
+	<div class="box">
+		<a href="#">链接文字一链接文字一</a>
+		<a href="#">链接文字二</a>
+		<a href="#">链接文字三</a>
+		<a href="#">链接文字四</a>
+		<a href="#">链接文字五</a>
+	</div>
+
+	<div class="box2">
+		<a href="#">链接文字</a>
+	
+	</div>
+</body>
+</html>
+
+
+
+12——元素类型转换
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style type="text/css">
+		.menu{
+			width:694px;
+			height:50px;
+			/* background-color:cyan; */
+			margin:50px auto 0;
+			font-size:0;
+		}
+
+		.menu a{
+			width:98px;
+			height:48px;
+			background-color:#fff;
+			display:inline-block;
+			border:1px solid gold;
+			font-size:16px;
+			margin-left:-1px;
+			text-align:center;
+			line-height:48px;
+			text-decoration:none;
+			color:pink;
+			font-family:'Microsoft Yahei'
+		}
+
+		.menu a:hover{
+			background-color:gold;
+			color:#fff;
+		}
+
+
+
+	</style>
+</head>
+<body>
+	<div class="menu">
+		<a href="#">首页</a>
+		<a href="#">公司简介</a>
+		<a href="#">公司简介</a>
+		<a href="#">公司简介</a>
+		<a href="#">公司简介</a>
+		<a href="#">公司简介</a>
+		<a href="#">公司简介</a>
+	</div>
+</body>
+</html>
+
+
+
+
+
+04——清除浮动
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style type="text/css">
+		.list{
+			width:210px;
+			/* height:400px; */
+			border:1px solid #000;
+			margin:50px auto 0;
+			list-style:none;
+			padding:0;
+			/* 
+			第一种清除浮动的方法：
+			overflow: hidden; 
+			*/
+
+		}
+
+		.list li{
+			width:50px;
+			height:50px;
+			background-color:gold;
+			margin:10px;
+			float:left;
+		}
+
+		/* .clearfix:before{
+			content:"";
+			display:table;
+		}
+		
+		
+		.clearfix:after{
+			content:"";
+			display:table;
+			clear:both;
+		} */
+
+		
+		.clearfix:before,.clearfix:after{
+			content:"";
+			display:table;
+		}
+		.clearfix:after{
+			clear:both;
+		}
+		.clearfix{
+			zoom:1;
+		}
+
+
+
+	</style>
+</head>
+<body>
+	<!-- ul.list>li{$}*8 -->
+
+	<ul class="list clearfix">
+		<li>1</li>
+		<li>2</li>
+		<li>3</li>
+		<li>4</li>
+		<li>5</li>
+		<li>6</li>
+		<li>7</li>
+		<li>8</li>
+		<li>5</li>
+		<li>6</li>
+		<li>7</li>
+		<li>8</li>
+		<!-- 
+		
+		第二种清除浮动的方法：
+		<div style="clear:both"></div>
+
+		 -->
+	</ul>
+
+</body>
+</html>
+
+
+
+02——文字绕图
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style type="text/css">
+		.box{
+			width:450px;
+			height:210px;
+			border:1px solid #000;
+			margin:50px auto 0;
+
+		}
+
+		.box img{
+			float:left;
+			margin:10px;
+			margin-bottom:0; 
+		}
+
+		.box div{
+			margin:10px;
+			font-size:14px;
+			line-height:22px;
+		}
+
+
+
+	</style>
+</head>
+<body>
+	<div class="box">
+		<img src="images/bg.jpg" alt="h5的标志">
+		<div>
+			1、浮动元素有左浮动(float:left)和右浮动(float:right)两种
+
+2、浮动的元素会向左或向右浮动，碰到父元素边界、其他元素才停下来
+
+3、相邻浮动的块元素可以并在一行，超出父级宽度就换行
+
+4、浮动让行内元素或块元素自动转化为行内块元素(此时不会有行内块元素间隙问题)
+
+5、浮动元素后面没有浮动的元素会占据浮动元素的位置，没有浮动的元素内的文字会避开浮动的元素，形成文字饶图的效果
+
+6、父元素如果没有设置尺寸(一般是高度不设置)，父元素内整体浮动的元素无法撑开父元素，父元素需要清除浮动
+		</div>
+
+	</div>
+</body>
+</html>
+
+
+
+
