@@ -1,0 +1,404 @@
+一个软件框架是由其中各个软件模块组成的，每一个模块都有特定的功能，模块与模块之间通过相互配合来完成软件的开发。
+软件框架是针对某一类软件设计问题而产生的。
+
+
+安装虚拟环境的命令：
+1）sudo pip install virtualenv #安装虚拟环境
+2）sudo pip install virtualenvwrapper #安装虚拟环境扩展包
+3）编辑家目录下面的.bashrc文件，添加下面两行。
+export WORKON_HOME=$HOME/.virtualenvs
+source /usr/local/bin/virtualenvwrapper.sh
+4）使用source .bashrc使其生效一下。
+
+
+
+指定创建python3的虚拟环境：
+mkvirtualenv -p python3 bj18_py3   # bj18_py3是创建的虚拟环境的名称
+
+
+退出虚拟环境：
+deactivate
+
+
+在pycharm里的booktest里面的models.py:
+from django.db import models
+# 设计和表对应的类，模型类
+# Create your models here.
+
+# 图书类
+class BookInfo(models.Model):
+    '''图书模型类'''
+    # 图书名称，CharField说明是一个字符串，max_length指定字符串的最大长度
+    btitle = models.CharField(max_length=20)
+    # 出版日期，DateField说明是一个日期类型
+    bpub_date = models.DateField()
+
+
+
+python@ubuntu:~$ workon 
+asuka01_py3    django_py3.4   py3            spider_py2     飞机大战
+django_py2     py2            pythonProject  tornado_py2    
+python@ubuntu:~$ workon asuka01_py3
+(asuka01_py3) python@ubuntu:~$ ls
+bj18     Documents  examples.desktop  Public           Templates
+dbs      Downloads  Music             PycharmProjects  Videos
+Desktop  dump.rdb   Pictures          python练习       workspace
+(asuka01_py3) python@ubuntu:~$ cd bj18/
+(asuka01_py3) python@ubuntu:~/bj18$ ls
+test1
+(asuka01_py3) python@ubuntu:~/bj18$ cd test1/
+(asuka01_py3) python@ubuntu:~/bj18/test1$ ls
+booktest  db.sqlite3  manage.py  test1
+(asuka01_py3) python@ubuntu:~/bj18/test1$ python manage.py shell
+>>> from booktest.models import BookInfo
+>>> b = BookInfo()
+>>> b.btitle = '天龙八部'
+>>> from datetime import date
+>>> b.bpub_date = date(1990,1,1)
+>>> b.save()
+>>> b2 = BookInfo.objects.get(id=1)
+>>> type(b2)
+<class 'booktest.models.BookInfo'>
+>>> b2.btitle
+'天龙八部'
+>>> b2.bpub_date
+datetime.date(1990, 1, 1)
+>>> b2.bpub_date=date(1990,10,10)   # 修改时间
+>>> b2.save()
+>>> b2.delete()  # 删除之前的内容，此时db.sqlite3表里已经没内容了
+>>> 
+>>> quit()
+
+
+
+在pycharm里的booktest里面的models.py:
+from django.db import models
+# 设计和表对应的类，模型类
+# Create your models here.
+
+# 一类
+# 图书类
+class BookInfo(models.Model):
+    '''图书模型类'''
+    # 图书名称，CharField说明是一个字符串，max_length指定字符串的最大长度
+    btitle = models.CharField(max_length=20)
+    # 出版日期，DateField说明是一个日期类型
+    bpub_date = models.DateField()
+
+
+# 多类
+# 英雄人物类
+# 英雄名字 hname
+# 性别  hgender
+# 年龄  hage
+# 备注  hcomment
+# 关系属性 hbook，建立图书类和英雄人物类型之间的一对多关系
+class HeroInfo(models.Model):
+    '''英雄人物模型类'''
+    hname = models.CharField(max_length=20)  # 英雄名称
+    # 性别，BooleanField说明是布尔类型，default指定默认值，False代表男
+    hgender = models.BooleanField(default=False)
+    # 备注
+    hcomment = models.CharField(max_length=128)
+    # 关系属性 hbook，建立图书类和英雄人物类型之间的一对多关系
+    # 关系属性对应的表的字段名格式：关系属性名_id
+    hbook = models.ForeignKey('BookInfo')
+
+
+(asuka01_py3) python@ubuntu:~/bj18/test1$ python manage.py makemigrations    # 生成迁移文件
+Migrations for 'booktest':
+  0002_heroinfo.py:
+    - Create model HeroInfo
+
+(asuka01_py3) python@ubuntu:~/bj18/test1$ python manage.py migrate  #  执行迁移生成表
+Operations to perform:
+  Synchronize unmigrated apps: messages, staticfiles
+  Apply all migrations: sessions, booktest, admin, auth, contenttypes
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+  Installing custom SQL...
+Running migrations:
+  Rendering model states... DONE
+  Applying booktest.0002_heroinfo... OK
+(asuka01_py3) python@ubuntu:~/bj18/test1$ 
+
+(asuka01_py3) python@ubuntu:~/bj18/test1$ python manage.py shell
+>>> from booktest.models import BookInfo,HeroInfo
+>>> 
+>> b = BookInfo()
+>>> b.title = '天龙八部'  # 这里没敲对，因该是b.btitle
+>>> from datetime import date
+>>> b.bpub_date = date(1990,1,1)
+>>> b.save()
+>>> h = HeroInfo()
+>>> h.hname = '段誉'
+>>> h.hgender = False
+>>> h.hcomment = '六脉神剑'
+>>> h.hbook = b   # 设置关联属性，将人物对应相应的图书
+>>> h.save()
+>>> 
+>>> h3 = HeroInfo.objects.get(id=1)
+>>> h3.hname
+'段誉'
+>>> h3.hgender
+False
+>>> h3.hcomment
+'六脉神剑'
+>>> h3.hbook_id
+2
+>>> h3.hbook
+<BookInfo: BookInfo object>
+>>> h3.hbook.btitle
+''
+>>> b.btitle = '天龙八部'
+>>> b.save()
+>>> h3.hbook.btitle
+''
+>>> b.heroinfo_set.all()  # 查看英雄表的信息
+[<HeroInfo: HeroInfo object>]
+>>> BookInfo.objects.all()
+[<BookInfo: BookInfo object>]
+>>> HeroInfo.objects.all()
+[<HeroInfo: HeroInfo object>]
+>>> 
+
+
+
+语言和时间的本地化，在settings.py里修改：
+LANGUAGE_CODE = 'zh-hans'  # 使用中文
+
+TIME_ZONE = 'Asia/Shanghai'  # 中国时间
+
+
+创建管理员：
+(asuka01_py3) python@ubuntu:~/bj18/test1$ python manage.py createsuperuser
+Username (leave blank to use 'python'): admin
+Email address: admin@itcast.cn
+Password: 
+Password (again): 
+Superuser created successfully.
+
+
+
+启动服务：
+(asuka01_py3) python@ubuntu:~/bj18/test1$ python manage.py runserver
+
+
+
+models.py增加内容后：
+from django.db import models
+# 设计和表对应的类，模型类
+# Create your models here.
+
+# 一类
+# 图书类
+class BookInfo(models.Model):
+    '''图书模型类'''
+    # 图书名称，CharField说明是一个字符串，max_length指定字符串的最大长度
+    btitle = models.CharField(max_length=20)
+    # 出版日期，DateField说明是一个日期类型
+    bpub_date = models.DateField()
+
+    def __str__(self):
+        # 返回书名
+        return self.btitle
+
+
+# 多类
+# 英雄人物类
+# 英雄名字 hname
+# 性别  hgender
+# 年龄  hage
+# 备注  hcomment
+# 关系属性 hbook，建立图书类和英雄人物类型之间的一对多关系
+class HeroInfo(models.Model):
+    '''英雄人物模型类'''
+    hname = models.CharField(max_length=20)  # 英雄名称
+    # 性别，BooleanField说明是布尔类型，default指定默认值，False代表男
+    hgender = models.BooleanField(default=False)
+    # 备注
+    hcomment = models.CharField(max_length=128)
+    # 关系属性 hbook，建立图书类和英雄人物类型之间的一对多关系
+    # 关系属性对应的表的字段名格式：关系属性名_id
+    hbook = models.ForeignKey('BookInfo')
+
+    def __str__(self):
+        # 返回英雄名字
+        return self.hname
+
+
+
+admin.py里增加的内容：  # 要在页面上显示，就得这样做
+from django.contrib import admin
+from booktest.models import BookInfo, HeroInfo
+# 后台管理相关文件
+# Register your models here.
+# 自定义模型管理类
+class BookInfoAdmin(admin.ModelAdmin):
+    '''图书模型管理类'''
+    list_display = ['id', 'btitle', 'bpub_date']  # 在页面上显示的内容
+
+class HeroInfoAdmin(admin.ModelAdmin):
+    '''英雄人物模型管理类'''
+    list_display = ['id', 'hname', 'hcomment']
+
+# 注册模型类
+admin.site.register(BookInfo, BookInfoAdmin)
+admin.site.register(HeroInfo, HeroInfoAdmin)
+
+
+
+
+views.py里进行配置视图：
+from django.shortcuts import render
+from django.http import HttpResponse
+
+# Create your views here.
+# 1. 定义视图函数，HttpRequest
+# 2. 进行url配置，建立url地址和视图的对应关系
+# http://127.0.0.1:8000/index
+def index(request):
+    # 进行处理，和M和T进行交互
+    return HttpResponse('老铁，没毛病')
+
+
+
+在booktest里新建urls.py:
+from django.conf.urls import url
+from booktest import views
+
+# /index
+# 在应用的urls文件中进行url配置的时候：
+# 1. 严格匹配开头和结尾
+urlpatterns = [
+    # 通过url函数设置url路由配置项
+    url(r'^index$', views.index), # 建立/index和视图index之间的关系
+    url(r'^index2$', views.index2),
+]
+
+
+在原本test1里的urls.py文件：
+"""test1 URL Configuration
+
+The `urlpatterns` list routes URLs to views. For more information please see:
+    https://docs.djangoproject.com/en/1.8/topics/http/urls/
+Examples:
+Function views
+    1. Add an import:  from my_app import views
+    2. Add a URL to urlpatterns:  url(r'^$', views.home, name='home')
+Class-based views
+    1. Add an import:  from other_app.views import Home
+    2. Add a URL to urlpatterns:  url(r'^$', Home.as_view(), name='home')
+Including another URLconf
+    1. Add an import:  from blog import urls as blog_urls
+    2. Add a URL to urlpatterns:  url(r'^blog/', include(blog_urls))
+"""
+from django.conf.urls import include, url
+from django.contrib import admin
+
+
+# 项目的urls文件
+#  index
+
+urlpatterns = [
+    url(r'^admin/', include(admin.site.urls)),  # 配置项目
+    url(r'^', include('booktest.urls')),  # 包含booktest应用中的urls文件
+]
+
+
+
+
+
+在test1项目目录下新建templates目录，并在这个目录里根据项目来命名下级目录，比如新建booktest目录，并在里面添加index.html文件：
+
+
+settings.py里面修改：# 告诉django,html模板在哪里
+EMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],  # 设置模板文件目录
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
+
+
+根据项目目录的绝对路径来的：
+# 项目目录的绝对路径
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+在views.py里重新修改了内容：  # 目的是使用模板文件
+from django.shortcuts import render
+from django.http import HttpResponse
+from django.template import loader, RequestContext
+
+def my_render(request, template_path, context_dict={}):
+    '''使用模板文件'''
+    # 使用模板文件
+    # 1. 加载模板文件，模板对象
+    temp = loader.get_template(template_path)
+    # 2.定义模板上下文：给模板文件传递数据
+    context = RequestContext(request, context_dict)
+    # 3.模板渲染：产生标准的html内容
+    res_html = temp.render(context)
+    # 4.返回给浏览器
+    return HttpResponse(res_html)
+
+
+# Create your views here.
+# 1. 定义视图函数，HttpRequest
+# 2. 进行url配置，建立url地址和视图的对应关系
+# http://127.0.0.1:8000/index
+def index(request):
+    # 进行处理，和M和T进行交互
+    # return HttpResponse('老铁，没毛病')
+    # return my_render(request,'booktest/index.html')  # 和下面的render的效果一样
+    return render(request, 'booktest/index.html', {'content':'hello world', 'list':list(range(1,10))})
+
+# http://127.0.0.1:8000/index2
+def index2(request):
+    return HttpResponse('hello python')
+
+
+
+
+index.html文件里的内容为：
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>模板文件</title>
+</head>
+<body>
+<h1>这是一个模板文件</h1>
+使用模板变量：<br/>
+{{ content }}<br/>
+使用列表：<br/>
+{{ list }}<br/>
+for循环：<br/>
+<ul>
+    {% for i in list %}
+        <li>{{ i }}</li>
+    {% endfor %}    # 这些语法格式记住就好了
+</ul>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
