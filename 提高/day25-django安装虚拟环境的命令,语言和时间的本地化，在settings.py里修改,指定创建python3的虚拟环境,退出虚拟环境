@@ -20,6 +20,11 @@ mkvirtualenv -p python3 bj18_py3   # bj18_py3是创建的虚拟环境的名称
 deactivate
 
 
+创建应用：
+python manage.py startapp booktest
+
+
+
 在pycharm里的booktest里面的models.py:
 from django.db import models
 # 设计和表对应的类，模型类
