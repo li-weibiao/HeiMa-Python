@@ -1,0 +1,111 @@
+python@ubuntu:~$ mysql -uroot -pmysql
+
+mysql> create database bj18 charset=utf8;
+Query OK, 1 row affected (0.00 sec)
+
+
+
+
+python@ubuntu:~$ workon asuka01_py3
+(asuka01_py3) python@ubuntu:~$ cd bj18/
+(asuka01_py3) python@ubuntu:~/bj18$ ls
+test1
+(asuka01_py3) python@ubuntu:~/bj18$ django-admin startproject test2
+(asuka01_py3) python@ubuntu:~/bj18$ ls 
+test1  test2
+
+
+(asuka01_py3) python@ubuntu:~/bj18$ cd test2
+(asuka01_py3) python@ubuntu:~/bj18/test2$ ls
+manage.py  test2
+(asuka01_py3) python@ubuntu:~/bj18/test2$ python manage.py startapp booktest   # 创建新的django应用
+(asuka01_py3) python@ubuntu:~/bj18/test2$ ls
+booktest  manage.py  test2
+(asuka01_py3) python@ubuntu:~/bj18/test2$ 
+
+
+(asuka01_py3) python@ubuntu:~/bj18/test2$ python manage.py runserver    # 报错
+pip install pymysql      # 同一个界面下，就不复制开头信息了，只不过自己要明白
+然后再test2里配置__init__.py
+python manage.py runserver
+然后在booktest里的models.py添加配置
+python manage.py makemigrations
+python mange.py migrate
+bj18数据库里插入数据
+python manage.py runserver
+访问页面
+配置booktest里的views.py
+
+
+
+在test2项目目录下，新建templates目录
+在test2里配置settings.py，设置模板目录
+在templates里新建booktest目录
+在booktest里创建index.html
+
+
+
+配置test2里urls.py
+在booktest里新建urls.py
+
+
+若是端口被占用，则可以换端口运行:python manage.py runserver 127.0.0.1:8001
+
+
+统一开发的时候，一定要在地址前加/，比如：<a href="/create">新增</a>
+
+
+创建管理员：python manage.py createsuperuser   (输入管理员名称和密码等)
+配置booktest里的admin.py
+
+
+更详细的models选项和字段参考：百度django1.8.2中文文档
+
+
+
+开启mysql日志：
+1)	sudo vi /etc/mysql/mysql.conf.d/mysqld.cnf 68 69行
+2)	sudo service mysql restart 重启mysql服务
+3)	/var/log/mysql/mysql.log #mysql操作的记录文件。
+4)	sudo tail -f /var/log/mysql/mysql.log #实时查看mysql文件的内容
+
+
+
+对于Models模块里的增删改查，具体看day01笔记：
+查询相关函数
+get返回一条且只能有一条数据,返回值是一个对象,参数可以写查询条件。
+all返回模型类对应表的所有数据,返回值是 QuerySet
+filter:返回满足条件的数据,返回值是 QuerySet,参数可以写查询条件。
+exclude:返回不满足条件的数据,返回值是 QuerySet,参数可以写查询条件。
+order_by:对查询结果进行排序,返回值是 QuerySet,参数中写排序的字段
+
+from diango.db. models import F,Q,Sum,Count. Ayg, Max,Min
+F对象:用于类属性之间的比较。
+Q对象:用于条件之间的逻辑关系。
+aggregate:进行聚合操作,返回值是一个字典,进行聚合的时候需要先导入聚合类。
+count:返回结果集中数据的数目,返回值是一个数字。
+注意:
+对一个 QuerySet实例对象,可以继续调用上面的所有函数。
+通过模型类实现关联查询时，要查哪个表中的数据，就需要通过哪个类来查。
+写关联查询条件的时候，如果类中没有关系属性，条件需要些对应类的名，如果类中有关系属性，直接写关系属性。
+
+
+
+查询集取下标或者切片操作来限制查询集的结果。
+
+
+关联查询，一对一，一对多，多对一
+
+模型插入，更新和删除
+
+模型自关联
+
+
+个人理解：用户通过访问url,来调用urls.py文件，接着通过urls.py来调用views.py文件，来实现与数据库和模板的交互。
+
+
+
+
+
+
+
