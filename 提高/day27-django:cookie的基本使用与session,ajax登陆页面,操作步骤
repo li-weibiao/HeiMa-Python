@@ -1,0 +1,133 @@
+操作步骤：
+先进入虚拟环境
+
+django-admin startproject test3
+
+cd test3
+
+python manage.py startapp booktest   # 创建新的django应用
+
+pycharm里打开新建的django项目
+
+创建templates文件夹，修改配置文件settings.py
+
+修改test3文件夹里面的__init__.py，写上import pymysql等，导入mysql数据库
+
+在templates里新建booktest文件目录，里面新建index.html
+
+配置test3里的urls.py文件
+
+在booktest文件目录下，新建urls.py文件
+
+配置booktest里的views.py
+
+python manage.py runserver
+
+***注意***：
+在网站开发的时候，settings.py里的DEBUG可以等于True，这是调试模式，但是上线后，
+这个要改成False
+
+在templates里定义了一个404.html
+
+在templates里定义了一个500.html
+
+在templates的booktest文件目录里定义了一个login.html
+
+在views.py里定义login函数
+
+在booktest文件目录里的urls.py里添加login的url
+
+在views.py里定义login_check函数
+
+
+***注意***：
+若是出现forbiden错误，在settngs.py里注释掉47行
+
+在templates的booktest文件目录里定义test_ajax.html
+
+在test3目录下新建static目录，然后配置settings.py文件，添加STATICFILES_DIRS
+
+
+
+
+
+
+
+截图笔记（没有校对，若有错误，还请包涵，多百度）：
+服务器接收到http协议的请求后,会根据报文创建 http, httprequest, 对象,这个对象不需要我们创建,直接使用
+服务器构造好的对象就可以。视图的第一个参数必须是 httprequest, django.  http对象,在django.http模块中定义了
+ httprequestapl.对象的APl
+属性
+下面除非特别说明,属性都是只读的。
+·path:一个字符串,表示请求的页面的完整路径,不包含域名和参数部分。
+.method: http :get','pos:一个字符串,表示请求使用的HTTP方法,常用值包括:'geT'、'pOS
+在浏览器中给出地址发出请求采用get方式,如超链接。
+在浏览器中点击表单的提交按钮发起请求,如果表单的 method设置为post则为post请求。
+ encoding:一个字符串,表示提交的数据的编码方式。
+如果为None则表示使用浏览器的默认设置,一般为utf-8
+这个属性是可写的,可以通过修改它来修改访问表单数据使用的编码,接下来对属性的任何访问将
+使用新的 encoding值。
+get: Query Dict类型对象,类似于字典,包含get请求方式的所有参数。
+post: QueryDict类型对象,类似于字典,包含post请求方式的所有参数。
+ FILES:一个类似于字典的对象,包含所有的上传文件。
+ COOKIES:个标准的 Python字典,包含所有的 cookie,键和值都为字符串。
+ session:一个既可读又可写的类似于字典的对象,表示当前的会话,只有当 Django启用会话的支持时
+才可用,详细内容见状态保持。
+·运行服务器,在浏览器中浏览首页,可以在浏览器“开发者工具”中看到请求信息如下图:
+
+
+ajax:异步的 javascript
+在不重新加载页面的情况下,对页面进行局部的刷新。
+.ajax({
+'url':请求地址,
+'type':请求方式,
+'dataType':预期返回的数据格式
+'data':参数
+}).success(function(data){
+	//回调函数
+})
+
+
+
+
+cookie的基本使用
+
+
+
+所有请求者的 Session都会存储在服务器中,服务器如何区分请求者和 Session数据的对应关系呢?
+答:在使用 Session后,会在 Cookiese中存储一个的数据,每次请求时浏览器都会将这个数据发给服
+务器,服务器在接收到sessionid后,会根据这个值找出这个请求者的 Session
+结果:如果想使用Session,浏览器必须支持 Cookie,否则就无法使用 Session了。
+存储 Session时,键与 Cookiesessionid中的相同,值是开发人员设置的键值对信息,进行了base64编码,过
+期时间由开发人员设置。
+对象及方法
+通过 httprequestsession.对象的session属性进行会话的读写操作。
+1)以键值对的格式写session
+request.session['键']=值
+2)根据键读取值。
+request.session.get('键',默认值)
+3)清除所有session,在存储中删除值部分。
+request.session.clear()
+4)清除session数据,在存储中删除 session的整条数据。
+request.session.flush()
+5)删除session中的指定键及值,在存储中只删除某个键及对应的值。
+del request.session['键']
+6)设置会话的超时时间,如果没有指定过期时间则两个星期后过期。
+request.session.set_expiry(value)
+
+·如果value是一个整数,会话的 session_id cookie将在value秒没有活动后过期。
+如果value为o,那么用户会话的 session_ id cookie将在用户的浏览器关闭时过期。
+·如果value为None,那么会话的 session_id cookie两周之后过期。
+
+安全性不高用cookie
+安全性要求高用session,比如银行卡账户密码
+
+
+
+
+
+
+
+
+
+
