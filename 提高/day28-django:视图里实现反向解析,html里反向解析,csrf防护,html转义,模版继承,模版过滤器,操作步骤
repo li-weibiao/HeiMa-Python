@@ -1,0 +1,41 @@
+模版
+pycharm——>New Project——>Django——>选择虚拟环境，比如bj18——>创建test4——>填写项目名称，比如booktest
+
+修改settings.py里的mysql配置——>在test4项目目录下配置__init__.py，添加import pymysql等内容
+
+在templates里新建目录booktest,在里面新建index.html
+
+配置views.py,定义index函数
+
+配置urls.py,自己在booktest里新建urls.py
+
+
+新建过滤器：booktest目录下新建python包，templatetags，然后在templatetags里新建filters.py文件
+
+
+知识点：
+模版过滤器，过滤器用于对模板变量进行操作（想不起来可以参考django目录里的笔记，或者百度）
+
+模板注释，单行和多行
+
+模版继承
+
+父模版中预留位置，好让子模版写自己的内容
+
+把所有页面相同的内容放到父模块文件中，不需要放在块中。有些位置页面内容不同，需要在父模块中预留块。
+
+html转义
+
+csrf攻击
+
+***要让W10访问虚拟机里的django页面，需要在虚拟机里指定ip和端口，比如：python manage.py runserver 172.16.179.131:8000***
+
+登陆装饰器函数，封包
+
+django默认开启了csrf防护，需要在表单post提交数据时加上｛% csrf_token %｝标签。
+
+html里反向解析
+
+视图里实现反向解析
+
+
