@@ -1,0 +1,115 @@
+1.	静态文件
+1.1 使用
+在 网页使用的css文件，js文件和图片叫做静态文件。
+1)	新建静态文件夹 static。
+ 
+2) 配置静态文件所在的物理目录。Settings.py
+ 
+STATIC_URL设置访问静态文件对应的url。
+STATICFILES_DIRS设置静态文件所在的物理目录。
+动态生成静态文件的路径。
+1.2 加载目录
+STATICFILES_FINDERS=('django.contrib.staticfiles.finders.FileSystemFinder', 'django.contrib.staticfiles.finders.AppDirectoriesFinder')
+2.	中间件
+中间件函数是django框架给我们预留的函数接口，让我们可以干预请求和应答的过程。
+ 
+2.1 获取浏览器端的ip地址
+使用request对象的META属性：request.META['REMOTE_ADDR']
+2.2 使用中间件
+1)	新建middleware.py文件。
+ 
+2)	定义中间件类。
+ 
+在类中定义中间件预留函数。
+__init__:服务器响应第一个请求的时候调用。
+process_request:是在产生request对象，进行url匹配之前调用。
+process_view：是url匹配之后，调用视图函数之前。
+process_response：视图函数调用之后，内容返回给浏览器之前。
+process_exception:视图函数出现异常，会调用这个函数。
+如果注册的多个中间件类中包含process_exception函数的时候，调用的顺序跟注册的顺序是相反的。
+3)	注册中间件类。
+  
+3.	Admin后台管理
+3.1 使用
+1) 本地化。语言和时区本地化。
+2) 创建超级管理员。
+python mange.py createsuperuser
+3)	注册模型类。
+4) 	自定义管理页面。
+	自定义模型管理类。
+	注册模型类的时候给register函数添加第二个参数，就是自定义模型管理类的名字。
+3.2 模型管理类相关属性
+1) 列表页相关的选项。
+2) 编辑页相关的选项。
+4. 上传图片
+商品销售网站。
+4.1 配置上传文件保存目录
+1)	新建上传文件保存目录。
+ 
+2)	配置上传文件保存目录。
+ 
+4.2 后台管理页面上传图片
+1)	设计模型类。
+ 
+2)	迁移生成表格。
+ 
+3) 注册模型类。
+4.3 用户自定义页面上传图片
+1)	定义用户上传图片的页面并显示，是一个自定义的表单。
+ 
+2)	定义接收上传文件的视图函数。
+request对象有一个FILES的属性，类似于字典，通过request.FILES可以获取上传文件的处理对象。
+在django中，上传文件不大于2.5M,文件放在内存中。上传文件大于2.5M,文件内容写到一个临时文件中。
+Django处理上传文件的两个类：
+FILE_UPLOAD_HANDLERS= ("django.core.files.uploadhandler.MemoryFileUploadHandler",
+ 	"django.core.files.uploadhandler.TemporaryFileUploadHandler")
+上传图片参考资料：
+1.	http://python.usyiyi.cn/documents/django_182/topics/http/file-uploads.html
+2.	http://python.usyiyi.cn/documents/django_182/ref/files/uploads.html#django.core.files.uploadedfile.UploadedFile
+5.	分页
+查询出所有省级地区的信息，显示在页面上。
+AeroInfo.objects.filter(aParent__isnull = True)
+1)	查询出所有省级地区的信息。
+2)	按每页显示10条信息进行分页，默认显示第一页的信息，下面并显示出页码。
+3)	点击i页链接的时候，就显示第i页的省级地区信息。
+from django.core.paginator import Paginator
+paginator = Paginator(areas, 10) #按每页10条数据进行分页
+Paginator类对象的属性:
+属性名	说明
+num_pages	返回分页之后的总页数
+page_range	返回分页后页码的列表
+Paginator类对象的方法:
+方法名	说明
+page(self, number)	返回第number页的Page类实例对象
+
+Page类对象的属性：
+属性名	说明
+number	返回当前页的页码
+object_list	返回包含当前页的数据的查询集
+paginator	返回对应的Paginator类对象
+
+Page类对象的方法：
+属性名	说明
+has_previous	判断当前页是否有前一页
+has_next	判断当前页是否有下一页
+previous_page_number	返回前一页的页码
+next_page_number	返回下一页的页码
+分页参考资料：
+http://python.usyiyi.cn/translate/django_182/topics/pagination.html
+6.	省市县选择案例
+1)	显示省地区信息。
+$.get('/prov', function(data){
+})
+2)	省改变时在对应的下拉列表框中显示下级市的信息。
+$.get('/city?pid='+pid, function(data){
+			})
+			request.GET.get(‘pid’)
+或者:
+	$.get('/city'+$(this).val(), function(data){
+			})
+3)	市改变时在对应的下拉列表框中显示下级县的信息。
+$.get('/dis?pid='+pid, function(data){
+		})
+		或者:
+$.get('/dis'+$(this).val(), function(data){
+		})
