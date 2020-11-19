@@ -1479,7 +1479,7 @@ pip install redis-py-cluster
 
 
 •创建⽂件redis_cluster.py，示例码如下
-from rediscluster import *
+from rediscluster import *  # 或者是 from rediscluster import StrictRedisCluster,就看哪个有效果
 if __name__ == '__main__':
   try:
       # 构建所有的节点，Redis会使⽤CRC16算法，将键和值写到某个节点上
