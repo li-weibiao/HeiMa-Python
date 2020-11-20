@@ -194,4 +194,4 @@ celery -A celery_tasks.tasks worker -l info
 
 
 个人总结：
-静态页面以及文件放在nginx服务器里面，访问动态就让nginx将要求转发给uwsgi服务器，由uwsgi服务器来调用application,总而联系django项目，然后由django服务器来返回信息。
+静态页面以及静态文件放在nginx服务器里面，访问动态就让nginx将要求转发给uwsgi服务器，由uwsgi服务器来调用application,总而联系django项目，然后由django服务器来返回信息。
