@@ -1,0 +1,397 @@
+1.	项目架构
+ 
+2.	数据库表结构
+
+ 
+3.	用户认证模型
+ 
+
+ 
+注意： AUTH_USER_MODEL配置参数要在第一次迁移数据库之前配置，否则可能django的认证系统工作不正常
+4.	类视图
+将视图view以类的形式定义
+通用类视图基类： 
+django.views.generic.View  ( 与django.views.generic.base.View 是同一个)
+urls.py中配置路由使用类视图的as_view()方法
+由dispatch()方法具体将请求request分发至对应请求方式的处理方法中（get、post等）
+扩展阅读：
+http://python.usyiyi.cn/translate/django_182/topics/class-based-views/intro.html
+类视图资料：
+http://python.usyiyi.cn/documents/django_182/ref/class-based-views/base.html#django.views.generic.base.View.as_view
+5.	用户模块开发
+5.1	Django认证系统文档
+http://python.usyiyi.cn/documents/django_182/topics/auth/default.html
+预习方法：
+方法名	备注
+create_user	创建用户
+authenticate	登录验证
+login	记录登录状态
+logout	退出用户登录
+is_authenticated	判断用户是否登录
+login_required装饰器	进行登录判断
+
+5.2	用户注册
+5.2.1 django发送邮件
+ 
+5.2.2	celery
+异步任务队列。
+ 
+1)	使用
+ 
+ 
+2)	发出任务
+ 
+3)	启动worker
+ 
+5.3	用户激活
+使用itsdangerous 加密用户的身份信息。
+参考资料：
+http://itsdangerous.readthedocs.io/en/latest/
+
+
+1)	加密用户身份信息
+ 
+2)	解密用户身份信息
+ 
+5.4	用户登录
+5.4.1 配置redis作为Django缓存和session后端
+django-redis文档： 
+http://django-redis-chs.readthedocs.io/zh_CN/latest/#
+配置：
+ 
+5.4.2 登录判断装饰器login_required
+ 
+ 
+使用LoginRequireMixin:
+ 
+登录后跳转：
+ 
+5.5	用户退出
+logout函数清除登录用户的session信息。
+5.6	用户地址
+5.6.1 模型类和模型管理器类
+ 
+5.7	用户个人信息
+5.7.1 redis存储历史浏览记录分析
+ 
+参考资料：
+http://redisdoc.com/index.html
+http://redis-py.readthedocs.io/en/latest/#indices-and-tables
+5.7.2	django-redis获取redis链接
+ 
+ 
+
+6.	商品模块开发
+6.1了解FastDFS分布式文件系统
+集群
+
+ 
+
+启动FastDFS的方法，需要的操作：
+1.	修改如下的配置文件  （在/etc/fdfs目录中）
+ 
+tracker_server=自己的ip地址:22122
+2.	启动tracker、storage、nginx服务：
+sudo service fdfs_trackerd start
+sudo service fdfs_storaged start
+sudo /usr/local/nginx/sbin/nginx
+3.	执行如下命令测试是否成功
+fdfs_upload_file /etc/fdfs/client.conf 要上传的图片文件 
+如果返回类似group1/M00/00/00/rBIK6VcaP0aARXXvAAHrUgHEviQ394.jpg的文件id则说明文件上传成功
+在浏览器中可以用   127.0.0.1:8888/返回的文件id   
+访问图片
+ 
+6.2 python对接fastdfs
+1. workon django_py3 
+2. 进入fdfs_client-py-master.zip所在目录
+3. pip install fdfs_client-py-master.zip
+
+>>> from fdfs_client.client import Fdfs_client
+>>> client = Fdfs_client('/etc/fdfs/client.conf')
+>>> ret = client.upload_by_filename('test')
+>>> ret
+{'Group name':'group1','Status':'Upload successed.', 'Remote file_id':'group1/M00/00/00/
+	wKjzh0_xaR63RExnAAAaDqbNk5E1398.py','Uploaded size':'6.0KB','Local file name':'test'
+	, 'Storage IP':'192.168.243.133'}
+
+6.3	项目上传图片和使用图片流程
+ 
+海量存储，存储容量扩展方便。
+文件内容重复。
+结合nginx提高网站访问图片的效率。
+6.4	Django二次开发对接FastDFS
+Django文档： 
+http://python.usyiyi.cn/translate/django_182/ref/files/storage.html
+http://python.usyiyi.cn/translate/django_182/howto/custom-file-storage.html
+1)	配置文件settings中加入如下配置
+ 
+2)	创建utils/fdfs 目录
+ 
+3)	storage.py文件中自定义文件存储类
+ 
+ 
+6.5商品首页
+6.5.1 基本页面处理
+动态给对象增加属性
+ 
+6.5.2 保存购物车信息的数据设计
+ 
+6.5.3 页面静态化
+把原本动态的页面处理结果保存成html文件，让用户直接访问这个生成出来的静态的html页面
+
+
+ 
+
+ 
+
+ 
+
+ 
+6.5.4 使用缓存
+将处理计算的结果先临时保存起来，下次使用的时候可以先直接使用，如果没有这个备份的数据，重新进行计算处理
+将缓存数据保存在内存中 （本项目中保存在redis中）
+cache
+修改了数据库的数据，直接删除缓存
+缓存要设置有效期
+django文档：
+http://python.usyiyi.cn/translate/django_182/topics/cache.html
+ 
+6.6商品详情页
+添加历史浏览记录：
+ 
+6.7商品列表页
+6.7.1 分页
+http://python.usyiyi.cn/documents/django_182/topics/pagination.html
+
+ 
+ 
+6.7.2 页码控制
+ 
+6.8 商品搜索
+ 
+6.8.1 安装和配置
+1)	安装python包。
+pip install django-haystack
+pip install whoosh
+2)	在settings.py文件中注册应用haystack并做如下配置。
+ 
+ 
+6.8.2 索引文件生成
+1)	在goods应用目录下新建一个search_indexes.py文件，在其中定义一个商品索引类。
+ 
+2)	在templates下面新建目录search/indexes/goods。
+ 
+3)	在此目录下面新建一个文件goodssku_text.txt并编辑内容如下。
+ 
+4)	使用命令生成索引文件。
+	python manage.py rebuild_index
+6.8.3 全文检索的使用
+1) 配置url。
+ 
+2)表单搜索时设置表单内容如下。
+ 
+点击标题进行提交时，会通过haystack搜索数据。
+3)	全文检索结果。
+搜索出结果后，haystack会把搜索出的结果传递给templates/search目录下的search.html，传递的上下文包括：
+query：搜索关键字
+page：当前页的page对象 –>遍历page对象，获取到的是SearchResult类的实例对象，对象的属性object才是模型类的对象。
+paginator：分页paginator对象
+通过HAYSTACK_SEARCH_RESULTS_PER_PAGE 可以控制每页显示数量。
+ 
+6.8.4 改变分词方式
+1) 安装jieba分词模块。
+pip install jieba
+2)	找到虚拟环境py_django下的haystack目录。
+/home/python/.virtualenvs/bj17_py3/lib/python3.5/site-packages/haystack/backends/
+3)	在上面的目录中创建ChineseAnalyzer.py文件。
+import jieba
+from whoosh.analysis import Tokenizer, Token
+
+class ChineseTokenizer(Tokenizer):
+    def __call__(self, value, positions=False, chars=False,
+                 keeporiginal=False, removestops=True,
+                 start_pos=0, start_char=0, mode='', **kwargs):
+        t = Token(positions, chars, removestops=removestops, mode=mode, **kwargs)
+        seglist = jieba.cut(value, cut_all=True)
+        for w in seglist:
+            t.original = t.text = w
+            t.boost = 1.0
+            if positions:
+                t.pos = start_pos + value.find(w)
+            if chars:
+                t.startchar = start_char + value.find(w)
+                t.endchar = start_char + value.find(w) + len(w)
+            yield t
+
+def ChineseAnalyzer():
+    return ChineseTokenizer()
+4)	复制whoosh_backend.py文件，改为如下名称。
+	whoosh_cn_backend.py
+5)	打开复制出来的新文件，引入中文分析类，内部采用jieba分词。
+from .ChineseAnalyzer import ChineseAnalyzer
+6)	更改词语分析类。
+查找
+analyzer=StemmingAnalyzer()
+改为
+analyzer=ChineseAnalyzer()
+7)	修改settings.py文件中的配置项。
+ 
+8)	重新创建索引数据
+python manage.py rebuild_index
+7.	购物车模块开发
+7.1添加到购物车
+确定前端是否传递数据，传递什么数据，什么格式
+确定前端访问的方式（get  post）
+确定返回给前端的什么数据，什么格式
+7.2购物车页面
+购物车页面js
+ 
+Jquery选择器参考资料:
+http://www.w3school.com.cn/jquery/jquery_ref_selectors.asp
+7.3 购物车记录更新
+采用ajax post请求
+前端需要传递的参数:商品id(sku_id) 商品数量(count)
+ 
+7.4 购物车记录删除
+采用ajax post请求
+前端需要传递的参数:商品id(sku_id)
+ 
+8.	订单模块开发
+8.1 提交订单页面
+ 
+8.2	订单生成
+ 
+8.2.1 mysql事务
+1)	事务概念
+一组mysql语句，要么执行，要么全不不执行。
+2)	事务的特点
+1、原子性：一组事务，要么成功；要么撤回。
+2、稳定性 ：有非法数据（外键约束之类），事务撤回。
+3、隔离性：事务独立运行。一个事务处理后的结果，影响了其他事务，那么其他事务会撤回。事务的100%隔离，需要牺牲速度。
+4、可靠性：软、硬件崩溃后，InnoDB数据表驱动会利用日志文件重构修改。可靠性和高速度不可兼得， innodb_flush_log_at_trx_commit 选项 决定什么时候吧事务保存到日志里。
+3)	事务控制语句
+BEGIN或START TRANSACTION；显式地开启一个事务；
+COMMIT；也可以使用COMMIT WORK，不过二者是等价的。COMMIT会提交事务，并使已对数据库进行的所有修改称为永久性的；
+ROLLBACK；有可以使用ROLLBACK WORK，不过二者是等价的。回滚会结束用户的务，并撤销正在进行的所有未提交的修改；
+SAVEPOINT identifier；SAVEPOINT允许在事务中创建一个保存点，一个事务中可以有多个SAVEPOINT；
+RELEASE SAVEPOINT identifier；删除一个事务的保存点，当没有指定的保存点时，执行该语句会抛出一个异常；
+ROLLBACK TO identifier；把事务回滚到标记点；
+4)	mysql事务隔离级别
+SQL标准定义了4类隔离级别，包括了一些具体规则，用来限定事务内外的哪些改变是可见的，哪些是不可见的。低级别的隔离级一般支持更高的并发处理，并拥有更低的系统开销。
+Read Uncommitted（读取未提交内容）
+在该隔离级别，所有事务都可以看到其他未提交事务的执行结果。本隔离级别很少用于实际应用，因为它的性能也不比其他级别好多少。读取未提交的数据，也被称之为脏读（Dirty Read）。
+Read Committed（读取提交内容）
+这是大多数数据库系统的默认隔离级别（但不是MySQL默认的）。它满足了隔离的简单定义：一个事务只能看见已经提交事务所做的改变。这种隔离级别 也支持所谓的不可重复读（Nonrepeatable Read），因为同一事务的其他实例在该实例处理其间可能会有新的commit，所以同一select可能返回不同结果。
+Repeatable Read（可重读）
+       这是MySQL的默认事务隔离级别，它确保同一事务的多个实例在并发读取数据时，会看到同样的数据行。不过理论上，这会导致另一个棘手的问题：幻读 （Phantom Read）。简单的说，幻读指当用户读取某一范围的数据行时，另一个事务又在该范围内插入了新行，当用户再读取该范围的数据行时，会发现有新的“幻影” 行。InnoDB和Falcon存储引擎通过多版本并发控制（MVCC，Multiversion Concurrency Control）机制解决了该问题。
+Serializable（可串行化） 
+       这是最高的隔离级别，它通过强制事务排序，使之不可能相互冲突，从而解决幻读问题。简言之，它是在每个读的数据行上加上共享锁。在这个级别，可能导致大量的超时现象和锁竞争。
+         这四种隔离级别采取不同的锁类型来实现，若读取的是同一个数据的话，就容易发生问题。例如：
+脏读(Drity Read)：某个事务已更新一份数据，另一个事务在此时读取了同一份数据，由于某些原因，前一个RollBack了操作，则后一个事务所读取的数据就会是不正确的。
+不可重复读(Non-repeatable read):在一个事务的两次查询之中数据不一致，这可能是两次查询过程中间插入了一个事务更新的原有的数据。
+幻读(Phantom Read):在一个事务的两次查询中数据笔数不一致，例如有一个事务查询了几行(Row)数据，而另一个事务却在此时插入了新的几行数据，先前的事务在接下来的查询中，就会发现有几行数据是它先前所没有的。
+ 
+5)	设置mysql事务的隔离级别
+打开mysql配置文件: sudo vi /etc/mysql/mysql.conf.d/mysqld.cnf, 添加如下行。
+ 
+保存配置文件，重启mysql服务。
+	sudo service mysql restart
+8.2.2订单并发处理
+ 
+
+(1)	悲观锁
+select * from df_goods_sku where id=17 for update;
+ 
+悲观锁获取数据时对数据行了锁定，其他事务要想获取锁，必须等原事务结束。
+(2) 乐观锁
+查询时不锁数据，提交更改时进行判断.
+update df_goods_sku set stock=0, sales=1 where id=17 and stock=1;
+冲突比较少的时候，使用乐观锁。
+冲突比较多的时候，使用悲观锁。
+8.3 用户中心-订单页
+8.4 订单支付
+https://openhome.alipay.com/platform/home.htm
+ 
+ 
+9.	项目部署
+9.1 uwsgi
+遵循wsgi协议的web服务器。
+9.1.1 uwsgi的安装
+	pip install uwsgi
+9.1.2 uwsgi的配置
+项目部署时，需要把settings.py文件夹下的：
+DEBUG=FALSE
+ALLOWED_HOSTS=[‘*’] 
+
+[uwsgi]
+#使用nginx连接时使用
+#socket=127.0.0.1:8080
+#直接做web服务器使用
+http=127.0.0.1:8080
+#项目目录
+chdir=/Users/smart/Desktop/dj/bj17/dailyfresh
+#项目中wsgi.py文件的目录，相对于项目目录
+wsgi-file=dailyfresh/wsgi.py
+processes=4
+threads=2
+master=True
+pidfile=uwsgi.pid
+daemonize=uwsgi.log
+virtualenv=/Users/smart/.virtualenvs/dailyfresh
+9.1.3 uwsgi的启动和停止
+启动:uwsgi –-ini 配置文件路径 例如:uwsgi –-ini uwsgi.ini
+停止:uwsgi --stop uwsgi.pid路径 例如:uwsgi –-stop uwsgi.pid
+9.2 nginx
+9.2.1 nginx 配置转发请求给uwsgi
+location / {
+	include uwsgi_params;
+	uwsgi_pass uwsgi服务器的ip:port;
+}
+9.2.2 nginx配置处理静态文件
+django settings.py中配置收集静态文件路径:
+STATIC_ROOT=收集的静态文件路径 例如:/var/www/dailyfresh/static;
+
+django 收集静态文件的命令:
+	python manage.py collectstatic
+执行上面的命令会把项目中所使用的静态文件收集到STATIC_ROOT指定的目录下。
+
+收集完静态文件之后,让nginx提供静态文件，需要在nginx配置文件中增加如下配置:
+location /static {
+	alias /var/www/dailyfresh/static/;
+}
+9.2.3 nginx转发请求给另外地址
+在location 对应的配置项中增加 proxy_pass 转发的服务器地址。
+如当用户访问127.0.0.1时，在nginx中配置把这个请求转发给172.16.179.131:80(nginx)服务器，让这台服务器提供静态首页。
+配置如下:
+location = /{
+	proxy_pass http://172.16.179.131;
+}
+9.2.4 nginx配置upstream实现负载均衡
+ngnix 配置负载均衡时，在server配置的前面增加upstream配置项。
+upstream dailyfresh {
+	server 127.0.0.1:8080;
+	server 127.0.0.1:8081;
+}
+9.2.4 部署项目流程图
+ 
+10.	项目总结
+1.	生鲜类产品  B2C  PC电脑端网页
+2.	功能模块：用户模块  商品模块（首页、 搜索、商品） 购物车模块  订单模块（下单、 支付）
+3.	用户模块：注册、登录、激活、退出、个人中心、地址
+4.	商品模块：首页、详情、列表、搜索（haystack+whoosh）
+5.	购物车： 增加、删除、修改、查询
+6.	订单模块：确认订单页面、提交订单（下单）、请求支付、查询支付结果、评论
+7.	django默认的认证系统 AbstractUser
+8.	itsdangerous  生成签名的token （序列化工具 dumps  loads）
+9.	邮件 （django提供邮件支持 配置参数  send_mail）
+10.	 celery (重点  整体认识 异步任务)
+11.	 页面静态化 （缓解压力  celery  nginx）
+12.	 缓存（缓解压力， 保存的位置、有效期、与数据库的一致性问题）
+13.	 FastDFS (分布式的图片存储服务， 修改了django的默认文件存储系统)
+14.	 搜索（ whoosh  索引  分词）
+15.	 购物车redis 哈希 历史记录redis list
+16.	 ajax 前端用ajax请求后端接口
+17.	 事务
+18.	 高并发的库存问题 （悲观锁、乐观锁）
+19.	 支付的使用流程
+20.	 nginx （负载均衡  提供静态文件）
