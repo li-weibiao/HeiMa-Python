@@ -19,7 +19,7 @@ app = Flask(__name__,
 # app.config.from_pyfile("config.cfg")
 
 # 2. 使用对象配置参数
-class Config(object):
+class Config(object):  # 开启错误调试功能
     DEBUG = True
     ITCAST = "python"
 
@@ -46,4 +46,4 @@ def index():
 if __name__ == '__main__':
     # 启动flask程序
     # app.run()
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)  # 这里的host可以是192.168.1.31等等这些ip,debug是开启调试模式
