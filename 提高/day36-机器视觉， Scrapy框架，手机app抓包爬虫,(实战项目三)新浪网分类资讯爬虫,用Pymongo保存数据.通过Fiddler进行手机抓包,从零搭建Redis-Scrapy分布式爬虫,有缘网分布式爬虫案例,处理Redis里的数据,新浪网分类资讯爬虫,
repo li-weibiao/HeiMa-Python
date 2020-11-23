@@ -1,0 +1,5160 @@
+机器视觉
+
+从 Google 的无人驾驶汽车到可以识别假钞的自动售卖机，机器视觉一直都是一个应用广 泛且具有深远的影响和雄伟的愿景的领域。
+
+我们将重点介绍机器视觉的一个分支：文字识别，介绍如何用一些 Python库来识别和使用在线图片中的文字。
+
+我们可以很轻松的阅读图片里的文字，但是机器阅读这些图片就会非常困难，利用这种人类用户可以正常读取但是大多数机器人都没法读取的图片，验证码 (CAPTCHA)就出现了。验证码读取的难易程度也大不相同，有些验证码比其他的更加难读。
+
+将图像翻译成文字一般被称为光学文字识别(Optical Character Recognition, OCR)。可以实现OCR的底层库并不多,目前很多库都是使用共同的几个底层 OCR 库,或者是在上面 进行定制。
+
+ORC库概述
+
+在读取和处理图像、图像相关的机器学习以及创建图像等任务中，Python 一直都是非常出色的语言。虽然有很多库可以进行图像处理，但在这里我们只重点介绍：Tesseract
+
+Tesseract
+
+Tesseract 是一个 OCR 库,目前由 Google 赞助(Google 也是一家以 OCR 和机器学习技术闻名于世的公司)。Tesseract 是目前公认最优秀、最精确的开源 OCR 系统，除了极高的精确度，Tesseract 也具有很高的灵活性。它可以通过训练识别出任何字体，也可以识别出任何 Unicode 字符。
+
+安装Tesseract
+
+Windows 系统
+
+下载可执行安装文件https://code.google.com/p/tesseract-ocr/downloads/list安装。
+
+Linux 系统
+
+可以通过 apt-get 安装:  $sudo apt-get tesseract-ocr 
+
+Mac OS X系统
+
+用 Homebrew(http://brew.sh/)等第三方库可以很方便地安装  brew install tesseract 
+
+安装pytesseract
+
+Tesseract 是一个 Python 的命令行工具，不是通过 import 语句导入的库。安装之后,要用 tesseract 命令在 Python 的外面运行，但我们可以通过 pip 安装支持Python 版本的 Tesseract库：
+
+ pip install pytesseract 
+
+==========================================================================================================================================================================================
+
+处理给规范的文字
+
+处理的大多数文字最好都是比较干净、格式规范的。格式规范的文字通常可以满足一些需求，通常格式规范的文字具有以下特点:
+•使用一个标准字体(不包含手写体、草书,或者十分“花哨的”字体)
+•即使被复印或拍照，字体还是很清晰，没有多余的痕迹或污点
+•排列整齐，没有歪歪斜斜的字
+•没有超出图片范围，也没有残缺不全，或紧紧贴在图片的边缘
+
+文字的一些格式问题在图片预处理时可以进行解决。例如,可以把图片转换成灰度图，调整亮度和对比度，还可以根据需要进行裁剪和旋转（详情需要了解图像与信号处理）等。
+
+格式规范文字的理想示例
+
+
+
+通过下面的命令运行 Tesseract，读取文件并把结果写到一个文本文件中:  tesseract test.jpg text 
+
+
+
+ cat text.txt  即可显示结果。
+
+识别结果很准确,不过符号 ^ 和 * 分别被表示成了双引号和单引号。大体上可以让你很舒服地阅读。
+
+通过Python代码实现
+import pytesseract
+from PIL import Image
+
+image = Image.open('test.jpg')
+text = pytesseract.image_to_string(image)
+print text
+
+
+运行结果：
+This is some text, written in Arial, that will be read by
+Tesseract. Here are some symbols: !@#$%"&*()
+
+
+对图片进行阈值过滤和降噪处理（了解即可）
+
+很多时候我们在网上会看到这样的图片：
+
+
+
+Tesseract 不能完整处理这个图片,主要是因为图片背景色是渐变的,最终结果是这样:
+
+
+
+随着背景色从左到右不断加深,文字变得越来越难以识别,Tesseract 识别出的 每一行的最后几个字符都是错的。
+
+遇到这类问题,可以先用 Python 脚本对图片进行清理。利用 PIL 库,我们可以创建一个阈值过滤器来去掉渐变的背景色，只把文字留下来，从而让图片更加清晰，便于 Tesseract 读取:
+from PIL import Image
+import subprocess
+
+def cleanFile(filePath, newFilePath):
+    image = Image.open(filePath)
+
+    # 对图片进行阈值过滤（低于143的置为黑色，否则为白色）
+    image = image.point(lambda x: 0 if x < 143 else 255)
+    # 重新保存图片
+    image.save(newFilePath)
+
+    # 调用系统的tesseract命令对图片进行OCR识别     
+    subprocess.call(["tesseract", newFilePath, "output"])
+
+    # 打开文件读取结果
+    with open("output.txt", 'r') as f:
+        print(f.read())
+
+if __name__ == "__main__":
+    cleanFile("text2.png", "text2clean.png")
+
+
+通过一个阈值对前面的“模糊”图片进行过滤的结果
+
+
+
+除了一些标点符号不太清晰或丢失了,大部分文字都被读出来了。Tesseract 给出了最好的 结果:
+
+
+
+从网站图片中抓取文字
+
+用 Tesseract 读取硬盘里图片上的文字,可能不怎么令人兴奋,但当我们把它和网络爬虫组合使用时,就能成为一个强大的工具。
+
+网站上的图片可能并不是故意把文字做得很花哨 (就像餐馆菜单的 JPG 图片上的艺术字),但它们上面的文字对网络爬虫来说就是隐藏起来 了，举个例子：
+
+•虽然亚马逊的 robots.txt 文件允许抓取网站的产品页面,但是图书的预览页通常不让网络机 器人采集。
+
+
+•图书的预览页是通过用户触发 Ajax 脚本进行加载的,预览图片隐藏在 div 节点 下面;其实,普通的访问者会觉得它们看起来更像是一个 Flash 动画,而不是一个图片文 件。当然,即使我们能获得图片,要把它们读成文字也没那么简单。
+
+
+•下面的程序就解决了这个问题:首先导航到托尔斯泰的《战争与和平》的大字号印刷版 1, 打开阅读器,收集图片的 URL 链接,然后下载图片,识别图片,最后打印每个图片的文 字。因为这个程序很复杂,利用了前面几章的多个程序片段,所以我增加了一些注释以让 每段代码的目的更加清晰:
+
+
+import time
+from urllib.request import urlretrieve
+import subprocess
+from selenium import webdriver
+#创建新的Selenium driver
+driver = webdriver.PhantomJS()
+
+# 用Selenium试试Firefox浏览器:
+# driver = webdriver.Firefox()
+
+driver.get("http://www.amazon.com/War-Peace-Leo-Nikolayevich-Tolstoy/dp/1427030200")
+# 单击图书预览按钮 driver.find_element_by_id("sitbLogoImg").click() imageList = set()
+# 等待页面加载完成
+time.sleep(5)
+# 当向右箭头可以点击时,开始翻页
+while "pointer" in driver.find_element_by_id("sitbReaderRightPageTurner").get_attribute("style"):
+    driver.find_element_by_id("sitbReaderRightPageTurner").click()
+    time.sleep(2)
+    # 获取已加载的新页面(一次可以加载多个页面,但是重复的页面不能加载到集合中)
+    pages = driver.find_elements_by_xpath("//div[@class='pageImage']/div/img")
+    for page in pages:
+        image = page.get_attribute("src")
+        imageList.add(image)
+driver.quit()
+
+# 用Tesseract处理我们收集的图片URL链接
+for image in sorted(imageList):
+    # 保存图片
+    urlretrieve(image, "page.jpg")
+    p = subprocess.Popen(["tesseract", "page.jpg", "page"], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    f = open("page.txt", "r")
+    p.wait() print(f.read())
+
+
+和我们前面使用 Tesseract 读取的效果一样，这个程序也会完美地打印书中很多长长的段落，第六页的预览如下所示:
+6
+     "A word of friendly advice, mon
+     cher. Be off as soon as you can,
+     that's all I have to tell you. Happy
+     he who has ears to hear. Good-by,
+     my dear fellow. Oh, by the by!" he
+     shouted through the doorway after
+     Pierre, "is it true that the countess
+     has fallen into the clutches of the
+     holy fathers of the Society of je-
+     sus?"
+     Pierre did not answer and left Ros-
+     topchin's room more sullen and an-
+     gry than he had ever before shown
+     himself.
+
+
+但是当文字出现在彩色封面上时，结果就不那么完美了:
+   WEI' nrrd Peace
+   Len Nlkelayevldu Iolfluy
+   Readmg shmdd be ax
+   wlnvame asnossxble Wenfler
+   an mm m our cram: Llhvary
+    - Leo Tmsloy was a Russian rwovelwst
+    I and moval phflmopher med lur
+    A ms Ideas 01 nonviolenx reswslance m 5 We range     0, "and"
+
+
+如果想把文字加工成普通人可以看懂的效果，还需要花很多时间去处理。
+
+比如，通过给 Tesseract 提供大量已知的文字与图片映射集，经过训练 Tesseract 就可以“学会”识别同一种字体，而且可以达到极高的精确率和准确率，甚至可以忽略图片中文字的背景色和相对位置等问题。
+
+=======================================================================================================================================================================================================
+
+尝试对知乎网验证码进行处理：
+
+许多流行的内容管理系统即使加了验证码模块，其众所周知的注册页面也经常会遭到网络 机器人的垃圾注册。
+
+那么，这些网络机器人究，竟是怎么做的呢?既然我们已经，可以成功地识别出保存在电脑上 的验证码了，那么如何才能实现一个全能的网络机器人呢?
+
+大多数网站生成的验证码图片都具有以下属性。
+•它们是服务器端的程序动态生成的图片。验证码图片的 src 属性可能和普通图片不太一 样，比如  <img src="WebForm.aspx?id=8AP85CQKE9TJ"> ，但是可以和其他图片一样进行 下载和处理。
+•图片的答案存储在服务器端的数据库里。
+•很多验证码都有时间限制，如果你太长时间没解决就会失效。
+•常用的处理方法就是，首先把验证码图片下载到硬盘里，清理干净，然后用 Tesseract 处理 图片，最后返回符合网站要求的识别结果。
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+
+import requests
+import time
+import pytesseract
+from PIL import Image
+from bs4 import BeautifulSoup
+
+def captcha(data):
+    with open('captcha.jpg','wb') as fp:
+        fp.write(data)
+    time.sleep(1)
+    image = Image.open("captcha.jpg")
+    text = pytesseract.image_to_string(image)
+    print "机器识别后的验证码为：" + text
+    command = raw_input("请输入Y表示同意使用，按其他键自行重新输入：")
+    if (command == "Y" or command == "y"):
+        return text
+    else:
+        return raw_input('输入验证码：')
+
+def zhihuLogin(username,password):
+
+    # 构建一个保存Cookie值的session对象
+    sessiona = requests.Session()
+    headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0'}
+
+    # 先获取页面信息，找到需要POST的数据（并且已记录当前页面的Cookie）
+    html = sessiona.get('https://www.zhihu.com/#signin', headers=headers).content
+
+    # 找到 name 属性值为 _xsrf 的input标签，取出value里的值
+    _xsrf = BeautifulSoup(html ,'lxml').find('input', attrs={'name':'_xsrf'}).get('value')
+
+    # 取出验证码，r后面的值是Unix时间戳,time.time()
+    captcha_url = 'https://www.zhihu.com/captcha.gif?r=%d&type=login' % (time.time() * 1000)
+    response = sessiona.get(captcha_url, headers = headers)
+
+
+    data = {
+        "_xsrf":_xsrf,
+        "email":username,
+        "password":password,
+        "remember_me":True,
+        "captcha": captcha(response.content)
+    }
+
+    response = sessiona.post('https://www.zhihu.com/login/email', data = data, headers=headers)
+    print response.text
+
+    response = sessiona.get('https://www.zhihu.com/people/maozhaojun/activities', headers=headers)
+    print response.text
+
+
+if __name__ == "__main__":
+    zhihuLogin('xxxx@qq.com','ALAxxxxIME')
+
+
+尝试处理中文字符
+
+如果手头上有中文的训练数据，也可以尝试对中文进行识别。
+
+命令： tesseract --list-langs 可以查看当前支持的语言， chi_sim 表示支持简体中文。
+
+
+
+那么在使用时候，可以指定某个语言来进行识别，如：
+
+ tesseract -l chi_sim paixu.png paixu 
+
+
+
+表现在程序里，则可以这么写：
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+
+from PIL import Image
+import subprocess
+
+def cleanFile(filePath)
+    image = Image.open(filePath)
+
+    # 调用系统的tesseract命令, 对图片进行OCR中文识别
+    subprocess.call(["tesseract", "-l", "chi_sim", filePath, "paixu"])
+
+    # 打开文件读取结果
+    with open("paixu.txt", 'r') as f:
+        print(f.read())
+
+if __name__ == "__main__":
+    cleanFile("paixu.png")
+
+========================================================================================================================================================================================
+
+案例三：执行 JavaScript 语句
+•1.隐藏百度图片
+
+
+from selenium import webdriver
+
+driver = webdriver.PhantomJS()
+driver.get("https://www.baidu.com/")
+
+# 给搜索输入框标红的javascript脚本
+js = "var q=document.getElementById(\"kw\");q.style.border=\"2px solid red\";"
+
+# 调用给搜索输入框标红js脚本
+driver.execute_script(js)
+
+#查看页面快照
+driver.save_screenshot("redbaidu.png")
+
+#js隐藏元素，将获取的图片元素隐藏
+img = driver.find_element_by_xpath("//*[@id='lg']/img")
+driver.execute_script('$(arguments[0]).fadeOut()',img)
+
+# 向下滚动到页面底部
+driver.execute_script("$('.scroll_top').click(function(){$('html,body').animate({scrollTop: '0px'}, 800);});")
+
+#查看页面快照
+driver.save_screenshot("nullbaidu.png")
+
+driver.quit()
+
+•1.模拟滚动条滚动到底部
+
+# 
+from selenium import webdriver
+import time
+
+driver = webdriver.PhantomJS()
+driver.get("https://movie.douban.com/typerank?type_name=剧情&type=11&interval_id=100:90&action=")
+
+# 向下滚动10000像素
+js = "document.body.scrollTop=10000"
+#js="var q=document.documentElement.scrollTop=10000"
+time.sleep(3)
+
+#查看页面快照
+driver.save_screenshot("douban.png")
+
+# 执行JS语句
+driver.execute_script(js)
+time.sleep(10)
+
+#查看页面快照
+driver.save_screenshot("newdouban.png")
+
+driver.quit()
+
+====================================================================================================================================================================================
+
+参考阅读：训练Tesseract
+
+要使用 Tesseract 的功能，比如后面的示例中训练程序识别字母，要先在系统中设置一 个新的环境变量  $TESSDATA_PREFIX ，让 Tesseract 知道训练的数据文件存储在哪里，然后搞一份tessdata数据文件，放到Tesseract目录下。
+
+•在大多数 Linux 系统和 Mac OS X 系统上,你可以这么设置:  $export TESSDATA_PREFIX=/usr/local/share/Tesseract 
+
+
+•在 Windows 系统上也类似,你可以通过下面这行命令设置环境变量:  #setx TESSDATA_PREFIX C:\Program Files\Tesseract OCR\Tesseract 
+
+
+大多数其他的验证码都是比较简单的。例如，流行的 PHP 内容管理系统 Drupal 有一个著名的验证码模块 https://www.drupal.org/project/captcha，可以生成不同难度的验证码。
+
+举个例子：
+
+
+
+那么与其他验证码相比，为什么这个验证码更容易被人类和机器读懂呢?
+•字母没有相互叠加在一起，在水平方向上也没有彼此交叉。也就是说，可以在每一个字 母外面画一个方框，而不会重叠在一起。
+•图片没有背景色、线条或其他对 OCR 程序产生干扰的噪点。
+•虽然不能因一个图片下定论，但是这个验证码用的字体种类很少，而且用的是 sans-serif 字体(像“4”和“M”)和一种手写形式的字体(像“m”“C”和“3”)。
+•白色背景色与深色字母之间的对比度很高。
+
+这个验证码只做了一点点改变，就让 OCR 程序很难识别。
+•字母和数据都使用了，这会增加待搜索字符的数量。
+•字母随机的倾斜程度会迷惑 OCR 软件，但是人类还是很容易识别的。
+•那个比较陌生的手写字体很有挑战性，在“C”和“3”里面还有额外的线条。
+•另外这个非常小的小写“m”，计算机需要进行额外的训练才能识别。
+
+用下面的代码运行 Tesseract 识别图片:
+
+ tesseract captchaExample.png output 
+
+我们得到的结果 output.txt 是:  4N\，，，C<3 
+
+创建样本库训练Tesseract
+
+要训练 Tesseract 识别一种文字，无论是晦涩难懂的字体还是验证码，你都需要向 Tesseract 提供每个字符不同形式的样本。
+
+首先要收集大量的验证码样本，样本的数量和复杂程度，会决定训练的效果。第二步是准确地告诉 Tesseract 一张图片中的每个字符是什么，以及每个字符的具体位置。
+
+这里需要创建一些矩形定位文件(box file)，一个验证码图片生成一个矩形定位文件，也可以通过jTessBoxEditor软件来修改矩形的定位。
+
+一个图片的矩形定位文件如下所示:
+      4  15 26 33 55 0
+      M  38 13 67 45 0
+      m  79 15 101 26 0
+      C  111 33 136 60 0
+      3  147 17 176 45 0
+
+
+第一列符号是图片中的每个字符，后面的 4 个数字分别是包围这个字符的最小矩形的坐标 (图片左下角是原点 (0，0)，4 个数字分别对应每个字符的左下角 x 坐标、左下角 y 坐标、右上角 x 坐标和右上角 y 坐标)，最后一个数字“0”表示图片样本的编号。
+
+矩形定位文件必须保存在一个 .box 后缀的文本文件中，(例如 4MmC3.box)。
+
+
+博客园的一篇不错的训练教程：http://www.cnblogs.com/mjorcen/p/3800739.html?utm_source=tuicool&utm_medium=referral
+
+前面的内容只是对 Tesseract 库的字体训练和识别能力的一个简略概述。如果你对 Tesseract 的其他训练方法感兴趣，甚至打算建立自己的验证码训练文件库，推荐阅读 Tesseract 官方文档：https://github.com/tesseract-ocr/tesseract/wiki，加油！
+
+==================================================================================================================================================================================================================
+
+Scrapy 框架
+
+•Scrapy是用纯Python实现一个为了爬取网站数据、提取结构性数据而编写的应用框架，用途非常广泛。
+
+
+•框架的力量，用户只需要定制开发几个模块就可以轻松的实现一个爬虫，用来抓取网页内容以及各种图片，非常之方便。
+
+
+•Scrapy 使用了 Twisted ['twɪstɪd] (其主要对手是Tornado)异步网络框架来处理网络通讯，可以加快我们的下载速度，不用自己去实现异步框架，并且包含了各种中间件接口，可以灵活的完成各种需求。
+
+
+Scrapy架构图(绿线是数据流向)：
+
+
+
+• Scrapy Engine(引擎) : 负责 Spider 、 ItemPipeline 、 Downloader 、 Scheduler 中间的通讯，信号、数据传递等。
+
+
+• Scheduler(调度器) : 它负责接受 引擎 发送过来的Request请求，并按照一定的方式进行整理排列，入队，当 引擎 需要时，交还给 引擎 。
+
+
+• Downloader（下载器） ：负责下载 Scrapy Engine(引擎) 发送的所有Requests请求，并将其获取到的Responses交还给 Scrapy Engine(引擎) ，由 引擎 交给 Spider 来处理，
+
+
+• Spider（爬虫） ：它负责处理所有Responses,从中分析提取数据，获取Item字段需要的数据，并将需要跟进的URL提交给 引擎 ，再次进入 Scheduler(调度器) ，
+
+
+• Item Pipeline(管道) ：它负责处理 Spider 中获取到的Item，并进行进行后期处理（详细分析、过滤、存储等）的地方.
+
+
+• Downloader Middlewares（下载中间件） ：你可以当作是一个可以自定义扩展下载功能的组件。
+
+
+• Spider Middlewares（Spider中间件） ：你可以理解为是一个可以自定扩展和操作 引擎 和 Spider 中间 通信 的功能组件（比如进入 Spider 的Responses;和从 Spider 出去的Requests）
+
+
+Scrapy的运作流程
+
+代码写好，程序开始运行...
+
+1. 引擎 ：Hi！ Spider , 你要处理哪一个网站？
+
+
+2. Spider ：老大要我处理xxxx.com。
+
+
+3. 引擎 ：你把第一个需要处理的URL给我吧。
+
+
+4. Spider ：给你，第一个URL是xxxxxxx.com。
+
+
+5. 引擎 ：Hi！ 调度器 ，我这有request请求你帮我排序入队一下。
+
+
+6. 调度器 ：好的，正在处理你等一下。
+
+
+7. 引擎 ：Hi！ 调度器 ，把你处理好的request请求给我。
+
+
+8. 调度器 ：给你，这是我处理好的request
+
+
+9. 引擎 ：Hi！下载器，你按照老大的 下载中间件 的设置帮我下载一下这个request请求
+
+
+10. 下载器 ：好的！给你，这是下载好的东西。（如果失败：sorry，这个request下载失败了。然后 引擎 告诉 调度器 ，这个request下载失败了，你记录一下，我们待会儿再下载）
+
+
+11. 引擎 ：Hi！ Spider ，这是下载好的东西，并且已经按照老大的 下载中间件 处理过了，你自己处理一下（注意！这儿responses默认是交给 def parse() 这个函数处理的）
+
+
+12. Spider ：（处理完毕数据之后对于需要跟进的URL），Hi！ 引擎 ，我这里有两个结果，这个是我需要跟进的URL，还有这个是我获取到的Item数据。
+
+
+13. 引擎 ：Hi ！ 管道  我这儿有个item你帮我处理一下！ 调度器 ！这是需要跟进URL你帮我处理下。然后从第四步开始循环，直到获取完老大需要全部信息。
+
+
+14. 管道``调度器 ：好的，现在就做！
+
+
+注意！只有当 调度器 中不存在任何request了，整个程序才会停止，（也就是说，对于下载失败的URL，Scrapy也会重新下载。）
+
+制作 Scrapy 爬虫 一共需要4步：
+•新建项目 (scrapy startproject xxx)：新建一个新的爬虫项目
+•明确目标 （编写items.py）：明确你想要抓取的目标
+•制作爬虫 （spiders/xxspider.py）：制作爬虫开始爬取网页
+•存储内容 （pipelines.py）：设计管道存储爬取内容
+
+======================================================================================================================================================================================
+
+Scrapy的安装介绍
+
+Scrapy框架官方网址：http://doc.scrapy.org/en/latest
+
+Scrapy中文维护站点：http://scrapy-chs.readthedocs.io/zh_CN/latest/index.html
+
+Windows 安装方式
+•Python 2 / 3
+•升级pip版本： pip install --upgrade pip 
+•通过pip 安装 Scrapy 框架 pip install Scrapy 
+
+Ubuntu 需要9.10或以上版本安装方式
+•Python 2 / 3
+•安装非Python的依赖  sudo apt-get install python-dev python-pip libxml2-dev libxslt1-dev zlib1g-dev libffi-dev libssl-dev 
+•通过pip 安装 Scrapy 框架  sudo pip install scrapy 
+
+安装后，只要在命令终端输入 scrapy，提示类似以下结果，代表已经安装成功
+
+
+
+具体Scrapy安装流程参考：http://doc.scrapy.org/en/latest/intro/install.html#intro-install-platform-notes 里面有各个平台的安装方法
+
+===================================================================================================================================================================================================================
+
+入门案例
+
+学习目标
+•创建一个Scrapy项目
+•定义提取的结构化数据(Item)
+•编写爬取网站的 Spider 并提取出结构化数据(Item)
+•编写 Item Pipelines 来存储提取到的Item(即结构化数据)
+
+一. 新建项目(scrapy startproject)
+•在开始爬取之前，必须创建一个新的Scrapy项目。进入自定义的项目目录中，运行下列命令：
+scrapy startproject mySpider
+
+•其中， mySpider 为项目名称，可以看到将会创建一个 mySpider 文件夹，目录结构大致如下：
+
+
+
+下面来简单介绍一下各个主要文件的作用：
+
+
+scrapy.cfg ：项目的配置文件
+
+mySpider/ ：项目的Python模块，将会从这里引用代码
+
+mySpider/items.py ：项目的目标文件
+
+mySpider/pipelines.py ：项目的管道文件
+
+mySpider/settings.py ：项目的设置文件
+
+mySpider/spiders/ ：存储爬虫代码目录
+
+二、明确目标(mySpider/items.py)
+
+我们打算抓取：http://www.itcast.cn/channel/teacher.shtml 网站里的所有讲师的姓名、职称和个人信息。
+
+1.打开mySpider目录下的items.py
+
+
+2.Item 定义结构化数据字段，用来保存爬取到的数据，有点像Python中的dict，但是提供了一些额外的保护减少错误。
+
+
+3.可以通过创建一个 scrapy.Item 类， 并且定义类型为 scrapy.Field的类属性来定义一个Item。
+
+
+4.接下来，创建一个ItcastItem 类，和构建item模型（model）。
+
+import scrapy
+
+class ItcastItem(scrapy.Item):
+    name = scrapy.Field()
+    level = scrapy.Field()
+    info = scrapy.Field()
+
+
+三、制作爬虫 （spiders/itcastSpider.py）
+
+爬虫功能要分两步：
+
+1. 爬数据
+•在当前目录下输入命令，将在 mySpider/spider 目录下创建一个名为 itcast 的爬虫，并指定爬取域的范围：
+scrapy genspider itcast "itcast.cn"
+
+•打开 mySpider/spider目录里的 itcast.py，默认增加了下列代码:
+import scrapy
+
+class ItcastSpider(scrapy.Spider):
+    name = "itcast"
+    allowed_domains = ["itcast.cn"]
+    start_urls = (
+        'http://www.itcast.cn/',
+    )
+
+    def parse(self, response):
+        pass
+
+
+其实也可以由我们自行创建itcast.py并编写上面的代码，只不过使用命令可以免去编写固定代码的麻烦
+
+要建立一个Spider， 你必须用scrapy.Spider类创建一个子类，并确定了三个强制的属性 和 一个方法。
+
+• name = ""  ：这个爬虫的识别名称，必须是唯一的，在不同的爬虫必须定义不同的名字。
+
+
+• allow_domains = []  是搜索的域名范围，也就是爬虫的约束区域，规定爬虫只爬取这个域名下的网页，不存在的URL会被忽略。
+
+
+• start_urls = ()  ：爬取的URL元祖/列表。爬虫从这里开始抓取数据，所以，第一次下载的数据将会从这些urls开始。其他子URL将会从这些起始URL中继承性生成。
+
+
+• parse(self, response)  ：解析的方法，每个初始URL完成下载后将被调用，调用的时候传入从每一个URL传回的Response对象来作为唯一参数，主要作用如下：
+1.负责解析返回的网页数据(response.body)，提取结构化数据(生成item)
+2.生成需要下一页的URL请求。
+
+
+将start_urls的值修改为需要爬取的第一个url
+start_urls = ("http://www.itcast.cn/channel/teacher.shtml",)
+
+
+修改parse()方法
+def parse(self, response):
+    with open("teacher.html", "w") as f:
+        f.write(response.text)
+
+
+然后运行一下看看，在mySpider目录下执行：
+scrapy crawl itcast
+
+
+是的，就是 itcast，看上面代码，它是 ItcastSpider 类的 name 属性，也就是使用  scrapy genspider 命令的爬虫名。
+
+一个Scrapy爬虫项目里，可以存在多个爬虫。各个爬虫在执行时，就是按照 name 属性来区分。
+
+运行之后，如果打印的日志出现  [scrapy] INFO: Spider closed (finished) ，代表执行完成。 之后当前文件夹中就出现了一个 teacher.html 文件，里面就是我们刚刚要爬取的网页的全部源代码信息。
+
+
+
+2. 取数据
+•爬取整个网页完毕，接下来的就是的取过程了，首先观察页面源码：
+
+
+<div class="li_txt">
+    <h3>  xxx  </h3>
+    <h4> xxxxx </h4>
+    <p> xxxxxxxx </p>
+
+
+是不是一目了然？直接上XPath开始提取数据吧。
+•我们之前在mySpider/items.py 里定义了一个ItcastItem类。 这里引入进来
+  from mySpider.items import ItcastItem
+
+•然后将我们得到的数据封装到一个  ItcastItem  对象中，可以保存每个老师的属性：
+from mySpider.items import ItcastItem
+
+def parse(self, response):
+    #open("teacher.html","wb").write(response.body).close()
+    # 存放老师信息的集合
+    items = []
+
+    for each in response.xpath("//div[@class='li_txt']"):
+        # 将我们得到的数据封装到一个 `ItcastItem` 对象
+        item = ItcastItem()
+        #extract()方法返回的都是字符串
+        name = each.xpath("h3/text()").extract()
+        title = each.xpath("h4/text()").extract()
+        info = each.xpath("p/text()").extract()
+
+        #xpath返回的是包含一个元素的列表
+        item['name'] = name[0]
+        item['title'] = title[0]
+        item['info'] = info[0]
+
+        items.append(item)
+
+    # 直接返回最后数据
+    return items
+
+•我们暂时先不处理管道，后面会详细介绍。
+
+保存数据
+
+scrapy保存信息的最简单的方法主要有四种，-o 输出指定格式的文件，，命令如下：
+# json格式，默认为Unicode编码
+scrapy crawl itcast -o teachers.json
+
+# json lines格式，默认为Unicode编码
+scrapy crawl itcast -o teachers.jsonl
+
+# csv 逗号表达式，可用Excel打开
+scrapy crawl itcast -o teachers.csv
+
+# xml格式
+scrapy crawl itcast -o teachers.xml
+
+
+
+
+思考
+
+如果将代码改成下面形式，结果完全一样。
+
+请思考 yield 在这里的作用：
+from mySpider.items import ItcastItem
+
+def parse(self, response):
+    #open("teacher.html","wb").write(response.body).close()
+    # 存放老师信息的集合
+    #items = []
+    for each in response.xpath("//div[@class='li_txt']"):
+        # 将我们得到的数据封装到一个 `ItcastItem` 对象
+        item = ItcastItem()
+        #extract()方法返回的都是字符串
+        name = each.xpath("h3/text()").extract_first()
+        title = each.xpath("h4/text()").extract_first()
+        info = each.xpath("p/text()").extract_first()
+        #items.append(item)
+        #将获取的数据交给pipelines
+        yield item
+
+    # 返回数据，不经过pipeline
+    #return items
+
+======================================================================================================================================================================================
+
+Scrapy Shell
+
+Scrapy终端是一个交互终端，我们可以在未启动spider的情况下尝试及调试代码，也可以用来测试XPath或CSS表达式，查看他们的工作方式，方便我们爬取的网页中提取的数据。
+
+如果安装了 IPython ，Scrapy终端将使用 IPython (替代标准Python终端)。 IPython 终端与其他相比更为强大，提供智能的自动补全，高亮输出，及其他特性。（推荐安装IPython）
+
+启动Scrapy Shell
+
+进入项目的根目录，执行下列命令来启动shell:
+scrapy shell "http://www.itcast.cn/channel/teacher.shtml"
+
+
+
+
+Scrapy Shell根据下载的页面会自动创建一些方便使用的对象，例如 Response 对象，以及  Selector 对象 (对HTML及XML内容) 。
+
+•当shell载入后，将得到一个包含response数据的本地 response 变量，输入  response.body 将输出response的包体，输出  response.headers  可以看到response的包头。
+
+
+•输入  response.selector  时， 将获取到一个response 初始化的类 Selector 的对象，此时可以通过使用  response.selector.xpath() 或 response.selector.css()  来对 response 进行查询。
+
+
+•Scrapy也提供了一些快捷方式, 例如  response.xpath() 或 response.css() 同样可以生效（如之前的案例）。
+
+
+Selectors选择器
+
+Scrapy Selectors 内置 XPath 和 CSS Selector 表达式机制
+
+Selector有四个基本的方法，最常用的还是xpath:
+•xpath(): 传入xpath表达式，返回该表达式所对应的所有节点的selector list列表
+•extract(): 序列化该节点为字符串并返回list
+•css(): 传入CSS表达式，返回该表达式所对应的所有节点的selector list列表，语法同 BeautifulSoup4
+•re(): 根据传入的正则表达式对数据进行提取，返回字符串list列表
+
+XPath表达式的例子及对应的含义:
+/html/head/title: 选择<HTML>文档中 <head> 标签内的 <title> 元素
+/html/head/title/text(): 选择上面提到的 <title> 元素的文字
+//td: 选择所有的 <td> 元素
+//div[@class="mine"]: 选择所有具有 class="mine" 属性的 div 元素
+
+
+尝试Selector
+
+我们用腾讯社招的网站http://hr.tencent.com/position.php?&start=0#a举例：
+# 启动
+scrapy shell "http://hr.tencent.com/position.php?&start=0#a"
+
+# 返回 xpath选择器对象列表
+response.xpath('//title')
+[<Selector xpath='//title' data='<title>职位搜索 | 社会招聘 | Tencent 腾讯招聘</title'>]
+
+# 使用 extract()方法返回字符串列表
+response.xpath('//title').extract()
+['<title>职位搜索 | 社会招聘 | Tencent 腾讯招聘</title>']
+
+# 打印列表第一个元素,没有则返回None
+print response.xpath('//title').extract_first()
+<title>职位搜索 | 社会招聘 | Tencent 腾讯招聘</title>
+
+#contains的用法，or的用法，last()的含义
+In [6]: response.xpath('//*[contains(@class,"odd") or contains(@class,"even")]/td[last()]/text()').extract()
+Out[6]:
+['2017-06-02',
+ '2017-06-02',
+ '2017-06-02',
+ '2017-06-02',
+ '2017-06-02',
+ '2017-06-02',
+ '2017-06-02',
+ '2017-06-02',
+ '2017-06-02',
+ '2017-06-02']
+
+ In [4]: response.xpath('//a[contains(@href,"position_detail.php?")]/text()').extract()
+ Out[4]:
+ ['19407-移动游戏平台合作（上海）',
+  '19407-手游商业化与本地化策划（上海）',
+  'OMG236-腾讯视频平台高级产品经理（深圳）',
+  'OMG096-科技频道记者（北京）',
+  '18402-项目管理',
+  'IEG-招聘经理（深圳）',
+  'OMG097-视觉设计师（北京）',
+  'OMG097-策略产品经理/产品运营（北京）',
+  'OMG097-策略产品经理/产品运营（北京）',
+  'OMG097-数据产品经理(北京）']
+
+  In [5]: response.xpath('//*[contains(@class,"odd") or contains(@class,"even")]/td[last()-1]/text()').extract()
+  Out[5]: ['上海', '上海', '深圳', '北京', '深圳', '深圳', '北京', '北京', '北京', '北京']
+
+
+以后做数据提取的时候，可以把现在Scrapy Shell中测试，测试通过后再应用到代码中。
+
+当然Scrapy Shell作用不仅仅如此，但是不属于我们课程重点，不做详细介绍。
+
+官方文档：http://scrapy-chs.readthedocs.io/zh_CN/latest/topics/shell.html
+
+===================================================================================================================================================================================
+
+Item Pipeline
+
+当Item在Spider中被收集之后，它将会被传递到Item Pipeline，这些Item Pipeline组件按定义的顺序处理Item。
+
+每个Item Pipeline都是实现了简单方法的Python类，比如决定此Item是丢弃而存储。以下是item pipeline的一些典型应用：
+•验证爬取的数据(检查item包含某些字段，比如说name字段)
+•查重(并丢弃)
+•将爬取结果保存到文件或者数据库中
+
+编写item pipeline
+
+编写item pipeline很简单，item pipiline组件是一个独立的Python类，其中process_item()方法必须实现:
+import something
+
+class SomethingPipeline(object):
+    def __init__(self):    
+        # 可选实现，做参数初始化等
+        # doing something
+
+    def process_item(self, item, spider):
+        # item (Item 对象) – 被爬取的item
+        # spider (Spider 对象) – 爬取该item的spider
+        # 这个方法必须实现，每个item pipeline组件都需要调用该方法，
+        # 这个方法必须返回一个 Item 对象，被丢弃的item将不会被之后的pipeline组件所处理。
+        return item
+
+    def open_spider(self, spider):
+        # spider (Spider 对象) – 被开启的spider
+        # 可选实现，当spider被开启时，这个方法被调用。
+
+    def close_spider(self, spider):
+        # spider (Spider 对象) – 被关闭的spider
+        # 可选实现，当spider被关闭时，这个方法被调用
+
+
+完善之前的案例：
+
+item写入JSON文件
+
+以下pipeline将所有(从所有'spider'中)爬取到的item，存储到一个独立地items.json 文件，每行包含一个序列化为'JSON'格式的'item'。
+
+打开 pipelines.py 文件，写入下面代码:
+# pipelines.py
+
+import json
+
+class ItcastJsonPipeline(object):
+
+    def __init__(self):
+        self.file = open('teacher.json', 'wb')
+
+    def process_item(self, item, spider):
+        content = json.dumps(dict(item), ensure_ascii=False) + "\n"
+        self.file.write(content)
+        return item
+
+    def close_spider(self, spider):
+        self.file.close()
+
+
+启用一个Item Pipeline组件
+
+为了启用Item Pipeline组件，必须将它的类添加到 settings.py文件ITEM_PIPELINES 配置，就像下面这个例子:
+# Configure item pipelines
+# See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
+ITEM_PIPELINES = {
+    #'mySpider.pipelines.SomePipeline': 300,
+    "mySpider.pipelines.ItcastJsonPipeline":300
+}
+
+
+分配给每个类的整型值，确定了他们运行的顺序，item按数字从低到高的顺序，通过pipeline，通常将这些数字定义在0-1000范围内（0-1000随意设置，数值越低，组件的优先级越高）
+
+重新启动爬虫
+
+将parse()方法改为4.2中最后思考中的代码，然后执行下面的命令：
+scrapy crawl itcast
+
+
+查看当前目录是否生成teacher.json
+
+======================================================================================================================================================================================
+
+Spider
+
+Spider类定义了如何爬取某个(或某些)网站。包括了爬取的动作(例如:是否跟进链接)以及如何从网页的内容中提取结构化数据(爬取item)。 换句话说，Spider就是您定义爬取的动作及分析某个网页(或者是有些网页)的地方。
+
+ class scrapy.Spider 是最基本的类，所有编写的爬虫必须继承这个类。
+
+主要用到的函数及调用顺序为：
+
+ __init__()  : 初始化爬虫名字和start_urls列表
+
+ start_requests() 调用make_requests_from url() :生成Requests对象交给Scrapy下载并返回response
+
+ parse()  : 解析response，并返回Item或Requests（需指定回调函数）。Item传给Item pipline持久化 ， 而Requests交由Scrapy下载，并由指定的回调函数处理（默认parse())，一直进行循环，直到处理完所有的数据为止。
+
+源码参考
+#所有爬虫的基类，用户定义的爬虫必须从这个类继承
+class Spider(object_ref):
+
+    #定义spider名字的字符串(string)。spider的名字定义了Scrapy如何定位(并初始化)spider，所以其必须是唯一的。
+    #name是spider最重要的属性，而且是必须的。
+    #一般做法是以该网站(domain)(加或不加 后缀 )来命名spider。 例如，如果spider爬取 mywebsite.com ，该spider通常会被命名为 mywebsite
+    name = None
+
+    #初始化，提取爬虫名字，start_ruls
+    def __init__(self, name=None, **kwargs):
+        if name is not None:
+            self.name = name
+        # 如果爬虫没有名字，中断后续操作则报错
+        elif not getattr(self, 'name', None):
+            raise ValueError("%s must have a name" % type(self).__name__)
+
+        # python 对象或类型通过内置成员__dict__来存储成员信息
+        self.__dict__.update(kwargs)
+
+        #URL列表。当没有指定的URL时，spider将从该列表中开始进行爬取。 因此，第一个被获取到的页面的URL将是该列表之一。 后续的URL将会从获取到的数据中提取。
+        if not hasattr(self, 'start_urls'):
+            self.start_urls = []
+
+    # 打印Scrapy执行后的log信息
+    def log(self, message, level=log.DEBUG, **kw):
+        log.msg(message, spider=self, level=level, **kw)
+
+    # 判断对象object的属性是否存在，不存在做断言处理
+    def set_crawler(self, crawler):
+        assert not hasattr(self, '_crawler'), "Spider already bounded to %s" % crawler
+        self._crawler = crawler
+
+    @property
+    def crawler(self):
+        assert hasattr(self, '_crawler'), "Spider not bounded to any crawler"
+        return self._crawler
+
+    @property
+    def settings(self):
+        return self.crawler.settings
+
+    #该方法将读取start_urls内的地址，并为每一个地址生成一个Request对象，交给Scrapy下载并返回Response
+    #该方法仅调用一次
+    def start_requests(self):
+        for url in self.start_urls:
+            yield self.make_requests_from_url(url)
+
+    #start_requests()中调用，实际生成Request的函数。
+    #Request对象默认的回调函数为parse()，提交的方式为get
+    def make_requests_from_url(self, url):
+        return Request(url, dont_filter=True)
+
+    #默认的Request对象回调函数，处理返回的response。
+    #生成Item或者Request对象。用户必须实现这个类
+    def parse(self, response):
+        raise NotImplementedError
+
+    @classmethod
+    def handles_request(cls, request):
+        return url_is_from_spider(request.url, cls)
+
+    def __str__(self):
+        return "<%s %r at 0x%0x>" % (type(self).__name__, self.name, id(self))
+
+    __repr__ = __str__
+
+
+主要属性和方法
+
+•name
+
+
+定义spider名字的字符串。
+
+例如，如果spider爬取 mywebsite.com ，该spider通常会被命名为 mywebsite
+
+
+•allowed_domains
+
+
+包含了spider允许爬取的域名(domain)的列表，可选。
+
+
+•start_urls
+
+
+初始URL元祖/列表。当没有制定特定的URL时，spider将从该列表中开始进行爬取。
+
+
+•start_requests(self)
+
+
+该方法必须返回一个可迭代对象(iterable)。该对象包含了spider用于爬取（默认实现是使用 start_urls 的url）的第一个Request。
+
+当spider启动爬取并且未指定start_urls时，该方法被调用。
+
+
+•parse(self, response)
+
+
+当请求url返回网页没有指定回调函数时，默认的Request对象回调函数。用来处理网页返回的response，以及生成Item或者Request对象。
+
+
+•log(self, message[, level, component])
+
+
+使用 scrapy.log.msg() 方法记录(log)message。 更多数据请参见 logging
+
+
+案例：腾讯招聘网自动翻页采集
+•创建一个新的爬虫：
+
+ scrapy genspider tencent "tencent.com" 
+•编写items.py
+
+获取职位名称、详细信息、
+class TencentItem(scrapy.Item):
+    name = scrapy.Field()
+    detailLink = scrapy.Field()
+    positionInfo = scrapy.Field()
+    peopleNumber = scrapy.Field()
+    workLocation = scrapy.Field()
+    publishTime = scrapy.Field()
+
+•编写tencent.py
+# tencent.py
+
+from mySpider.items import TencentItem
+import scrapy
+import re
+
+class TencentSpider(scrapy.Spider):
+    name = "tencent"
+    allowed_domains = ["hr.tencent.com"]
+    start_urls = [
+        "http://hr.tencent.com/position.php?&start=0#a"
+    ]
+
+    def parse(self, response):
+    items = response.xpath('//*[contains(@class,"odd") or contains(@class,"even")]')
+    for item in items:
+        temp = dict(
+            name=item.xpath("./td[1]/a/text()").extract()[0],
+            detailLink="http://hr.tencent.com/"+item.xpath("./td[1]/a/@href").extract()[0],
+            positionInfo=item.xpath('./td[2]/text()').extract()[0] if len(item.xpath('./td[2]/text()').extract())>0 else None,
+            peopleNumber=item.xpath('./td[3]/text()').extract()[0],
+            workLocation=item.xpath('./td[4]/text()').extract()[0],
+            publishTime=item.xpath('./td[5]/text()').extract()[0]
+        )
+        yield temp
+
+    now_page = int(re.search(r"\d+", response.url).group(0))
+    print("*" * 100)
+    if now_page < 216:
+        url = re.sub(r"\d+", str(now_page + 10), response.url)
+        print("this is next page url:", url)
+        print("*" * 100)
+        yield scrapy.Request(url, callback=self.parse)
+
+•编写pipeline.py文件
+import json
+
+#class ItcastJsonPipeline(object):
+class TencentJsonPipeline(object):
+
+    def __init__(self):
+        #self.file = open('teacher.json', 'wb')
+        self.file = open('tencent.json', 'wb')
+
+    def process_item(self, item, spider):
+        content = json.dumps(dict(item), ensure_ascii=False) + "\n"
+        self.file.write(content)
+        return item
+
+    def close_spider(self, spider):
+        self.file.close()
+
+•在 setting.py 里设置ITEM_PIPELINES
+ITEM_PIPELINES = {
+    #'mySpider.pipelines.SomePipeline': 300,
+    #"mySpider.pipelines.ItcastJsonPipeline":300
+    "mySpider.pipelines.TencentJsonPipeline":300
+}
+
+•执行爬虫： scrapy crawl tencent 
+
+思考
+
+请思考 parse()方法的工作机制：
+
+1. 因为使用的yield，而不是return。parse函数将会被当做一个生成器使用。scrapy会逐一获取parse方法中生成的结果，并判断该结果是一个什么样的类型；
+2. 如果是request则加入爬取队列，如果是item类型则使用pipeline处理，其他类型则返回错误信息。
+3. scrapy取到第一部分的request不会立马就去发送这个request，只是把这个request放到队列里，然后接着从生成器里获取；
+4. 取尽第一部分的request，然后再获取第二部分的item，取到item了，就会放到对应的pipeline里处理；
+5. parse()方法作为回调函数(callback)赋值给了Request，指定parse()方法来处理这些请求 scrapy.Request(url, callback=self.parse)
+6. Request对象经过调度，执行生成 scrapy.http.response()的响应对象，并送回给parse()方法，直到调度器中没有Request（递归的思路）
+7. 取尽之后，parse()工作结束，引擎再根据队列和pipelines中的内容去执行相应的操作；
+8. 程序在取得各个页面的items前，会先处理完之前所有的request队列里的请求，然后再提取items。
+7. 这一切的一切，Scrapy引擎和调度器将负责到底。
+
+
+常见bug
+
+
+[scrapy.spidermiddlewares.offsite] DEBUG: Filtered offsite request to 'hr.tencent.com': 
+
+解决方式：
+
+
+domain错误 修改domain为：hr.tencent.com
+
+==========================================================================================================================================================================
+
+CrawlSpiders
+
+通过下面的命令可以快速创建 CrawlSpider模板 的代码：
+
+
+ scrapy genspider -t crawl tencent tencent.com 
+
+上一个案例中，我们通过正则表达式，制作了新的url作为Request请求参数，现在我们可以换个花样...
+
+ class scrapy.spiders.CrawlSpider 
+
+它是Spider的派生类，Spider类的设计原则是只爬取start_url列表中的网页，而CrawlSpider类定义了一些规则(rule)来提供跟进link的方便的机制，从爬取的网页中获取link并继续爬取的工作更适合。
+
+源码参考
+class CrawlSpider(Spider):
+    rules = ()
+    def __init__(self, *a, **kw):
+        super(CrawlSpider, self).__init__(*a, **kw)
+        self._compile_rules()
+
+    #首先调用parse()来处理start_urls中返回的response对象
+    #parse()则将这些response对象传递给了_parse_response()函数处理，并设置回调函数为parse_start_url()
+    #设置了跟进标志位True
+    #parse将返回item和跟进了的Request对象    
+    def parse(self, response):
+        return self._parse_response(response, self.parse_start_url, cb_kwargs={}, follow=True)
+
+    #处理start_url中返回的response，需要重写
+    def parse_start_url(self, response):
+        return []
+
+    def process_results(self, response, results):
+        return results
+
+    #从response中抽取符合任一用户定义'规则'的链接，并构造成Resquest对象返回
+    def _requests_to_follow(self, response):
+        if not isinstance(response, HtmlResponse):
+            return
+        seen = set()
+        #抽取之内的所有链接，只要通过任意一个'规则'，即表示合法
+        for n, rule in enumerate(self._rules):
+            links = [l for l in rule.link_extractor.extract_links(response) if l not in seen]
+            #使用用户指定的process_links处理每个连接
+            if links and rule.process_links:
+                links = rule.process_links(links)
+            #将链接加入seen集合，为每个链接生成Request对象，并设置回调函数为_repsonse_downloaded()
+            for link in links:
+                seen.add(link)
+                #构造Request对象，并将Rule规则中定义的回调函数作为这个Request对象的回调函数
+                r = Request(url=link.url, callback=self._response_downloaded)
+                r.meta.update(rule=n, link_text=link.text)
+                #对每个Request调用process_request()函数。该函数默认为indentify，即不做任何处理，直接返回该Request.
+                yield rule.process_request(r)
+
+    #处理通过rule提取出的连接，并返回item以及request
+    def _response_downloaded(self, response):
+        rule = self._rules[response.meta['rule']]
+        return self._parse_response(response, rule.callback, rule.cb_kwargs, rule.follow)
+
+    #解析response对象，会用callback解析处理他，并返回request或Item对象
+    def _parse_response(self, response, callback, cb_kwargs, follow=True):
+        #首先判断是否设置了回调函数。（该回调函数可能是rule中的解析函数，也可能是 parse_start_url函数）
+        #如果设置了回调函数（parse_start_url()），那么首先用parse_start_url()处理response对象，
+        #然后再交给process_results处理。返回cb_res的一个列表
+        if callback:
+            #如果是parse调用的，则会解析成Request对象
+            #如果是rule callback，则会解析成Item
+            cb_res = callback(response, **cb_kwargs) or ()
+            cb_res = self.process_results(response, cb_res)
+            for requests_or_item in iterate_spider_output(cb_res):
+                yield requests_or_item
+
+        #如果需要跟进，那么使用定义的Rule规则提取并返回这些Request对象
+        if follow and self._follow_links:
+            #返回每个Request对象
+            for request_or_item in self._requests_to_follow(response):
+                yield request_or_item
+
+    def _compile_rules(self):
+        def get_method(method):
+            if callable(method):
+                return method
+            elif isinstance(method, basestring):
+                return getattr(self, method, None)
+
+        self._rules = [copy.copy(r) for r in self.rules]
+        for rule in self._rules:
+            rule.callback = get_method(rule.callback)
+            rule.process_links = get_method(rule.process_links)
+            rule.process_request = get_method(rule.process_request)
+
+    def set_crawler(self, crawler):
+        super(CrawlSpider, self).set_crawler(crawler)
+        self._follow_links = crawler.settings.getbool('CRAWLSPIDER_FOLLOW_LINKS', True)
+
+
+CrawlSpider继承于Spider类，除了继承过来的属性外（name、allow_domains），还提供了新的属性和方法:
+
+rules
+
+CrawlSpider使用rules来决定爬虫的爬取规则，并将匹配后的url请求提交给引擎。所以在正常情况下，CrawlSpider不需要单独手动返回请求了。
+
+在rules中包含一个或多个Rule对象，每个Rule对爬取网站的动作定义了某种特定操作，比如提取当前相应内容里的特定链接，是否对提取的链接跟进爬取，对提交的请求设置回调函数等。
+
+如果多个rule匹配了相同的链接，则根据规则在本集合中被定义的顺序，第一个会被使用。
+
+class scrapy.spiders.Rule(
+        link_extractor,
+        callback = None,
+        cb_kwargs = None,
+        follow = None,
+        process_links = None,
+        process_request = None
+)
+
+
+• link_extractor ：是一个Link Extractor对象，用于定义需要提取的链接。
+
+
+• callback ： 从link_extractor中每获取到链接时，参数所指定的值作为回调函数，该回调函数接受一个response作为其第一个参数。
+
+
+注意：当编写爬虫规则时，避免使用parse作为回调函数。由于CrawlSpider使用parse方法来实现其逻辑，如果覆盖了 parse方法，crawl spider将会运行失败。
+
+
+• follow ：是一个布尔(boolean)值，指定了根据该规则从response提取的链接是否需要跟进。 如果callback为None，follow 默认设置为True ，否则默认为False。
+
+
+• process_links ：指定该spider中哪个的函数将会被调用，从link_extractor中获取到链接列表时将会调用该函数。该方法主要用来过滤。
+
+
+• process_request ：指定该spider中哪个的函数将会被调用， 该规则提取到每个request时都会调用该函数。 (用来过滤request)
+
+
+LinkExtractors
+class scrapy.linkextractors.LinkExtractor
+
+
+Link Extractors 的目的很简单: 提取链接｡
+
+每个LinkExtractor有唯一的公共方法是 extract_links()，它接收一个 Response 对象，并返回一个 scrapy.link.Link 对象。
+
+Link Extractors要实例化一次，并且 extract_links 方法会根据不同的 response 调用多次提取链接｡
+class scrapy.linkextractors.LinkExtractor(
+    allow = (),
+    deny = (),
+    allow_domains = (),
+    deny_domains = (),
+    deny_extensions = None,
+    restrict_xpaths = (),
+    tags = ('a','area'),
+    attrs = ('href'),
+    canonicalize = True,
+    unique = True,
+    process_value = None
+)
+
+
+主要参数：
+
+• allow ：满足括号中“正则表达式”的URL会被提取，如果为空，则全部匹配。
+
+
+• deny ：满足括号中“正则表达式”的URL一定不提取（优先级高于allow）。
+
+
+• allow_domains ：会被提取的链接的domains。
+
+
+• deny_domains ：一定不会被提取链接的domains。
+
+
+• restrict_xpaths ：使用xpath表达式，和allow共同作用过滤链接。
+
+
+爬取规则(Crawling rules)
+
+继续用腾讯招聘为例，给出配合rule使用CrawlSpider的例子:
+
+1.首先运行
+ scrapy shell "http://hr.tencent.com/position.php?&start=0#a"
+
+
+
+2.导入LinkExtractor，创建LinkExtractor实例对象。：
+ from scrapy.linkextractors import LinkExtractor
+
+ page_lx = LinkExtractor(allow=('position.php?&start=\d+'))
+
+
+
+allow : LinkExtractor对象最重要的参数之一，这是一个正则表达式，必须要匹配这个正则表达式(或正则表达式列表)的URL才会被提取，如果没有给出(或为空), 它会匹配所有的链接｡
+
+deny : 用法同allow，只不过与这个正则表达式匹配的URL不会被提取)｡它的优先级高于 allow 的参数，如果没有给出(或None), 将不排除任何链接｡
+
+
+3.调用LinkExtractor实例的extract_links()方法查询匹配结果：
+ page_lx.extract_links(response)
+
+
+
+4.没有查到：
+ []
+
+
+
+5.注意转义字符的问题，继续重新匹配：
+ page_lx = LinkExtractor(allow=('position\.php\?&start=\d+'))
+ # page_lx = LinkExtractor(allow = ('start=\d+'))
+
+ page_lx.extract_links(response)
+
+
+
+
+
+CrawlSpider 版本
+
+那么，scrapy shell测试完成之后，修改以下代码
+#提取匹配 'http://hr.tencent.com/position.php?&start=\d+'的链接
+page_lx = LinkExtractor(allow = ('start=\d+'))
+
+rules = [
+    #提取匹配,并使用spider的parse方法进行分析;并跟进链接(没有callback意味着follow默认为True)
+    Rule(page_lx, callback = 'parse', follow = True)
+]
+
+
+这么写对吗？
+
+不对！千万记住 callback 千万不能写 parse，再次强调：由于CrawlSpider使用parse方法来实现其逻辑，如果覆盖了 parse方法，crawl spider将会运行失败。
+import scrapy
+from scrapy.linkextractors import LinkExtractor
+from scrapy.spiders import CrawlSpider, Rule
+
+
+class TecentSpider(CrawlSpider):
+    name = 'tecent'
+    allowed_domains = ['hr.tencent.com']
+    start_urls = ['http://hr.tencent.com/position.php?&start=0']
+    page_lx = LinkExtractor(allow=r'start=\d+')
+    #position.php?&start=10#a
+    rules = (
+        Rule(page_lx, callback='parse_item', follow=True),
+    )
+
+    def parse_item(self, response):
+        items = response.xpath('//*[contains(@class,"odd") or contains(@class,"even")]')
+        for item in items:
+            temp = dict(
+                position=item.xpath("./td[1]/a/text()").extract()[0],
+                detailLink="http://hr.tencent.com/" + item.xpath("./td[1]/a/@href").extract()[0],
+                type=item.xpath('./td[2]/text()').extract()[0] if len(
+                    item.xpath('./td[2]/text()').extract()) > 0 else None,
+                need_num=item.xpath('./td[3]/text()').extract()[0],
+                location=item.xpath('./td[4]/text()').extract()[0],
+                publish_time=item.xpath('./td[5]/text()').extract()[0]
+            )
+            print(temp)
+            yield temp
+
+    # parse() 方法不需要重写     
+    # def parse(self, response):                                              
+    #     pass
+
+
+运行：  scrapy crawl tencent 
+
+Logging
+
+Scrapy提供了log功能，可以通过 logging 模块使用。
+
+
+可以修改配置文件settings.py，任意位置添加下面两行，效果会清爽很多。
+LOG_FILE = "TencentSpider.log"
+LOG_LEVEL = "INFO"
+
+
+Log levels
+
+•Scrapy提供5层logging级别:
+
+
+•CRITICAL - 严重错误(critical)
+
+•ERROR - 一般错误(regular errors)
+•WARNING - 警告信息(warning messages)
+•INFO - 一般信息(informational messages)
+•DEBUG - 调试信息(debugging messages)
+
+logging设置
+
+通过在setting.py中进行以下设置可以被用来配置logging:
+1. LOG_ENABLED  默认: True，启用logging
+2. LOG_ENCODING  默认: 'utf-8'，logging使用的编码
+3. LOG_FILE  默认: None，在当前目录里创建logging输出文件的文件名
+4. LOG_LEVEL  默认: 'DEBUG'，log的最低级别
+5. LOG_STDOUT  默认: False 如果为 True，进程所有的标准输出(及错误)将会被重定向到log中。例如，执行 print "hello" ，其将会在Scrapy log中显示。
+
+===============================================================================================================================================================================
+
+Request
+
+Request 部分源码：
+# 部分代码
+class Request(object_ref):
+
+    def __init__(self, url, callback=None, method='GET', headers=None, body=None, 
+                 cookies=None, meta=None, encoding='utf-8', priority=0,
+                 dont_filter=False, errback=None):
+
+        self._encoding = encoding  # this one has to be set first
+        self.method = str(method).upper()
+        self._set_url(url)
+        self._set_body(body)
+        assert isinstance(priority, int), "Request priority not an integer: %r" % priority
+        self.priority = priority
+
+        assert callback or not errback, "Cannot use errback without a callback"
+        self.callback = callback
+        self.errback = errback
+
+        self.cookies = cookies or {}
+        self.headers = Headers(headers or {}, encoding=encoding)
+        self.dont_filter = dont_filter
+
+        self._meta = dict(meta) if meta else None
+
+    @property
+    def meta(self):
+        if self._meta is None:
+            self._meta = {}
+        return self._meta
+
+
+其中，比较常用的参数：
+url: 就是需要请求，并进行下一步处理的url
+
+callback: 指定该请求返回的Response，由那个函数来处理。
+
+method: 请求一般不需要指定，默认GET方法，可设置为"GET", "POST", "PUT"等，且保证字符串大写
+
+headers: 请求时，包含的头文件。一般不需要。内容一般如下：
+        # 自己写过爬虫的肯定知道
+        Host: media.readthedocs.org
+        User-Agent: Mozilla/5.0 (Windows NT 6.2; WOW64; rv:33.0) Gecko/20100101 Firefox/33.0
+        Accept: text/css,*/*;q=0.1
+        Accept-Language: zh-cn,zh;q=0.8,en-us;q=0.5,en;q=0.3
+        Accept-Encoding: gzip, deflate
+        Referer: http://scrapy-chs.readthedocs.org/zh_CN/0.24/
+        Cookie: _ga=GA1.2.1612165614.1415584110;
+        Connection: keep-alive
+        If-Modified-Since: Mon, 25 Aug 2014 21:59:35 GMT
+        Cache-Control: max-age=0
+
+meta: 比较常用，在不同的请求之间传递数据使用的。字典dict型
+
+        request_with_cookies = Request(
+            url="http://www.example.com",
+            cookies={'currency': 'USD', 'country': 'UY'},
+            meta={'dont_merge_cookies': True}
+        )
+
+encoding: 使用默认的 'utf-8' 就行。
+
+dont_filter: 表明该请求不由调度器过滤。这是当你想使用多次执行相同的请求,忽略重复的过滤器。默认为False。
+
+errback: 指定错误处理函数
+
+
+Response
+# 部分代码
+class Response(object_ref):
+    def __init__(self, url, status=200, headers=None, body='', flags=None, request=None):
+        self.headers = Headers(headers or {})
+        self.status = int(status)
+        self._set_body(body)
+        self._set_url(url)
+        self.request = request
+        self.flags = [] if flags is None else list(flags)
+
+    @property
+    def meta(self):
+        try:
+            return self.request.meta
+        except AttributeError:
+            raise AttributeError("Response.meta not available, this response " \
+                "is not tied to any request")
+
+
+大部分参数和上面的差不多：
+
+status: 响应码
+_set_body(body)： 响应体
+_set_url(url)：响应url
+self.request = request
+
+
+发送POST请求
+
+•可以使用  yield scrapy.FormRequest(url, formdata, callback) 方法发送POST请求。
+
+
+•如果希望程序执行一开始就发送POST请求，可以重写Spider类的 start_requests(self)  方法，并且不再调用start_urls里的url。
+
+class mySpider(scrapy.Spider):
+    # start_urls = ["http://www.example.com/"]
+
+    def start_requests(self):
+        url = 'http://www.renren.com/PLogin.do'
+
+        # FormRequest 是Scrapy发送POST请求的方法
+        yield scrapy.FormRequest(
+            url = url,
+            formdata = {"email" : "mr_mao_hacker@163.com", "password" : "axxxxxxxe"},
+            callback = self.parse_page
+        )
+    def parse_page(self, response):
+        # do something
+
+
+模拟登陆
+
+使用FormRequest.from_response()方法模拟用户登录
+
+
+通常网站通过  实现对某些表单字段（如数据或是登录界面中的认证令牌等）的预填充。 
+
+使用Scrapy抓取网页时，如果想要预填充或重写像用户名、用户密码这些表单字段， 可以使用 FormRequest.from_response() 方法实现。
+
+下面是使用这种方法的爬虫例子:
+import scrapy
+
+class LoginSpider(scrapy.Spider):
+    name = 'example.com'
+    start_urls = ['http://www.example.com/users/login.php']
+
+    def parse(self, response):
+        return scrapy.FormRequest.from_response(
+            response,
+            formdata={'username': 'john', 'password': 'secret'},
+            callback=self.after_login
+        )
+
+    def after_login(self, response):
+        # check login succeed before going on
+        if "authentication failed" in response.body:
+            self.log("Login failed", level=log.ERROR)
+            return
+
+        # continue scraping with authenticated session...
+
+
+知乎爬虫案例参考：
+
+zhihuSpider.py爬虫代码
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+from scrapy.spiders import CrawlSpider, Rule
+from scrapy.selector import Selector
+from scrapy.linkextractors import LinkExtractor
+from scrapy import Request, FormRequest
+from zhihu.items import ZhihuItem
+
+class ZhihuSipder(CrawlSpider) :
+    name = "zhihu"
+    allowed_domains = ["www.zhihu.com"]
+    start_urls = [
+        "http://www.zhihu.com"
+    ]
+    rules = (
+        Rule(LinkExtractor(allow = ('/question/\d+#.*?', )), callback = 'parse_page', follow = True),
+        Rule(LinkExtractor(allow = ('/question/\d+', )), callback = 'parse_page', follow = True),
+    )
+
+    headers = {
+        "Accept": "*/*",
+        "Accept-Language": "en-US,en;q=0.8,zh-TW;q=0.6,zh;q=0.4",
+        "Connection": "keep-alive",
+        "Content-Type":" application/x-www-form-urlencoded; charset=UTF-8",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2125.111 Safari/537.36",
+        "Referer": "http://www.zhihu.com/"
+    }
+
+    #重写了爬虫类的方法, 实现了自定义请求, 运行成功后会调用callback回调函数
+    def start_requests(self):
+        return [Request("https://www.zhihu.com/login", meta = {'cookiejar' : 1}, callback = self.post_login)]
+
+    def post_login(self, response):
+        print 'Preparing login'
+        #下面这句话用于抓取请求网页后返回网页中的_xsrf字段的文字, 用于成功提交表单
+        xsrf = response.xpath('//input[@name="_xsrf"]/@value').extract()[0]
+        print xsrf
+        #FormRequeset.from_response是Scrapy提供的一个函数, 用于post表单
+        #登陆成功后, 会调用after_login回调函数
+        return [FormRequest.from_response(response,   #"http://www.zhihu.com/login",
+                            meta = {'cookiejar' : response.meta['cookiejar']},
+                            headers = self.headers,  #注意此处的headers
+                            formdata = {
+                            '_xsrf': xsrf,
+                            'email': '123456@qq.com',
+                            'password': '123456'
+                            },
+                            callback = self.after_login,
+                            dont_filter = True
+                            )]
+
+    def after_login(self, response) :
+        for url in self.start_urls :
+            yield self.make_requests_from_url(url)
+
+    def parse_page(self, response):
+        problem = Selector(response)
+        item = ZhihuItem()
+        item['url'] = response.url
+        item['name'] = problem.xpath('//span[@class="name"]/text()').extract()
+        print item['name']
+        item['title'] = problem.xpath('//h2[@class="zm-item-title zm-editable-content"]/text()').extract()
+        item['description'] = problem.xpath('//div[@class="zm-editable-content"]/text()').extract()
+        item['answer']= problem.xpath('//div[@class=" zm-editable-content clearfix"]/text()').extract()
+        return item
+
+
+Item类设置
+from scrapy.item import Item, Field
+
+class ZhihuItem(Item):
+    # define the fields for your item here like:
+    # name = scrapy.Field()
+    url = Field()  #保存抓取问题的url
+    title = Field()  #抓取问题的标题
+    description = Field()  #抓取问题的描述
+    answer = Field()  #抓取问题的答案
+    name = Field()  #个人用户的名称
+
+
+setting.py 设置抓取间隔
+BOT_NAME = 'zhihu'
+
+SPIDER_MODULES = ['zhihu.spiders']
+NEWSPIDER_MODULE = 'zhihu.spiders'
+DOWNLOAD_DELAY = 0.25   #设置下载间隔为250ms
+
+===================================================================================================================================================================================
+
+反反爬虫相关机制
+
+Some websites implement certain measures to prevent bots from crawling them, with varying degrees of sophistication. Getting around those measures can be difficult and tricky, and may sometimes require special infrastructure. Please consider contacting commercial support if in doubt.
+
+(有些些网站使用特定的不同程度的复杂性规则防止爬虫访问，绕过这些规则是困难和复杂的，有时可能需要特殊的基础设施，如果有疑问，请联系商业支持。)
+
+
+来自于Scrapy官方文档描述：http://doc.scrapy.org/en/master/topics/practices.html#avoiding-getting-banned 
+
+通常防止爬虫被反主要有以下几个策略：
+
+•动态设置User-Agent（随机切换User-Agent，模拟不同用户的浏览器信息）
+
+
+•禁用Cookies（也就是不启用cookies middleware，不向Server发送cookies，有些网站通过cookie的使用发现爬虫行为）
+◦可以通过 COOKIES_ENABLED  控制 CookiesMiddleware 开启或关闭
+
+
+•设置延迟下载（防止访问过于频繁，设置为 2秒 或更高）
+
+
+•Google Cache 和 Baidu Cache：如果可能的话，使用谷歌/百度等搜索引擎服务器页面缓存获取页面数据。
+
+
+•使用IP地址池：VPN和代理IP，现在大部分网站都是根据IP来ban的。
+
+
+•使用 Crawlera（专用于爬虫的代理组件），正确配置和设置下载中间件后，项目所有的request都是通过crawlera发出。
+  DOWNLOADER_MIDDLEWARES = {
+      'scrapy_crawlera.CrawleraMiddleware': 600
+  }
+
+  CRAWLERA_ENABLED = True
+  CRAWLERA_USER = '注册/购买的UserKey'
+  CRAWLERA_PASS = '注册/购买的Password'
+
+
+
+设置下载中间件（Downloader Middlewares）
+
+下载中间件是处于引擎(crawler.engine)和下载器(crawler.engine.download())之间的一层组件，可以有多个下载中间件被加载运行。 
+
+1.当引擎传递请求给下载器的过程中，下载中间件可以对请求进行处理 （例如增加http header信息，增加proxy信息等）；
+
+
+2.在下载器完成http请求，传递响应给引擎的过程中， 下载中间件可以对响应进行处理（例如进行gzip的解压等）
+
+
+要激活下载器中间件组件，将其加入到 DOWNLOADER_MIDDLEWARES 设置中。 该设置是一个字典(dict)，键为中间件类的路径，值为其中间件的顺序(order)。
+
+这里是一个例子:
+DOWNLOADER_MIDDLEWARES = {
+    'mySpider.middlewares.MyDownloaderMiddleware': 543,
+}
+
+
+编写下载器中间件十分简单。每个中间件组件是一个定义了以下一个或多个方法的Python类:
+class scrapy.contrib.downloadermiddleware.DownloaderMiddleware
+
+
+process_request(self, request, spider)
+
+•当每个request通过下载中间件时，该方法被调用。
+
+
+•process_request() 必须返回以下其中之一：一个 None 、一个 Response 对象、一个 Request 对象或 raise IgnoreRequest:
+
+◦如果其返回 None ，Scrapy将继续处理该request，执行其他的中间件的相应方法，直到合适的下载器处理函数(download handler)被调用， 该request被执行(其response被下载)。
+
+
+◦如果其返回 Response 对象，Scrapy将不会调用 任何 其他的 process_request() 或 process_exception() 方法，或相应地下载函数； 其将返回该response。 已安装的中间件的 process_response() 方法则会在每个response返回时被调用。
+
+
+◦如果其返回 Request 对象，Scrapy则停止调用 process_request方法并重新调度返回的request。当新返回的request被执行后， 相应地中间件链将会根据下载的response被调用。
+
+
+◦如果其raise一个 IgnoreRequest 异常，则安装的下载中间件的 process_exception() 方法会被调用。如果没有任何一个方法处理该异常， 则request的errback(Request.errback)方法会被调用。如果没有代码处理抛出的异常， 则该异常被忽略且不记录(不同于其他异常那样)。
+
+
+
+•参数: 
+◦ request (Request 对象)  – 处理的request
+◦ spider (Spider 对象)  – 该request对应的spider
+
+
+process_response(self, request, response, spider)
+
+当下载器完成http请求，传递响应给引擎的时候调用
+
+•process_request() 必须返回以下其中之一: 返回一个 Response 对象、 返回一个 Request 对象或raise一个 IgnoreRequest 异常。
+
+◦如果其返回一个 Response (可以与传入的response相同，也可以是全新的对象)， 该response会被在链中的其他中间件的 process_response() 方法处理。
+
+
+◦如果其返回一个 Request 对象，则中间件链停止， 返回的request会被重新调度下载。处理类似于 process_request() 返回request所做的那样。
+
+
+◦如果其抛出一个 IgnoreRequest 异常，则调用request的errback(Request.errback)。 如果没有代码处理抛出的异常，则该异常被忽略且不记录(不同于其他异常那样)。
+
+
+
+•参数: 
+◦ request (Request 对象)  – response所对应的request
+◦ response (Response 对象)  – 被处理的response
+◦ spider (Spider 对象)  – response所对应的spider
+
+
+使用案例：
+
+1. 创建 middlewares.py 文件。
+
+Scrapy代理IP、Uesr-Agent的切换都是通过 DOWNLOADER_MIDDLEWARES 进行控制，我们在 settings.py 同级目录下创建 middlewares.py 文件，包装所有请求。
+# middlewares.py
+
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+
+import random
+import base64
+
+from settings import USER_AGENTS
+from settings import PROXIES
+
+# 随机的User-Agent
+class RandomUserAgent(object):
+    def process_request(self, request, spider):
+        useragent = random.choice(USER_AGENTS)
+
+        request.headers.setdefault("User-Agent", useragent)
+
+class RandomProxy(object):
+    def process_request(self, request, spider):
+        proxy = random.choice(PROXIES)
+
+        if proxy['user_passwd'] is None:
+            # 没有代理账户验证的代理使用方式
+            request.meta['proxy'] = "http://" + proxy['ip_port']
+        else:
+            # 对账户密码进行base64编码转换
+            base64_userpasswd = base64.b64encode(proxy['user_passwd'])
+            # 对应到代理服务器的信令格式里
+            request.headers['Proxy-Authorization'] = 'Basic ' + base64_userpasswd
+            request.meta['proxy'] = "http://" + proxy['ip_port']
+
+
+
+为什么HTTP代理要使用base64编码：
+
+HTTP代理的原理很简单，就是通过HTTP协议与代理服务器建立连接，协议信令中包含要连接到的远程主机的IP和端口号，如果有需要身份验证的话还需要加上授权信息，服务器收到信令后首先进行身份验证，通过后便与远程主机建立连接，连接成功之后会返回给客户端200，表示验证通过，就这么简单，下面是具体的信令格式：
+CONNECT 59.64.128.198:21 HTTP/1.1
+Host: 59.64.128.198:21
+Proxy-Authorization: Basic bGV2I1TU5OTIz
+User-Agent: OpenFetion
+
+
+
+其中 Proxy-Authorization 是身份验证信息，Basic后面的字符串是用户名和密码组合后进行base64编码的结果，也就是对username:password进行base64编码。
+HTTP/1.0 200 Connection established
+
+
+
+OK，客户端收到收面的信令后表示成功建立连接，接下来要发送给远程主机的数据就可以发送给代理服务器了，代理服务器建立连接后会在根据IP地址和端口号对应的连接放入缓存，收到信令后再根据IP地址和端口号从缓存中找到对应的连接，将数据通过该连接转发出去。
+
+2. 修改settings.py配置USER_AGENTS和PROXIES
+•添加USER_AGENTS：
+　　USER_AGENTS = [
+    "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Win64; x64; Trident/5.0; .NET CLR 3.5.30729; .NET CLR 3.0.30729; .NET CLR 2.0.50727; Media Center PC 6.0)",
+    "Mozilla/5.0 (compatible; MSIE 8.0; Windows NT 6.0; Trident/4.0; WOW64; Trident/4.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; .NET CLR 1.0.3705; .NET CLR 1.1.4322)",
+    "Mozilla/4.0 (compatible; MSIE 7.0b; Windows NT 5.2; .NET CLR 1.1.4322; .NET CLR 2.0.50727; InfoPath.2; .NET CLR 3.0.04506.30)",
+    "Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN) AppleWebKit/523.15 (KHTML, like Gecko, Safari/419.3) Arora/0.3 (Change: 287 c9dfb30)",
+    "Mozilla/5.0 (X11; U; Linux; en-US) AppleWebKit/527+ (KHTML, like Gecko, Safari/419.3) Arora/0.6",
+    "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.2pre) Gecko/20070215 K-Ninja/2.1.1",
+    "Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9) Gecko/20080705 Firefox/3.0 Kapiko/3.0",
+    "Mozilla/5.0 (X11; Linux i686; U;) Gecko/20070322 Kazehakase/0.4.5"
+    ]
+
+
+•添加代理IP设置PROXIES：
+
+免费代理IP可以网上搜索，或者付费购买一批可用的私密代理IP：
+
+PROXIES = [
+    {'ip_port': '111.8.60.9:8123', 'user_passwd': 'user1:pass1'},
+    {'ip_port': '101.71.27.120:80', 'user_passwd': 'user2:pass2'},
+    {'ip_port': '122.96.59.104:80', 'user_passwd': 'user3:pass3'},
+    {'ip_port': '122.224.249.122:8088', 'user_passwd': 'user4:pass4'},
+]
+
+•除非特殊需要，禁用cookies，防止某些网站根据Cookie来封锁爬虫。
+COOKIES_ENABLED = False
+
+•设置下载延迟
+DOWNLOAD_DELAY = 3
+
+•最后设置setting.py里的DOWNLOADER_MIDDLEWARES，添加自己编写的下载中间件类。
+DOWNLOADER_MIDDLEWARES = {
+    #'mySpider.middlewares.MyCustomDownloaderMiddleware': 543,
+    'mySpider.middlewares.RandomUserAgent': 1,
+    'mySpider.middlewares.ProxyMiddleware': 100
+}
+
+=================================================================================================================================================================================
+
+Settings
+
+Scrapy设置(settings)提供了定制Scrapy组件的方法。可以控制包括核心(core)，插件(extension)，pipeline及spider组件。比如 设置Json Pipeliine、LOG_LEVEL等。
+
+参考文档：http://scrapy-chs.readthedocs.io/zh_CN/1.0/topics/settings.html#topics-settings-ref
+
+内置设置参考手册
+
+• BOT_NAME 
+
+◦默认: 'scrapybot'
+
+
+◦当您使用 startproject 命令创建项目时其也被自动赋值。
+
+
+
+• CONCURRENT_ITEMS 
+
+◦默认: 100
+
+
+◦Item Processor(即 Item Pipeline) 同时处理(每个response的)item的最大值。
+
+
+
+• CONCURRENT_REQUESTS 
+
+◦默认: 16
+
+
+◦Scrapy downloader 并发请求(concurrent requests)的最大值。
+
+
+
+• DEFAULT_REQUEST_HEADERS 
+
+◦默认: 如下
+{
+'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+'Accept-Language': 'en',
+}
+
+
+Scrapy HTTP Request使用的默认header。
+
+
+
+• DEPTH_LIMIT 
+
+◦默认: 0
+
+
+◦爬取网站最大允许的深度(depth)值。如果为0，则没有限制。
+
+
+
+• DOWNLOAD_DELAY 
+
+◦默认: 0
+
+
+◦下载器在下载同一个网站下一个页面前需要等待的时间。该选项可以用来限制爬取速度， 减轻服务器压力。同时也支持小数:
+
+
+ DOWNLOAD_DELAY = 0.25 # 250 ms of delay 
+◦默认情况下，Scrapy在两个请求间不等待一个固定的值， 而是使用0.5到1.5之间的一个随机值 * DOWNLOAD_DELAY 的结果作为等待间隔。
+
+
+• DOWNLOAD_TIMEOUT 
+
+◦默认: 180
+
+
+◦下载器超时时间(单位: 秒)。
+
+
+
+• ITEM_PIPELINES 
+
+◦默认: {}
+
+
+◦保存项目中启用的pipeline及其顺序的字典。该字典默认为空，值(value)任意，不过值(value)习惯设置在0-1000范围内，值越小优先级越高。
+ITEM_PIPELINES = {
+'mySpider.pipelines.SomethingPipeline': 300,
+'mySpider.pipelines.ItcastJsonPipeline': 800,
+}
+
+
+
+
+• LOG_ENABLED 
+
+◦默认: True
+
+
+◦是否启用logging。
+
+
+
+• LOG_ENCODING 
+
+◦默认: 'utf-8'
+
+
+◦logging使用的编码。
+
+
+
+• LOG_LEVEL 
+
+◦默认: 'DEBUG'
+
+
+◦log的最低级别。可选的级别有: CRITICAL、 ERROR、WARNING、INFO、DEBUG 。
+
+
+
+• USER_AGENT 
+
+◦默认: "Scrapy/VERSION (+http://scrapy.org)"
+
+
+◦爬取的默认User-Agent，除非被覆盖。
+
+
+
+• PROXIES ： 代理设置
+
+◦示例：
+PROXIES = [
+  {'ip_port': '111.11.228.75:80', 'password': ''},
+  {'ip_port': '120.198.243.22:80', 'password': ''},
+  {'ip_port': '111.8.60.9:8123', 'password': ''},
+  {'ip_port': '101.71.27.120:80', 'password': ''},
+  {'ip_port': '122.96.59.104:80', 'password': ''},
+  {'ip_port': '122.224.249.122:8088', 'password':''},
+]
+
+
+
+
+• COOKIES_ENABLED = False 
+◦禁用Cookies
+
+===================================================================================================================================================================================
+
+手机App抓包爬虫
+
+1. items.py
+class DouyuspiderItem(scrapy.Item):
+    name = scrapy.Field()# 存储照片的名字
+    imagesUrls = scrapy.Field()# 照片的url路径
+    imagesPath = scrapy.Field()# 照片保存在本地的路径
+
+
+2. spiders/douyu.py
+import scrapy
+import json
+from douyuSpider.items import DouyuspiderItem
+
+class DouyuSpider(scrapy.Spider):
+    name = "douyu"
+    allowd_domains = ["http://capi.douyucdn.cn"]
+
+    offset = 0
+    url = "http://capi.douyucdn.cn/api/v1/getVerticalRoom?limit=20&offset="
+    start_urls = [url + str(offset)]
+
+  def parse(self, response):
+      # 返回从json里获取 data段数据集合
+      data = json.loads(response.text)["data"]
+
+      for each in data:
+          item = DouyuspiderItem()
+          item["name"] = each["nickname"]
+          item["imagesUrls"] = each["vertical_src"]
+
+          yield item
+
+      self.offset += 20
+      yield scrapy.Request(self.url + str(self.offset), callback = self.parse)
+
+
+3. 设置setting.py
+
+ITEM_PIPELINES = {'douyuSpider.pipelines.ImagesPipeline': 1}
+
+# Images 的存放位置，之后会在pipelines.py里调用
+IMAGES_STORE = "/Users/Power/lesson_python/douyuSpider/Images"
+
+# user-agent
+USER_AGENT = 'DYZB/2.290 (iPhone; iOS 9.3.4; Scale/2.00)'
+
+
+4. pipelines.py
+import scrapy
+import os
+from scrapy.pipelines.images import ImagesPipeline
+from scrapy.utils.project import get_project_settings
+
+class ImagesPipeline(ImagesPipeline):
+    IMAGES_STORE = get_project_settings().get("IMAGES_STORE")
+
+    def get_media_requests(self, item, info):
+        image_url = item["imagesUrls"]
+        yield scrapy.Request(image_url)
+
+    def item_completed(self, results, item, info):
+        # 固定写法，获取图片路径，同时判断这个路径是否正确，如果正确，就放到 image_path里，ImagesPipeline源码剖析可见
+        image_path = [x["path"] for ok, x in results if ok]
+
+        os.rename(self.IMAGES_STORE + "/" + image_path[0], self.IMAGES_STORE + "/" + item["name"] + ".jpg")
+        item["imagesPath"] = self.IMAGES_STORE + "/" + item["name"]
+
+        return item
+
+#get_media_requests的作用就是为每一个图片链接生成一个Request对象，这个方法的输出将作为item_completed的输入中的results，results是一个元组，每个元组包括(success, imageinfoorfailure)。如果success=true，imageinfoor_failure是一个字典，包括url/path/checksum三个key。
+
+
+在项目根目录下新建main.py文件,用于调试
+from scrapy import cmdline
+cmdline.execute('scrapy crawl douyu'.split())
+
+
+执行程序
+py2 main.py
+
+=============================================================================================================================================================================
+
+阳光热线问政平台
+
+http://wz.sun0769.com/index.php/question/questionType?type=4
+
+爬取投诉帖子的编号、帖子的url、帖子的标题，和帖子里的内容。
+
+items.py
+import scrapy
+
+class DongguanItem(scrapy.Item):
+    # 每个帖子的标题
+    title = scrapy.Field()
+    # 每个帖子的编号
+    number = scrapy.Field()
+    # 每个帖子的文字内容
+    content = scrapy.Field()
+    # 每个帖子的url
+    url = scrapy.Field()
+
+
+spiders/sunwz.py
+
+Spider 版本
+# -*- coding: utf-8 -*-
+
+import scrapy
+from dongguan.items import DongguanItem
+
+class SunSpider(CrawlSpider):
+    name = 'sun'
+    allowed_domains = ['wz.sun0769.com']
+    url = 'http://wz.sun0769.com/index.php/question/questionType?type=4&page='
+    offset = 0
+    start_urls = [url + str(offset)]
+
+    def parse(self, response):
+        # 取出每个页面里帖子链接列表
+        links = response.xpath("//div[@class='greyframe']/table//td/a[@class='news14']/@href").extract()
+        # 迭代发送每个帖子的请求，调用parse_item方法处理
+        for link in links:
+            yield scrapy.Request(link, callback = self.parse_item)
+        # 设置页码终止条件，并且每次发送新的页面请求调用parse方法处理
+        if self.offset <= 71130:
+            self.offset += 30
+            yield scrapy.Request(self.url + str(self.offset), callback = self.parse)
+
+    # 处理每个帖子里
+    def parse_item(self, response):
+        item = DongguanItem()
+        # 标题
+        item['title'] = response.xpath('//div[contains(@class, "pagecenter p3")]//strong/text()').extract()[0]
+
+        # 编号
+        item['number'] = item['title'].split(' ')[-1].split(":")[-1]
+
+        # 文字内容，默认先取出有图片情况下的文字内容列表
+        content = response.xpath('//div[@class="contentext"]/text()').extract()
+        # 如果没有内容，则取出没有图片情况下的文字内容列表
+        if len(content) == 0:
+            content = response.xpath('//div[@class="c1 text14_2"]/text()').extract()
+            # content为列表，通过join方法拼接为字符串，并去除首尾空格
+            item['content'] = "".join(content).strip()
+        else:
+            item['content'] = "".join(content).strip()
+
+        # 链接
+        item['url'] = response.url
+
+        yield item
+
+
+CrawlSpider 版本
+
+# -*- coding: utf-8 -*-
+import scrapy
+from scrapy.linkextractors import LinkExtractor
+from scrapy.spiders import CrawlSpider, Rule
+from dongguan.items import DongguanItem
+import time
+
+
+class SunSpider(CrawlSpider):
+    name = 'sun'
+    allowed_domains = ['wz.sun0769.com']
+    start_urls = ['http://wz.sun0769.com/index.php/question/questionType?type=4&page=']
+
+    # 每一页的匹配规则
+    pagelink = LinkExtractor(allow=('type=4'))
+    # 每个帖子的匹配规则
+    contentlink = LinkExtractor(allow=r'/html/question/\d+/\d+.shtml')
+
+    rules = [
+        # 本案例为特殊情况，需要调用deal_links方法处理每个页面里的链接
+        Rule(pagelink, process_links = "deal_links", follow = True),
+        Rule(contentlink, callback = 'parse_item')
+    ]
+
+    # 需要重新处理每个页面里的链接，将链接里的‘Type&type=4?page=xxx’替换为‘Type?type=4&page=xxx’（或者是Type&page=xxx?type=4’替换为‘Type?page=xxx&type=4’），否则无法发送这个链接
+    def deal_links(self, links):
+        for link in links:
+            link.url = link.url.replace("?","&").replace("Type&", "Type?")
+            print link.url
+        return links
+
+
+    def parse_item(self, response):
+        print response.url
+        item = DongguanItem()
+        # 标题
+        item['title'] = response.xpath('//div[contains(@class, "pagecenter p3")]//strong/text()').extract()[0]
+
+        # 编号
+        item['number'] = item['title'].split(' ')[-1].split(":")[-1]
+
+        # 文字内容，默认先取出有图片情况下的文字内容列表
+        content = response.xpath('//div[@class="contentext"]/text()').extract()
+        # 如果没有内容，则取出没有图片情况下的文字内容列表
+        if len(content) == 0:
+            content = response.xpath('//div[@class="c1 text14_2"]/text()').extract()
+            # content为列表，通过join方法拼接为字符串，并去除首尾空格
+            item['content'] = "".join(content).strip()
+        else:
+            item['content'] = "".join(content).strip()
+
+        # 链接
+        item['url'] = response.url
+
+        yield item
+
+
+pipelines.py
+# -*- coding: utf-8 -*-
+
+# 文件处理类库，可以指定编码格式
+import codecs
+import json
+
+class JsonWriterPipeline(object):
+
+    def __init__(self):
+        # 创建一个只写文件，指定文本编码格式为utf-8
+        self.filename = codecs.open('sunwz.json', 'w', encoding='utf-8')
+
+    def process_item(self, item, spider):
+        content = json.dumps(dict(item), ensure_ascii=False) + "\n"
+        self.filename.write(content)
+        return item
+
+    def spider_closed(self, spider):
+        self.file.close()
+
+
+settings.py
+ITEM_PIPELINES = {
+    'dongguan.pipelines.DongguanPipeline': 300,
+}
+
+# 日志文件名和处理等级
+LOG_FILE = "dg.log"
+LOG_LEVEL = "DEBUG"
+
+
+在项目根目录下新建main.py文件,用于调试
+from scrapy import cmdline
+cmdline.execute('scrapy crawl sunwz'.split())
+
+
+执行程序
+py2 main.py
+
+========================================================================================================================================================================
+
+(实战项目三)新浪网分类资讯爬虫
+
+
+爬取新浪网导航页所有下所有大类、小类、小类里的子链接，以及子链接页面的新闻内容。
+
+效果演示图：
+
+
+
+items.py
+import scrapy
+import sys
+reload(sys)
+sys.setdefaultencoding("utf-8")
+
+class SinaItem(scrapy.Item):
+    # 大类的标题 和 url
+    parentTitle = scrapy.Field()
+    parentUrls = scrapy.Field()
+
+    # 小类的标题 和 子url
+    subTitle = scrapy.Field()
+    subUrls = scrapy.Field()
+
+    # 小类目录存储路径
+    subFilename = scrapy.Field()
+
+    # 小类下的子链接
+    sonUrls = scrapy.Field()
+
+    # 文章标题和内容
+    head = scrapy.Field()
+    content = scrapy.Field()
+
+
+spiders/sina.py
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+
+from Sina.items import SinaItem
+import scrapy
+import os
+
+import sys
+reload(sys)
+sys.setdefaultencoding("utf-8")
+
+
+class SinaSpider(scrapy.Spider):
+    name= "sina"
+    allowed_domains= ["sina.com.cn"]
+    start_urls= [
+       "http://news.sina.com.cn/guide/"
+    ]
+
+    def parse(self, response):
+        items= []
+        # 所有大类的url 和 标题
+        parentUrls = response.xpath('//div[@id=\"tab01\"]/div/h3/a/@href').extract()
+        parentTitle = response.xpath("//div[@id=\"tab01\"]/div/h3/a/text()").extract()
+
+        # 所有小类的ur 和 标题
+        subUrls  = response.xpath('//div[@id=\"tab01\"]/div/ul/li/a/@href').extract()
+        subTitle = response.xpath('//div[@id=\"tab01\"]/div/ul/li/a/text()').extract()
+
+        #爬取所有大类
+        for i in range(0, len(parentTitle)):
+            # 指定大类目录的路径和目录名
+            parentFilename = "./Data/" + parentTitle[i]
+
+            #如果目录不存在，则创建目录
+            if(not os.path.exists(parentFilename)):
+                os.makedirs(parentFilename)
+
+            # 爬取所有小类
+            for j in range(0, len(subUrls)):
+                item = SinaItem()
+
+                # 保存大类的title和urls
+                item['parentTitle'] = parentTitle[i]
+                item['parentUrls'] = parentUrls[i]
+
+                # 检查小类的url是否以同类别大类url开头，如果是返回True (sports.sina.com.cn 和 sports.sina.com.cn/nba)
+                if_belong = subUrls[j].startswith(item['parentUrls'])
+
+                # 如果属于本大类，将存储目录放在本大类目录下
+                if(if_belong):
+                    subFilename =parentFilename + '/'+ subTitle[j]
+                    # 如果目录不存在，则创建目录
+                    if(not os.path.exists(subFilename)):
+                        os.makedirs(subFilename)
+
+                    # 存储 小类url、title和filename字段数据
+                    item['subUrls'] = subUrls[j]
+                    item['subTitle'] =subTitle[j]
+                    item['subFilename'] = subFilename
+
+                    items.append(item)
+
+        #发送每个小类url的Request请求，得到Response连同包含meta数据 一同交给回调函数 second_parse 方法处理
+        for item in items:
+            yield scrapy.Request( url = item['subUrls'], meta={'meta_1': item}, callback=self.second_parse)
+
+    #对于返回的小类的url，再进行递归请求
+    def second_parse(self, response):
+        # 提取每次Response的meta数据
+        meta_1= response.meta['meta_1']
+
+        # 取出小类里所有子链接
+        sonUrls = response.xpath('//a/@href').extract()
+
+        items= []
+        for i in range(0, len(sonUrls)):
+            # 检查每个链接是否以大类url开头、以.shtml结尾，如果是返回True
+            if_belong = sonUrls[i].endswith('.shtml') and sonUrls[i].startswith(meta_1['parentUrls'])
+
+            # 如果属于本大类，获取字段值放在同一个item下便于传输
+            if(if_belong):
+                item = SinaItem()
+                item['parentTitle'] =meta_1['parentTitle']
+                item['parentUrls'] =meta_1['parentUrls']
+                item['subUrls'] = meta_1['subUrls']
+                item['subTitle'] = meta_1['subTitle']
+                item['subFilename'] = meta_1['subFilename']
+                item['sonUrls'] = sonUrls[i]
+                items.append(item)
+
+        #发送每个小类下子链接url的Request请求，得到Response后连同包含meta数据 一同交给回调函数 detail_parse 方法处理
+        for item in items:
+                yield scrapy.Request(url=item['sonUrls'], meta={'meta_2':item}, callback = self.detail_parse)
+
+    # 数据解析方法，获取文章标题和内容
+    def detail_parse(self, response):
+        item = response.meta['meta_2']
+        content = ""
+        head = response.xpath('//h1[@id=\"main_title\"]/text()')
+        content_list = response.xpath('//div[@id=\"artibody\"]/p/text()').extract()
+
+        # 将p标签里的文本内容合并到一起
+        for content_one in content_list:
+            content += content_one
+
+        item['head']= head
+        item['content']= content
+
+        yield item
+
+
+pipelines.py
+from scrapy import signals
+import sys
+reload(sys)
+sys.setdefaultencoding("utf-8")
+
+class SinaPipeline(object):
+    def process_item(self, item, spider):
+        sonUrls = item['sonUrls']
+
+        # 文件名为子链接url中间部分，并将 / 替换为 _，保存为 .txt格式
+        filename = sonUrls[7:-6].replace('/','_')
+        filename += ".txt"
+
+        fp = open(item['subFilename']+'/'+filename, 'w')
+        fp.write(item['content'])
+        fp.close()
+
+        return item
+
+
+settings.py
+BOT_NAME = 'Sina'
+
+SPIDER_MODULES = ['Sina.spiders']
+NEWSPIDER_MODULE = 'Sina.spiders'
+
+ITEM_PIPELINES = {
+    'Sina.pipelines.SinaPipeline': 300,
+}
+
+LOG_LEVEL = 'DEBUG'
+
+
+在项目根目录下新建main.py文件,用于调试
+from scrapy import cmdline
+cmdline.execute('scrapy crawl sina'.split())
+
+
+执行程序
+py2 main.py
+
+=================================================================================================================================================================================
+
+items.py
+class CoserItem(scrapy.Item):
+    url = scrapy.Field()
+    name = scrapy.Field()
+    info = scrapy.Field()
+    image_urls = scrapy.Field()
+    images = scrapy.Field()
+
+
+spiders/coser.py
+# -*- coding: utf-8 -*-
+from scrapy.selector import Selector
+import scrapy
+from scrapy.contrib.loader import ItemLoader
+from Cosplay.items import CoserItem
+
+
+class CoserSpider(scrapy.Spider):
+    name = "coser"
+    allowed_domains = ["bcy.net"]
+    start_urls = (
+        'http://bcy.net/cn125101',
+        'http://bcy.net/cn126487',
+        'http://bcy.net/cn126173'
+    )
+
+    def parse(self, response):
+        sel = Selector(response)
+
+        for link in sel.xpath("//ul[@class='js-articles l-works']/li[@class='l-work--big']/article[@class='work work--second-created']/h2[@class='work__title']/a/@href").extract():
+            link = 'http://bcy.net%s' % link
+            request = scrapy.Request(link, callback=self.parse_item)
+            yield request
+
+    def parse_item(self, response):
+        item = ItemLoader(item=CoserItem(), response=response)
+        item.add_xpath('name', "//h1[@class='js-post-title']/text()")
+        item.add_xpath('info', "//div[@class='post__info']/div[@class='post__type post__info-group']/span/text()")
+        urls = item.get_xpath('//img[@class="detail_std detail_clickable"]/@src')
+        urls = [url.replace('/w650', '') for url in urls]
+        item.add_value('image_urls', urls)
+        item.add_value('url', response.url)
+
+        return item.load_item()
+
+
+pipelines.py
+import requests
+from Cosplay import settings
+import os
+
+
+class ImageDownloadPipeline(object):
+    def process_item(self, item, spider):
+        if 'image_urls' in item:
+            images = []
+            dir_path = '%s/%s' % (settings.IMAGES_STORE, spider.name)
+
+            if not os.path.exists(dir_path):
+                os.makedirs(dir_path)
+            for image_url in item['image_urls']:
+                us = image_url.split('/')[3:]
+                image_file_name = '_'.join(us)
+                file_path = '%s/%s' % (dir_path, image_file_name)
+                images.append(file_path)
+                if os.path.exists(file_path):
+                    continue
+
+                with open(file_path, 'wb') as handle:
+                    response = requests.get(image_url, stream=True)
+                    for block in response.iter_content(1024):
+                        if not block:
+                            break
+
+                        handle.write(block)
+
+            item['images'] = images
+        return item
+
+
+settings.py
+
+ITEM_PIPELINES = {'Cosplay.pipelines.ImageDownloadPipeline': 1}
+
+IMAGES_STORE = '../Images'
+
+DOWNLOAD_DELAY = 0.25    # 250 ms of delay
+
+
+在项目根目录下新建main.py文件,用于调试
+from scrapy import cmdline
+cmdline.execute('scrapy crawl coser'.split())
+
+
+执行程序
+py2 main.py
+
+=============================================================================================================================================================================
+
+用Pymongo保存数据
+
+爬取豆瓣电影top250movie.douban.com/top250的电影数据，并保存在MongoDB中。
+
+items.py
+class DoubanspiderItem(scrapy.Item):
+    # 电影标题
+    title = scrapy.Field()
+    # 电影评分
+    score = scrapy.Field()
+    # 电影信息
+    content = scrapy.Field()
+    # 简介
+    info = scrapy.Field()
+
+
+spiders/douban.py
+import scrapy
+from doubanSpider.items import DoubanspiderItem
+
+
+class DoubanSpider(scrapy.Spider):
+    name = "douban"
+    allowed_domains = ["movie.douban.com"]
+    start = 0
+    url = 'https://movie.douban.com/top250?start='
+    end = '&filter='
+    start_urls = [url + str(start) + end]
+
+    def parse(self, response):
+
+        item = DoubanspiderItem()
+
+        movies = response.xpath("//div[@class=\'info\']")
+
+        for each in movies:
+            title = each.xpath('div[@class="hd"]/a/span[@class="title"]/text()').extract()
+            content = each.xpath('div[@class="bd"]/p/text()').extract()
+            score = each.xpath('div[@class="bd"]/div[@class="star"]/span[@class="rating_num"]/text()').extract()
+            info = each.xpath('div[@class="bd"]/p[@class="quote"]/span/text()').extract()
+
+            item['title'] = title[0]
+            # 以;作为分隔，将content列表里所有元素合并成一个新的字符串
+            item['content'] = ';'.join(content)
+            item['score'] = score[0]
+            item['info'] = info[0]
+            # 提交item
+
+            yield item
+
+        if self.start <= 225:
+            self.start += 25
+            yield scrapy.Request(self.url + str(self.start) + self.end, callback=self.parse)
+
+
+pipelines.py
+
+from scrapy.conf import settings
+import pymongo
+
+class DoubanspiderPipeline(object):
+    def __init__(self):
+        # 获取setting主机名、端口号和数据库名
+        host = settings['MONGODB_HOST']
+        port = settings['MONGODB_PORT']
+        dbname = settings['MONGODB_DBNAME']
+
+        # pymongo.MongoClient(host, port) 创建MongoDB链接
+        client = pymongo.MongoClient(host=host,port=port)
+
+        # 指向指定的数据库
+        mdb = client[dbname]
+        # 获取数据库里存放数据的表名
+        self.post = mdb[settings['MONGODB_DOCNAME']]
+
+
+    def process_item(self, item, spider):
+        data = dict(item)
+        # 向指定的表里添加数据
+        self.post.insert(data)
+        return item
+
+
+settings.py
+BOT_NAME = 'doubanSpider'
+
+SPIDER_MODULES = ['doubanSpider.spiders']
+NEWSPIDER_MODULE = 'doubanSpider.spiders'
+
+ITEM_PIPELINES = {
+        'doubanSpider.pipelines.DoubanspiderPipeline' : 300
+        }
+
+# Crawl responsibly by identifying yourself (and your website) on the user-agent
+USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36'
+
+# MONGODB 主机环回地址127.0.0.1
+MONGODB_HOST = '127.0.0.1'
+# 端口号，默认是27017
+MONGODB_PORT = 27017
+# 设置数据库名称
+MONGODB_DBNAME = 'DouBan'
+# 存放本次数据的表名称
+MONGODB_DOCNAME = 'DouBanMovies'
+
+
+运行
+启动MongoDB数据库需要两个命令：
+
+mongod：是mongoDB数据库进程本身
+mongo：是命令行shell客户端
+
+
+sudo mongod # 首先启动数据库服务，再执行Scrapy
+sudo mongo # 启动数据库shell
+
+在mongo shell下使用命令:
+
+# 查看当前数据库
+> db
+
+# 列出所有的数据库
+> show dbs
+
+# 连接DouBan数据库
+> use DouBan
+
+# 列出所有表
+> show collections
+
+# 查看表里的数据
+> db.DouBanMoives.find()
+
+===============================================================================================================================================================
+
+注意：模拟登陆时，必须保证settings.py里的  COOKIES_ENABLED  (Cookies中间件) 处于开启状态
+
+
+ COOKIES_ENABLED = True  或  # COOKIES_ENABLED = False 
+
+策略一：直接POST数据（比如需要登陆的账户信息)
+
+
+只要是需要提供post数据的，就可以用这种方法。下面示例里post的数据是账户密码：
+# -*- coding: utf-8 -*-
+import scrapy
+
+
+class Renren1Spider(scrapy.Spider):
+    name = "renren1"
+    allowed_domains = ["renren.com"]
+
+    def start_requests(self):
+        url = 'http://www.renren.com/PLogin.do'
+        # FormRequest 是Scrapy发送POST请求的方法
+        yield scrapy.FormRequest(
+                url = url,
+                formdata = {"email" : "mr_mao_hacker@163.com", "password" : "axxxxxxxe"},
+                callback = self.parse_page)
+
+    def parse_page(self, response):
+        with open("mao2.html", "w") as filename:
+            filename.write(response.body)
+
+
+策略二：标准的模拟登陆步骤
+
+
+正统模拟登录方法：
+
+1.首先发送登录页面的get请求，获取到页面里的登录必须的参数（比如说zhihu登陆界面的 _xsrf）
+
+
+2.然后和账户密码一起post到服务器，登录成功
+
+# -*- coding: utf-8 -*-
+import scrapy
+
+
+
+class Renren2Spider(scrapy.Spider):
+    name = "renren2"
+    allowed_domains = ["renren.com"]
+    start_urls = (
+        "http://www.renren.com/PLogin.do",
+    )
+
+    # 处理start_urls里的登录url的响应内容，提取登陆需要的参数（如果需要的话)
+    def parse(self, response):
+        # 提取登陆需要的参数
+        #_xsrf = response.xpath("//_xsrf").extract()[0]
+
+        # 发送请求参数，并调用指定回调函数处理
+        yield scrapy.FormRequest.from_response(
+                response,
+                formdata = {"email" : "mr_mao_hacker@163.com", "password" : "axxxxxxxe"},#, "_xsrf" = _xsrf},
+                callback = self.parse_page
+            )
+
+    # 获取登录成功状态，访问需要登录后才能访问的页面
+    def parse_page(self, response):
+        url = "http://www.renren.com/422167102/profile"
+        yield scrapy.Request(url, callback = self.parse_newpage)
+
+    # 处理响应内容
+    def parse_newpage(self, response):
+        with open("xiao.html", "w") as filename:
+            filename.write(response.body)
+
+
+策略三：直接使用保存登陆状态的Cookie模拟登陆
+
+
+如果实在没办法了，可以用这种方法模拟登录，虽然麻烦一点，但是成功率100%
+# -*- coding: utf-8 -*-
+import scrapy
+
+class RenrenSpider(scrapy.Spider):
+    name = "renren"
+    allowed_domains = ["renren.com"]
+    start_urls = (
+        'http://www.renren.com/111111',
+        'http://www.renren.com/222222',
+        'http://www.renren.com/333333',
+    )
+
+    cookies = {
+    "anonymid" : "ixrna3fysufnwv",
+    "_r01_" : "1",
+    "ap" : "327550029",
+    "JSESSIONID" : "abciwg61A_RvtaRS3GjOv",
+    "depovince" : "GW",
+    "springskin" : "set",
+    "jebe_key" : "f6fb270b-d06d-42e6-8b53-e67c3156aa7e%7Cc13c37f53bca9e1e7132d4b58ce00fa3%7C1484060607478%7C1%7C1486198628950",
+    "t" : "691808127750a83d33704a565d8340ae9",
+    "societyguester" : "691808127750a83d33704a565d8340ae9",
+    "id" : "327550029",
+    "xnsid" : "f42b25cf",
+    "loginfrom" : "syshome"
+    }
+
+    # 可以重写Spider类的start_requests方法，附带Cookie值，发送POST请求
+    def start_requests(self):
+        for url in self.start_urls:
+            yield scrapy.FormRequest(url, cookies = self.cookies, callback = self.parse_page)
+
+    # 处理响应内容
+    def parse_page(self, response):
+        print "===========" + response.url
+        with open("deng.html", "w") as filename:
+            filename.write(response.body)
+
+================================================================================================================================================================================
+
+通过Fiddler进行手机抓包
+
+通过Fiddler抓包工具，可以抓取手机的网络通信，但前提是手机和电脑处于同一局域网内（WI-FI或热点），然后进行以下设置：
+
+用Fiddler对Android应用进行抓包
+
+1.打开Fiddler设置
+
+
+
+
+2.在 Connections 里设置允许连接远程计算机，确认后重新启动Fiddler 
+
+
+1.在命令提示符下输入 ipconfig 查看本机IP 
+
+
+2.打开Android设备的“设置”->“WLAN”，找到你要连接的网络，在上面长按，然后选择“修改网络”，弹出网络设置对话框，然后勾选“显示高级选项”。 
+
+
+3.在“代理”后面的输入框选择“手动”，在“代理服务器主机名”后面的输入框输入电脑的ip地址，在“代理服务器端口”后面的输入框输入8888，然后点击“保存”按钮。 
+
+
+4.启动Android设备中的浏览器，访问网页即可在Fiddler中可以看到完成的请求和响应数据。
+
+
+用Fiddler对iPhone手机应用进行抓包
+
+基本流程差不多，只是手机设置不太一样：
+
+iPhone手机：点击设置 > 无线局域网 > 无线网络 > HTTP代理 > 手动：
+
+代理地址(电脑IP)：192.168.xx.xxx
+
+端口号：8888
+
+===========================================================================================================================================================================
+
+Scrapy 和 scrapy-redis的区别
+
+Scrapy 是一个通用的爬虫框架，但是不支持分布式，Scrapy-redis是为了更方便地实现Scrapy分布式爬取，而提供了一些以redis为基础的组件(仅有组件)。
+
+
+pip install scrapy-redis
+
+Scrapy-redis提供了下面四种组件（components）：(四种组件意味着这四个模块都要做相应的修改)
+• Scheduler 
+• Duplication Filter 
+• Item Pipeline 
+• Base Spider 
+
+scrapy-redis架构
+
+
+
+如上图所⽰示，scrapy-redis在scrapy的架构上增加了redis，基于redis的特性拓展了如下组件：
+
+ Scheduler ：
+
+Scrapy改造了python本来的collection.deque(双向队列)形成了自己的Scrapy queue(https://github.com/scrapy/queuelib/blob/master/queuelib/queue.py))，但是Scrapy多个spider不能共享待爬取队列Scrapy queue， 即Scrapy本身不支持爬虫分布式，scrapy-redis 的解决是把这个Scrapy queue换成redis数据库（也是指redis队列），从同一个redis-server存放要爬取的request，便能让多个spider去同一个数据库里读取。
+
+Scrapy中跟“待爬队列”直接相关的就是调度器 Scheduler ，它负责对新的request进行入列操作（加入Scrapy queue），取出下一个要爬取的request（从Scrapy queue中取出）等操作。它把待爬队列按照优先级建立了一个字典结构，比如：
+    {
+        优先级0 : 队列0
+        优先级1 : 队列1
+        优先级2 : 队列2
+    }
+
+
+然后根据request中的优先级，来决定该入哪个队列，出列时则按优先级较小的优先出列。为了管理这个比较高级的队列字典，Scheduler需要提供一系列的方法。但是原来的Scheduler已经无法使用，所以使用Scrapy-redis的scheduler组件。
+
+ Duplication Filter 
+
+Scrapy中用集合实现这个request去重功能，Scrapy中把已经发送的request指纹放入到一个集合中，把下一个request的指纹拿到集合中比对，如果该指纹存在于集合中，说明这个request发送过了，如果没有则继续操作。这个核心的判重功能是这样实现的：
+    def request_seen(self, request):
+        # 把请求转化为指纹  
+        fp = self.request_fingerprint(request)
+
+        # 这就是判重的核心操作  ，self.fingerprints就是指纹集合
+        if fp in self.fingerprints:
+            return True  #直接返回
+        self.fingerprints.add(fp) #如果不在，就添加进去指纹集合
+        if self.file:
+            self.file.write(fp + os.linesep)
+
+
+在scrapy-redis中去重是由 Duplication Filter 组件来实现的，它通过redis的set 不重复的特性，巧妙的实现了Duplication Filter去重。scrapy-redis调度器从引擎接受request，将request的指纹存⼊redis的set检查是否重复，并将不重复的request push写⼊redis的 request queue。
+
+引擎请求request(Spider发出的）时，调度器从redis的request queue队列⾥里根据优先级pop 出⼀个request 返回给引擎，引擎将此request发给spider处理。
+
+ Item Pipeline ：
+
+引擎将(Spider返回的)爬取到的Item给Item Pipeline，scrapy-redis 的Item Pipeline将爬取到的 Item 存⼊redis的 items queue。
+
+修改过 Item Pipeline 可以很方便的根据 key 从 items queue 提取item，从⽽实现  items processes 集群。
+
+ Base Spider 
+
+不在使用scrapy原有的Spider类，重写的 RedisSpider 继承了Spider和RedisMixin这两个类，RedisMixin是用来从redis读取url的类。
+
+当我们生成一个Spider继承RedisSpider时，调用setup_redis函数，这个函数会去连接redis数据库，然后会设置signals(信号)：
+
+•一个是当spider空闲时候的signal，会调用spider_idle函数，这个函数调用 schedule_next_request 函数，保证spider是一直活着的状态，并且抛出DontCloseSpider异常。
+
+
+•一个是当抓到一个item时的signal，会调用item_scraped函数，这个函数会调用 schedule_next_request 函数，获取下一个request。
+
+======================================================================================================================================================================================
+
+官方站点：https://github.com/rolando/scrapy-redis
+
+scrapy-redis的官方文档写的比较简洁，没有提及其运行原理，所以如果想全面的理解分布式爬虫的运行原理，还是得看scrapy-redis的源代码才行。
+
+scrapy-redis工程的主体还是是redis和scrapy两个库，工程本身实现的东西不是很多，这个工程就像胶水一样，把这两个插件粘结了起来。下面我们来看看，scrapy-redis的每一个源代码文件都实现了什么功能，最后如何实现分布式的爬虫系统：
+1.connection.py
+
+负责根据setting中配置实例化redis连接。被dupefilter和scheduler调用，总之涉及到redis存取的都要使用到这个模块。
+
+# 这里引入了redis模块，这个是redis-python库的接口，用于通过python访问redis数据库，
+# 这个文件主要是实现连接redis数据库的功能，这些连接接口在其他文件中经常被用到
+
+import redis
+import six
+
+from scrapy.utils.misc import load_object
+
+DEFAULT_REDIS_CLS = redis.StrictRedis
+
+# 可以在settings文件中配置套接字的超时时间、等待时间等
+# Sane connection defaults.
+DEFAULT_PARAMS = {
+    'socket_timeout': 30,
+    'socket_connect_timeout': 30,
+    'retry_on_timeout': True,
+}
+
+# 要想连接到redis数据库，和其他数据库差不多，需要一个ip地址、端口号、用户名密码（可选）和一个整形的数据库编号
+# Shortcut maps 'setting name' -> 'parmater name'.
+SETTINGS_PARAMS_MAP = {
+    'REDIS_URL': 'url',
+    'REDIS_HOST': 'host',
+    'REDIS_PORT': 'port',
+}
+
+
+def get_redis_from_settings(settings):
+    """Returns a redis client instance from given Scrapy settings object.
+    This function uses ``get_client`` to instantiate the client and uses
+    ``DEFAULT_PARAMS`` global as defaults values for the parameters. You can
+    override them using the ``REDIS_PARAMS`` setting.
+    Parameters
+    ----------
+    settings : Settings
+        A scrapy settings object. See the supported settings below.
+    Returns
+    -------
+    server
+        Redis client instance.
+    Other Parameters
+    ----------------
+    REDIS_URL : str, optional
+        Server connection URL.
+    REDIS_HOST : str, optional
+        Server host.
+    REDIS_PORT : str, optional
+        Server port.
+    REDIS_PARAMS : dict, optional
+        Additional client parameters.
+    """
+    params = DEFAULT_PARAMS.copy()
+    params.update(settings.getdict('REDIS_PARAMS'))
+    # XXX: Deprecate REDIS_* settings.
+    for source, dest in SETTINGS_PARAMS_MAP.items():
+        val = settings.get(source)
+        if val:
+            params[dest] = val
+
+    # Allow ``redis_cls`` to be a path to a class.
+    if isinstance(params.get('redis_cls'), six.string_types):
+        params['redis_cls'] = load_object(params['redis_cls'])
+
+    # 返回的是redis库的Redis对象，可以直接用来进行数据操作的对象
+    return get_redis(**params)
+
+
+# Backwards compatible alias.
+from_settings = get_redis_from_settings
+
+
+def get_redis(**kwargs):
+    """Returns a redis client instance.
+    Parameters
+    ----------
+    redis_cls : class, optional
+        Defaults to ``redis.StrictRedis``.
+    url : str, optional
+        If given, ``redis_cls.from_url`` is used to instantiate the class.
+    **kwargs
+        Extra parameters to be passed to the ``redis_cls`` class.
+    Returns
+    -------
+    server
+        Redis client instance.
+    """
+    redis_cls = kwargs.pop('redis_cls', DEFAULT_REDIS_CLS)
+    url = kwargs.pop('url', None)
+
+
+    if url:
+        return redis_cls.from_url(url, **kwargs)
+    else:
+        return redis_cls(**kwargs)
+
+======================================================================================================================================================================================
+
+dupefilter.py
+
+负责执行requst的去重，实现的很有技巧性，使用redis的set数据结构。但是注意scheduler并不使用其中用于在这个模块中实现的dupefilter键做request的调度，而是使用queue.py模块中实现的queue。
+
+当request不重复时，将其存入到queue中，调度时将其弹出。
+import logging
+import time
+
+from scrapy.dupefilters import BaseDupeFilter
+from scrapy.utils.request import request_fingerprint
+
+from .connection import get_redis_from_settings
+
+
+DEFAULT_DUPEFILTER_KEY = "dupefilter:%(timestamp)s"
+
+logger = logging.getLogger(__name__)
+
+
+# TODO: Rename class to RedisDupeFilter.
+class RFPDupeFilter(BaseDupeFilter):
+    """Redis-based request duplicates filter.
+    This class can also be used with default Scrapy's scheduler.
+    """
+
+    logger = logger
+
+    def __init__(self, server, key, debug=False):
+        """Initialize the duplicates filter.
+        Parameters
+        ----------
+        server : redis.StrictRedis
+            The redis server instance.
+        key : str
+            Redis key Where to store fingerprints.
+        debug : bool, optional
+            Whether to log filtered requests.
+        """
+        self.server = server
+        self.key = key
+        self.debug = debug
+        self.logdupes = True
+
+    @classmethod
+    def from_settings(cls, settings):
+        """Returns an instance from given settings.
+        This uses by default the key ``dupefilter:<timestamp>``. When using the
+        ``scrapy_redis.scheduler.Scheduler`` class, this method is not used as
+        it needs to pass the spider name in the key.
+        Parameters
+        ----------
+        settings : scrapy.settings.Settings
+        Returns
+        -------
+        RFPDupeFilter
+            A RFPDupeFilter instance.
+        """
+        server = get_redis_from_settings(settings)
+        # XXX: This creates one-time key. needed to support to use this
+        # class as standalone dupefilter with scrapy's default scheduler
+        # if scrapy passes spider on open() method this wouldn't be needed
+        # TODO: Use SCRAPY_JOB env as default and fallback to timestamp.
+        key = DEFAULT_DUPEFILTER_KEY % {'timestamp': int(time.time())}
+        debug = settings.getbool('DUPEFILTER_DEBUG')
+        return cls(server, key=key, debug=debug)
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        """Returns instance from crawler.
+        Parameters
+        ----------
+        crawler : scrapy.crawler.Crawler
+        Returns
+        -------
+        RFPDupeFilter
+            Instance of RFPDupeFilter.
+        """
+        return cls.from_settings(crawler.settings)
+
+    def request_seen(self, request):
+        """Returns True if request was already seen.
+        Parameters
+        ----------
+        request : scrapy.http.Request
+        Returns
+        -------
+        bool
+        """
+        fp = self.request_fingerprint(request)
+        # This returns the number of values added, zero if already exists.
+        added = self.server.sadd(self.key, fp)
+        return added == 0
+
+    def request_fingerprint(self, request):
+        """Returns a fingerprint for a given request.
+        Parameters
+        ----------
+        request : scrapy.http.Request
+        Returns
+        -------
+        str
+        """
+        return request_fingerprint(request)
+
+    def close(self, reason=''):
+        """Delete data on close. Called by Scrapy's scheduler.
+        Parameters
+        ----------
+        reason : str, optional
+        """
+        self.clear()
+
+    def clear(self):
+        """Clears fingerprints data."""
+        self.server.delete(self.key)
+
+    def log(self, request, spider):
+        """Logs given request.
+        Parameters
+        ----------
+        request : scrapy.http.Request
+        spider : scrapy.spiders.Spider
+        """
+        if self.debug:
+            msg = "Filtered duplicate request: %(request)s"
+            self.logger.debug(msg, {'request': request}, extra={'spider': spider})
+        elif self.logdupes:
+            msg = ("Filtered duplicate request %(request)s"
+                   " - no more duplicates will be shown"
+                   " (see DUPEFILTER_DEBUG to show all duplicates)")
+            msg = "Filtered duplicate request: %(request)s"
+            self.logger.debug(msg, {'request': request}, extra={'spider': spider})
+            self.logdupes = False
+
+
+这个文件看起来比较复杂，重写了scrapy本身已经实现的request判重功能。因为本身scrapy单机跑的话，只需要读取内存中的request队列或者持久化的request队列（scrapy默认的持久化似乎是json格式的文件，不是数据库）就能判断这次要发出的request url是否已经请求过或者正在调度（本地读就行了）。而分布式跑的话，就需要各个主机上的scheduler都连接同一个数据库的同一个request池来判断这次的请求是否是重复的了。 
+
+在这个文件中，通过继承BaseDupeFilter重写他的方法，实现了基于redis的判重。根据源代码来看，scrapy-redis使用了scrapy本身的一个fingerprint接request_fingerprint，这个接口很有趣，根据scrapy文档所说，他通过hash来判断两个url是否相同（相同的url会生成相同的hash结果），但是当两个url的地址相同，get型参数相同但是顺序不同时，也会生成相同的hash结果（这个真的比较神奇。。。）所以scrapy-redis依旧使用url的fingerprint来判断request请求是否已经出现过。
+
+这个类通过连接redis，使用一个key来向redis的一个set中插入fingerprint（这个key对于同一种spider是相同的，redis是一个key-value的数据库，如果key是相同的，访问到的值就是相同的，这里使用spider名字+DupeFilter的key就是为了在不同主机上的不同爬虫实例，只要属于同一种spider，就会访问到同一个set，而这个set就是他们的url判重池），如果返回值为0，说明该set中该fingerprint已经存在（因为集合是没有重复值的），则返回False，如果返回值为1，说明添加了一个fingerprint到set中，则说明这个request没有重复，于是返回True，还顺便把新fingerprint加入到数据库中了。 DupeFilter判重会在scheduler类中用到，每一个request在进入调度之前都要进行判重，如果重复就不需要参加调度，直接舍弃就好了，不然就是白白浪费资源。
+
+=============================================================================================================================================================================================================================
+
+picklecompat.py
+"""A pickle wrapper module with protocol=-1 by default."""
+
+try:
+    import cPickle as pickle  # PY2
+except ImportError:
+    import pickle
+
+
+def loads(s):
+    return pickle.loads(s)
+
+
+def dumps(obj):
+    return pickle.dumps(obj, protocol=-1)
+
+
+这里实现了loads和dumps两个函数，其实就是实现了一个序列化器。
+
+因为redis数据库不能存储复杂对象（key部分只能是字符串，value部分只能是字符串，字符串列表，字符串集合和hash），所以我们存啥都要先串行化成文本才行。
+
+这里使用的就是python的pickle模块，一个兼容py2和py3的串行化工具。这个serializer主要用于一会的scheduler存reuqest对象。
+
+======================================================================================================================================================================================================
+
+pipelines.py
+
+这是是用来实现分布式处理的作用。它将Item存储在redis中以实现分布式处理。由于在这里需要读取配置，所以就用到了from_crawler()函数。
+
+from scrapy.utils.misc import load_object
+from scrapy.utils.serialize import ScrapyJSONEncoder
+from twisted.internet.threads import deferToThread
+
+from . import connection
+
+
+default_serialize = ScrapyJSONEncoder().encode
+
+
+class RedisPipeline(object):
+    """Pushes serialized item into a redis list/queue"""
+
+    def __init__(self, server,
+                 key='%(spider)s:items',
+                 serialize_func=default_serialize):
+        self.server = server
+        self.key = key
+        self.serialize = serialize_func
+
+    @classmethod
+    def from_settings(cls, settings):
+        params = {
+            'server': connection.from_settings(settings),
+        }
+        if settings.get('REDIS_ITEMS_KEY'):
+            params['key'] = settings['REDIS_ITEMS_KEY']
+        if settings.get('REDIS_ITEMS_SERIALIZER'):
+            params['serialize_func'] = load_object(
+                settings['REDIS_ITEMS_SERIALIZER']
+            )
+
+        return cls(**params)
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        return cls.from_settings(crawler.settings)
+
+    def process_item(self, item, spider):
+        return deferToThread(self._process_item, item, spider)
+
+    def _process_item(self, item, spider):
+        key = self.item_key(item, spider)
+        data = self.serialize(item)
+        self.server.rpush(key, data)
+        return item
+
+    def item_key(self, item, spider):
+        """Returns redis key based on given spider.
+        Override this function to use a different key depending on the item
+        and/or spider.
+        """
+        return self.key % {'spider': spider.name}
+
+
+pipelines文件实现了一个item pipieline类，和scrapy的item pipeline是同一个对象，通过从settings中拿到我们配置的 REDIS_ITEMS_KEY 作为key，把item串行化之后存入redis数据库对应的value中（这个value可以看出出是个list，我们的每个item是这个list中的一个结点），这个pipeline把提取出的item存起来，主要是为了方便我们延后处理数据。
+
+========================================================================================================================================================================================================================
+
+queue.py
+
+该文件实现了几个容器类，可以看这些容器和redis交互频繁，同时使用了我们上边picklecompat中定义的序列化器。这个文件实现的几个容器大体相同，只不过一个是队列，一个是栈，一个是优先级队列，这三个容器到时候会被scheduler对象实例化，来实现request的调度。比如我们使用SpiderQueue最为调度队列的类型，到时候request的调度方法就是先进先出，而实用SpiderStack就是先进后出了。 
+
+从SpiderQueue的实现看出来，他的push函数就和其他容器的一样，只不过push进去的request请求先被scrapy的接口request_to_dict变成了一个dict对象（因为request对象实在是比较复杂，有方法有属性不好串行化），之后使用picklecompat中的serializer串行化为字符串，然后使用一个特定的key存入redis中（该key在同一种spider中是相同的）。而调用pop时，其实就是从redis用那个特定的key去读其值（一个list），从list中读取最早进去的那个，于是就先进先出了。 这些容器类都会作为scheduler调度request的容器，scheduler在每个主机上都会实例化一个，并且和spider一一对应，所以分布式运行时会有一个spider的多个实例和一个scheduler的多个实例存在于不同的主机上，但是，因为scheduler都是用相同的容器，而这些容器都连接同一个redis服务器，又都使用spider名加queue来作为key读写数据，所以不同主机上的不同爬虫实例公用一个request调度池，实现了分布式爬虫之间的统一调度。
+from scrapy.utils.reqser import request_to_dict, request_from_dict
+
+from . import picklecompat
+
+
+class Base(object):
+    """Per-spider queue/stack base class"""
+
+    def __init__(self, server, spider, key, serializer=None):
+        """Initialize per-spider redis queue.
+        Parameters:
+            server -- redis connection
+            spider -- spider instance
+            key -- key for this queue (e.g. "%(spider)s:queue")
+        """
+        if serializer is None:
+            # Backward compatibility.
+            # TODO: deprecate pickle.
+            serializer = picklecompat
+        if not hasattr(serializer, 'loads'):
+            raise TypeError("serializer does not implement 'loads' function: %r"
+                            % serializer)
+        if not hasattr(serializer, 'dumps'):
+            raise TypeError("serializer '%s' does not implement 'dumps' function: %r"
+                            % serializer)
+
+        self.server = server
+        self.spider = spider
+        self.key = key % {'spider': spider.name}
+        self.serializer = serializer
+
+    def _encode_request(self, request):
+        """Encode a request object"""
+        obj = request_to_dict(request, self.spider)
+        return self.serializer.dumps(obj)
+
+    def _decode_request(self, encoded_request):
+        """Decode an request previously encoded"""
+        obj = self.serializer.loads(encoded_request)
+        return request_from_dict(obj, self.spider)
+
+    def __len__(self):
+        """Return the length of the queue"""
+        raise NotImplementedError
+
+    def push(self, request):
+        """Push a request"""
+        raise NotImplementedError
+
+    def pop(self, timeout=0):
+        """Pop a request"""
+        raise NotImplementedError
+
+    def clear(self):
+        """Clear queue/stack"""
+        self.server.delete(self.key)
+
+
+class SpiderQueue(Base):
+    """Per-spider FIFO queue"""
+
+    def __len__(self):
+        """Return the length of the queue"""
+        return self.server.llen(self.key)
+
+    def push(self, request):
+        """Push a request"""
+        self.server.lpush(self.key, self._encode_request(request))
+
+    def pop(self, timeout=0):
+        """Pop a request"""
+        if timeout > 0:
+            data = self.server.brpop(self.key, timeout)
+            if isinstance(data, tuple):
+                data = data[1]
+        else:
+            data = self.server.rpop(self.key)
+        if data:
+            return self._decode_request(data)
+
+
+class SpiderPriorityQueue(Base):
+    """Per-spider priority queue abstraction using redis' sorted set"""
+
+    def __len__(self):
+        """Return the length of the queue"""
+        return self.server.zcard(self.key)
+
+    def push(self, request):
+        """Push a request"""
+        data = self._encode_request(request)
+        score = -request.priority
+        # We don't use zadd method as the order of arguments change depending on
+        # whether the class is Redis or StrictRedis, and the option of using
+        # kwargs only accepts strings, not bytes.
+        self.server.execute_command('ZADD', self.key, score, data)
+
+    def pop(self, timeout=0):
+        """
+        Pop a request
+        timeout not support in this queue class
+        """
+        # use atomic range/remove using multi/exec
+        pipe = self.server.pipeline()
+        pipe.multi()
+        pipe.zrange(self.key, 0, 0).zremrangebyrank(self.key, 0, 0)
+        results, count = pipe.execute()
+        if results:
+            return self._decode_request(results[0])
+
+
+class SpiderStack(Base):
+    """Per-spider stack"""
+
+    def __len__(self):
+        """Return the length of the stack"""
+        return self.server.llen(self.key)
+
+    def push(self, request):
+        """Push a request"""
+        self.server.lpush(self.key, self._encode_request(request))
+
+    def pop(self, timeout=0):
+        """Pop a request"""
+        if timeout > 0:
+            data = self.server.blpop(self.key, timeout)
+            if isinstance(data, tuple):
+                data = data[1]
+        else:
+            data = self.server.lpop(self.key)
+
+        if data:
+            return self._decode_request(data)
+
+
+__all__ = ['SpiderQueue', 'SpiderPriorityQueue', 'SpiderStack']
+
+================================================================================================================================================================================
+
+scheduler.py
+
+此扩展是对scrapy中自带的scheduler的替代（在settings的SCHEDULER变量中指出），正是利用此扩展实现crawler的分布式调度。其利用的数据结构来自于queue中实现的数据结构。
+
+scrapy-redis所实现的两种分布式：爬虫分布式以及item处理分布式就是由模块scheduler和模块pipelines实现。上述其它模块作为为二者辅助的功能模块
+import importlib
+import six
+
+from scrapy.utils.misc import load_object
+
+from . import connection
+
+
+# TODO: add SCRAPY_JOB support.
+class Scheduler(object):
+    """Redis-based scheduler"""
+
+    def __init__(self, server,
+                 persist=False,
+                 flush_on_start=False,
+                 queue_key='%(spider)s:requests',
+                 queue_cls='scrapy_redis.queue.SpiderPriorityQueue',
+                 dupefilter_key='%(spider)s:dupefilter',
+                 dupefilter_cls='scrapy_redis.dupefilter.RFPDupeFilter',
+                 idle_before_close=0,
+                 serializer=None):
+        """Initialize scheduler.
+        Parameters
+        ----------
+        server : Redis
+            The redis server instance.
+        persist : bool
+            Whether to flush requests when closing. Default is False.
+        flush_on_start : bool
+            Whether to flush requests on start. Default is False.
+        queue_key : str
+            Requests queue key.
+        queue_cls : str
+            Importable path to the queue class.
+        dupefilter_key : str
+            Duplicates filter key.
+        dupefilter_cls : str
+            Importable path to the dupefilter class.
+        idle_before_close : int
+            Timeout before giving up.
+        """
+        if idle_before_close < 0:
+            raise TypeError("idle_before_close cannot be negative")
+
+        self.server = server
+        self.persist = persist
+        self.flush_on_start = flush_on_start
+        self.queue_key = queue_key
+        self.queue_cls = queue_cls
+        self.dupefilter_cls = dupefilter_cls
+        self.dupefilter_key = dupefilter_key
+        self.idle_before_close = idle_before_close
+        self.serializer = serializer
+        self.stats = None
+
+    def __len__(self):
+        return len(self.queue)
+
+    @classmethod
+    def from_settings(cls, settings):
+        kwargs = {
+            'persist': settings.getbool('SCHEDULER_PERSIST'),
+            'flush_on_start': settings.getbool('SCHEDULER_FLUSH_ON_START'),
+            'idle_before_close': settings.getint('SCHEDULER_IDLE_BEFORE_CLOSE'),
+        }
+
+        # If these values are missing, it means we want to use the defaults.
+        optional = {
+            # TODO: Use custom prefixes for this settings to note that are
+            # specific to scrapy-redis.
+            'queue_key': 'SCHEDULER_QUEUE_KEY',
+            'queue_cls': 'SCHEDULER_QUEUE_CLASS',
+            'dupefilter_key': 'SCHEDULER_DUPEFILTER_KEY',
+            # We use the default setting name to keep compatibility.
+            'dupefilter_cls': 'DUPEFILTER_CLASS',
+            'serializer': 'SCHEDULER_SERIALIZER',
+        }
+        for name, setting_name in optional.items():
+            val = settings.get(setting_name)
+            if val:
+                kwargs[name] = val
+
+        # Support serializer as a path to a module.
+        if isinstance(kwargs.get('serializer'), six.string_types):
+            kwargs['serializer'] = importlib.import_module(kwargs['serializer'])
+
+        server = connection.from_settings(settings)
+        # Ensure the connection is working.
+        server.ping()
+
+        return cls(server=server, **kwargs)
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        instance = cls.from_settings(crawler.settings)
+        # FIXME: for now, stats are only supported from this constructor
+        instance.stats = crawler.stats
+        return instance
+
+    def open(self, spider):
+        self.spider = spider
+
+        try:
+            self.queue = load_object(self.queue_cls)(
+                server=self.server,
+                spider=spider,
+                key=self.queue_key % {'spider': spider.name},
+                serializer=self.serializer,
+            )
+        except TypeError as e:
+            raise ValueError("Failed to instantiate queue class '%s': %s",
+                             self.queue_cls, e)
+
+        try:
+            self.df = load_object(self.dupefilter_cls)(
+                server=self.server,
+                key=self.dupefilter_key % {'spider': spider.name},
+                debug=spider.settings.getbool('DUPEFILTER_DEBUG'),
+            )
+        except TypeError as e:
+            raise ValueError("Failed to instantiate dupefilter class '%s': %s",
+                             self.dupefilter_cls, e)
+
+        if self.flush_on_start:
+            self.flush()
+        # notice if there are requests already in the queue to resume the crawl
+        if len(self.queue):
+            spider.log("Resuming crawl (%d requests scheduled)" % len(self.queue))
+
+    def close(self, reason):
+        if not self.persist:
+            self.flush()
+
+    def flush(self):
+        self.df.clear()
+        self.queue.clear()
+
+    def enqueue_request(self, request):
+        if not request.dont_filter and self.df.request_seen(request):
+            self.df.log(request, self.spider)
+            return False
+        if self.stats:
+            self.stats.inc_value('scheduler/enqueued/redis', spider=self.spider)
+        self.queue.push(request)
+        return True
+
+    def next_request(self):
+        block_pop_timeout = self.idle_before_close
+        request = self.queue.pop(block_pop_timeout)
+        if request and self.stats:
+            self.stats.inc_value('scheduler/dequeued/redis', spider=self.spider)
+        return request
+
+    def has_pending_requests(self):
+        return len(self) > 0
+
+
+这个文件重写了scheduler类，用来代替scrapy.core.scheduler的原有调度器。其实对原有调度器的逻辑没有很大的改变，主要是使用了redis作为数据存储的媒介，以达到各个爬虫之间的统一调度。 scheduler负责调度各个spider的request请求，scheduler初始化时，通过settings文件读取queue和dupefilters的类型（一般就用上边默认的），配置queue和dupefilters使用的key（一般就是spider name加上queue或者dupefilters，这样对于同一种spider的不同实例，就会使用相同的数据块了）。每当一个request要被调度时，enqueue_request被调用，scheduler使用dupefilters来判断这个url是否重复，如果不重复，就添加到queue的容器中（先进先出，先进后出和优先级都可以，可以在settings中配置）。当调度完成时，next_request被调用，scheduler就通过queue容器的接口，取出一个request，把他发送给相应的spider，让spider进行爬取工作。
+
+=====================================================================================================================================================================================================
+
+spider.py
+
+设计的这个spider从redis中读取要爬的url,然后执行爬取，若爬取过程中返回更多的url，那么继续进行直至所有的request完成。之后继续从redis中读取url，循环这个过程。
+
+分析：在这个spider中通过connect signals.spider_idle信号实现对crawler状态的监视。当idle时，返回新的make_requests_from_url(url)给引擎，进而交给调度器调度。
+
+from scrapy import signals
+from scrapy.exceptions import DontCloseSpider
+from scrapy.spiders import Spider, CrawlSpider
+
+from . import connection
+
+
+# Default batch size matches default concurrent requests setting.
+DEFAULT_START_URLS_BATCH_SIZE = 16
+DEFAULT_START_URLS_KEY = '%(name)s:start_urls'
+
+
+class RedisMixin(object):
+    """Mixin class to implement reading urls from a redis queue."""
+    # Per spider redis key, default to DEFAULT_START_URLS_KEY.
+    redis_key = None
+    # Fetch this amount of start urls when idle. Default to DEFAULT_START_URLS_BATCH_SIZE.
+    redis_batch_size = None
+    # Redis client instance.
+    server = None
+
+    def start_requests(self):
+        """Returns a batch of start requests from redis."""
+        return self.next_requests()
+
+    def setup_redis(self, crawler=None):
+        """Setup redis connection and idle signal.
+        This should be called after the spider has set its crawler object.
+        """
+        if self.server is not None:
+            return
+
+        if crawler is None:
+            # We allow optional crawler argument to keep backwards
+            # compatibility.
+            # XXX: Raise a deprecation warning.
+            crawler = getattr(self, 'crawler', None)
+
+        if crawler is None:
+            raise ValueError("crawler is required")
+
+        settings = crawler.settings
+
+        if self.redis_key is None:
+            self.redis_key = settings.get(
+                'REDIS_START_URLS_KEY', DEFAULT_START_URLS_KEY,
+            )
+
+        self.redis_key = self.redis_key % {'name': self.name}
+
+        if not self.redis_key.strip():
+            raise ValueError("redis_key must not be empty")
+
+        if self.redis_batch_size is None:
+            self.redis_batch_size = settings.getint(
+                'REDIS_START_URLS_BATCH_SIZE', DEFAULT_START_URLS_BATCH_SIZE,
+            )
+
+        try:
+            self.redis_batch_size = int(self.redis_batch_size)
+        except (TypeError, ValueError):
+            raise ValueError("redis_batch_size must be an integer")
+
+        self.logger.info("Reading start URLs from redis key '%(redis_key)s' "
+                         "(batch size: %(redis_batch_size)s)", self.__dict__)
+
+        self.server = connection.from_settings(crawler.settings)
+        # The idle signal is called when the spider has no requests left,
+        # that's when we will schedule new requests from redis queue
+        crawler.signals.connect(self.spider_idle, signal=signals.spider_idle)
+
+    def next_requests(self):
+        """Returns a request to be scheduled or none."""
+        use_set = self.settings.getbool('REDIS_START_URLS_AS_SET')
+        fetch_one = self.server.spop if use_set else self.server.lpop
+        # XXX: Do we need to use a timeout here?
+        found = 0
+        while found < self.redis_batch_size:
+            data = fetch_one(self.redis_key)
+            if not data:
+                # Queue empty.
+                break
+            req = self.make_request_from_data(data)
+            if req:
+                yield req
+                found += 1
+            else:
+                self.logger.debug("Request not made from data: %r", data)
+
+        if found:
+            self.logger.debug("Read %s requests from '%s'", found, self.redis_key)
+
+    def make_request_from_data(self, data):
+        # By default, data is an URL.
+        if '://' in data:
+            return self.make_requests_from_url(data)
+        else:
+            self.logger.error("Unexpected URL from '%s': %r", self.redis_key, data)
+
+    def schedule_next_requests(self):
+        """Schedules a request if available"""
+        for req in self.next_requests():
+            self.crawler.engine.crawl(req, spider=self)
+
+    def spider_idle(self):
+        """Schedules a request if available, otherwise waits."""
+        # XXX: Handle a sentinel to close the spider.
+        self.schedule_next_requests()
+        raise DontCloseSpider
+
+
+class RedisSpider(RedisMixin, Spider):
+    """Spider that reads urls from redis queue when idle."""
+
+    @classmethod
+    def from_crawler(self, crawler, *args, **kwargs):
+        obj = super(RedisSpider, self).from_crawler(crawler, *args, **kwargs)
+        obj.setup_redis(crawler)
+        return obj
+
+
+class RedisCrawlSpider(RedisMixin, CrawlSpider):
+    """Spider that reads urls from redis queue when idle."""
+
+    @classmethod
+    def from_crawler(self, crawler, *args, **kwargs):
+        obj = super(RedisCrawlSpider, self).from_crawler(crawler, *args, **kwargs)
+        obj.setup_redis(crawler)
+        return obj
+
+
+spider的改动也不是很大，主要是通过connect接口，给spider绑定了spider_idle信号，spider初始化时，通过setup_redis函数初始化好和redis的连接，之后通过next_requests函数从redis中取出strat url，使用的key是settings中REDIS_START_URLS_AS_SET定义的（注意了这里的初始化url池和我们上边的queue的url池不是一个东西，queue的池是用于调度的，初始化url池是存放入口url的，他们都存在redis中，但是使用不同的key来区分，就当成是不同的表吧），spider使用少量的start url，可以发展出很多新的url，这些url会进入scheduler进行判重和调度。直到spider跑到调度池内没有url的时候，会触发spider_idle信号，从而触发spider的next_requests函数，再次从redis的start url池中读取一些url。
+
+总结
+
+最后总结一下scrapy-redis的总体思路：这个工程通过重写scheduler和spider类，实现了调度、spider启动和redis的交互。实现新的dupefilter和queue类，达到了判重和调度容器和redis的交互，因为每个主机上的爬虫进程都访问同一个redis数据库，所以调度和判重都统一进行统一管理，达到了分布式爬虫的目的。 当spider被初始化时，同时会初始化一个对应的scheduler对象，这个调度器对象通过读取settings，配置好自己的调度容器queue和判重工具dupefilter。每当一个spider产出一个request的时候，scrapy内核会把这个reuqest递交给这个spider对应的scheduler对象进行调度，scheduler对象通过访问redis对request进行判重，如果不重复就把他添加进redis中的调度池。当调度条件满足时，scheduler对象就从redis的调度池中取出一个request发送给spider，让他爬取。当spider爬取的所有暂时可用url之后，scheduler发现这个spider对应的redis的调度池空了，于是触发信号spider_idle，spider收到这个信号之后，直接连接redis读取strart url池，拿去新的一批url入口，然后再次重复上边的工作。
+
+==============================================================================================================================================================================================================================================
+
+从零搭建Redis-Scrapy分布式爬虫
+
+
+
+Scrapy-Redis分布式策略：
+
+假设有四台电脑：Windows 10、Mac OS X、Ubuntu 16.04、CentOS 7.2，任意一台电脑都可以作为 Master端 或 Slaver端，比如：
+
+• Master端 (核心服务器) ：使用 Windows 10，搭建一个Redis数据库，不负责爬取，只负责url指纹判重、Request的分配，以及数据的存储
+
+
+• Slaver端 (爬虫程序执行端) ：使用 Mac OS X 、Ubuntu 16.04、CentOS 7.2，负责执行爬虫程序，运行过程中提交新的Request给Master
+
+
+
+
+1.首先Slaver端从Master端拿任务（Request、url）进行数据抓取，Slaver抓取数据的同时，产生新任务的Request便提交给 Master 处理；
+
+
+2.Master端只有一个Redis数据库，负责将未处理的Request去重和任务分配，将处理后的Request加入待爬队列，并且存储爬取的数据。
+
+
+Scrapy-Redis默认使用的就是这种策略，我们实现起来很简单，因为任务调度等工作Scrapy-Redis都已经帮我们做好了，我们只需要继承RedisSpider、指定redis_key就行了。
+
+缺点是，Scrapy-Redis调度的任务是Request对象，里面信息量比较大（不仅包含url，还有callback函数、headers等信息），可能导致的结果就是会降低爬虫速度、而且会占用Redis大量的存储空间，所以如果要保证效率，那么就需要一定硬件水平。
+
+一、安装Redis
+
+安装Redis：http://redis.io/download
+
+安装完成后，拷贝一份Redis安装目录下的redis.conf到任意目录，建议保存到： /etc/redis/redis.conf  （Windows系统可以无需变动)
+
+二、修改配置文件 redis.conf
+
+打开你的redis.conf配置文件，示例:
+
+•非Windows系统:  sudo vi /etc/redis/redis.conf 
+
+
+•Windows系统： C:\Intel\Redis\conf\redis.conf 
+
+
+1.Master端redis.conf里注释 bind 127.0.0.1 ，Slave端才能远程连接到Master端的Redis数据库。
+
+
+
+2.
+◦ daemonize yno 表示Redis默认不作为守护进程运行，即在运行 redis-server /etc/redis/redis.conf 时，将显示Redis启动提示画面； 
+◾ daemonize yes 则默认后台运行，不必重新启动新的终端窗口执行其他命令，看个人喜好和实际需要。
+
+
+
+
+
+三、测试Slave端远程连接Master端
+
+测试中，Master端Windows 10 的IP地址为： 192.168.199.108 
+
+1.Master端按指定配置文件启动  redis-server ，示例：
+
+◦非Windows系统： sudo redis-server /etc/redis/redis/conf 
+
+
+◦Windows系统： 命令提示符(管理员) 模式下执行  redis-server C:\Intel\Redis\conf\redis.conf 读取默认配置即可。
+
+
+
+2.Master端启动本地 redis-cli ：
+
+
+
+
+3.slave端启动 redis-cli -h 192.168.199.108 ，-h 参数表示连接到指定主机的redis数据库
+
+
+
+
+
+
+注意：Slave端无需启动 redis-server ，Master端启动即可。只要 Slave 端读取到了 Master 端的 Redis 数据库，则表示能够连接成功，可以实施分布式。
+
+四、Redis数据库桌面管理工具
+
+这里推荐 Redis Desktop Manager，支持 Windows、Mac OS X、Linux 等平台：
+
+
+下载地址：https://redisdesktop.com/download
+
+=====================================================================================================================================================================================
+
+源码自带项目说明：
+
+使用scrapy-redis的example来修改
+
+先从github上拿到scrapy-redis的示例，然后将里面的example-project目录移到指定的地址：
+# clone github scrapy-redis源码文件
+git clone https://github.com/rolando/scrapy-redis.git
+
+# 直接拿官方的项目范例，改名为自己的项目用（针对懒癌患者)
+mv scrapy-redis/example-project ~/scrapyredis-project
+
+
+我们clone到的 scrapy-redis 源码中有自带一个example-project项目，这个项目包含3个spider，分别是dmoz, myspider_redis，mycrawler_redis。
+
+一、dmoz (class DmozSpider(CrawlSpider))
+
+这个爬虫继承的是CrawlSpider，它是用来说明Redis的持续性，当我们第一次运行dmoz爬虫，然后Ctrl + C停掉之后，再运行dmoz爬虫，之前的爬取记录是保留在Redis里的。
+
+分析起来，其实这就是一个 scrapy-redis 版  CrawlSpider  类，需要设置Rule规则，以及callback不能写parse()方法。
+
+执行方式： scrapy crawl dmoz 
+from scrapy.linkextractors import LinkExtractor
+from scrapy.spiders import CrawlSpider, Rule
+
+
+class DmozSpider(CrawlSpider):
+    """Follow categories and extract links."""
+    name = 'dmoz'
+    allowed_domains = ['dmoztools.net/']
+    start_urls = ['http://dmoztools.net/']
+
+    rules = [
+        Rule(LinkExtractor(
+            restrict_css=('.top-cat', '.sub-cat', '.cat-item')
+        ), callback='parse_directory', follow=True),
+    ]
+
+    def parse_directory(self, response):
+        for div in response.css('.title-and-desc'):
+            yield {
+                'name': div.css('.site-title::text').extract_first(),
+                'description': div.css('.site-descr::text').extract_first().strip(),
+                'link': div.css('a::attr(href)').extract_first(),
+            }
+
+
+二、myspider_redis (class MySpider(RedisSpider))
+
+这个爬虫继承了RedisSpider， 它能够支持分布式的抓取，采用的是basic spider，需要写parse函数。
+
+其次就是不再有start_urls了，取而代之的是redis_key，scrapy-redis将key从Redis里pop出来，成为请求的url地址。
+from scrapy_redis.spiders import RedisSpider
+
+
+class MySpider(RedisSpider):
+    """Spider that reads urls from redis queue (myspider:start_urls)."""
+    name = 'myspider_redis'
+
+    # 注意redis-key的格式：
+    redis_key = 'myspider:start_urls'
+
+    # 可选：等效于allowd_domains()，__init__方法按规定格式写，使用时只需要修改super()里的类名参数即可
+    def __init__(self, *args, **kwargs):
+        # Dynamically define the allowed domains list.
+        domain = kwargs.pop('domain', '')
+        self.allowed_domains = filter(None, domain.split(','))
+
+        # 修改这里的类名为当前类名
+        super(MySpider, self).__init__(*args, **kwargs)
+
+    def parse(self, response):
+        return {
+            'name': response.css('title::text').extract_first(),
+            'url': response.url,
+        }
+
+
+注意：
+
+RedisSpider类 不需要写 allowd_domains 和 start_urls ：
+
+1.scrapy-redis将从在构造方法 __init__() 里动态定义爬虫爬取域范围，也可以选择直接写 allowd_domains 。
+
+
+2.必须指定redis_key，即启动爬虫的命令，参考格式： redis_key = 'myspider:start_urls' 
+
+
+3.根据指定的格式， start_urls 将在 Master端的 redis-cli 里 lpush 到 Redis数据库里，RedisSpider 将在数据库里获取start_urls。
+
+
+执行方式：
+
+1.通过runspider方法执行爬虫的py文件（也可以分次执行多条），爬虫（们）将处于等待准备状态：
+
+ scrapy runspider myspider_redis.py 
+
+
+2.在Master端的redis-cli输入push指令，参考格式：
+
+ $redis > lpush myspider:start_urls http://dmoztools.net/ 
+
+
+3.Slaver端爬虫获取到请求，开始爬取。
+
+
+三、mycrawler_redis (class MyCrawler(RedisCrawlSpider))
+
+这个RedisCrawlSpider类爬虫继承了RedisCrawlSpider，能够支持分布式的抓取。因为采用的是crawlSpider，所以需要遵守Rule规则，以及callback不能写parse()方法。
+
+同样也不再有start_urls了，取而代之的是redis_key，scrapy-redis将key从Redis里pop出来，成为请求的url地址。
+from scrapy.spiders import Rule
+from scrapy.linkextractors import LinkExtractor
+
+from scrapy_redis.spiders import RedisCrawlSpider
+
+
+class MyCrawler(RedisCrawlSpider):
+    """Spider that reads urls from redis queue (myspider:start_urls)."""
+    name = 'mycrawler_redis'
+    redis_key = 'mycrawler:start_urls'
+
+    rules = (
+        # follow all links
+        Rule(LinkExtractor(), callback='parse_page', follow=True),
+    )
+
+    # __init__方法必须按规定写，使用时只需要修改super()里的类名参数即可
+    def __init__(self, *args, **kwargs):
+        # Dynamically define the allowed domains list.
+        domain = kwargs.pop('domain', '')
+        self.allowed_domains = filter(None, domain.split(','))
+
+        # 修改这里的类名为当前类名
+        super(MyCrawler, self).__init__(*args, **kwargs)
+
+    def parse_page(self, response):
+        return {
+            'name': response.css('title::text').extract_first(),
+            'url': response.url,
+        }
+
+
+注意：
+
+同样的，RedisCrawlSpider类不需要写 allowd_domains 和 start_urls ：
+
+1.scrapy-redis将从在构造方法 __init__() 里动态定义爬虫爬取域范围，也可以选择直接写 allowd_domains 。
+
+
+2.必须指定redis_key，即启动爬虫的命令，参考格式： redis_key = 'myspider:start_urls' 
+
+
+3.根据指定的格式， start_urls 将在 Master端的 redis-cli 里 lpush 到 Redis数据库里，RedisSpider 将在数据库里获取start_urls。
+
+
+执行方式：
+
+1.通过runspider方法执行爬虫的py文件（也可以分次执行多条），爬虫（们）将处于等待准备状态：
+
+ scrapy runspider mycrawler_redis.py 
+
+
+2.在Master端的redis-cli输入push指令，参考格式：
+
+ $redis > lpush mycrawler:start_urls http://www.dmoz.org/ 
+
+
+3.爬虫获取url，开始执行。
+
+
+总结：
+
+1.如果只是用到Redis的去重和保存功能，就选第一种；
+
+
+2.如果要写分布式，则根据情况，选择第二种、第三种；
+
+
+3.通常情况下，会选择用第三种方式编写深度聚焦爬虫。
+
+==================================================================================================================================================================================
+
+有缘网分布式爬虫案例：
+# clone github scrapy-redis源码文件
+git clone https://github.com/rolando/scrapy-redis.git
+
+# 直接拿官方的项目范例，改名为自己的项目用（针对懒癌患者)
+mv scrapy-redis/example-project ~/scrapy-youyuan
+
+
+修改settings.py
+
+下面列举了修改后的配置文件中与scrapy-redis有关的部分，middleware、proxy等内容在此就省略了。
+# -*- coding: utf-8 -*-
+
+# 指定使用scrapy-redis的调度器
+SCHEDULER = "scrapy_redis.scheduler.Scheduler"
+
+# 指定使用scrapy-redis的去重
+DUPEFILTER_CLASS = 'scrapy_redis.dupefilter.RFPDupeFilter'
+
+# 指定排序爬取地址时使用的队列，
+# 默认的 按优先级排序(Scrapy默认)，由sorted set实现的一种非FIFO、LIFO方式。
+SCHEDULER_QUEUE_CLASS = 'scrapy_redis.queue.SpiderPriorityQueue'
+# 可选的 按先进先出排序（FIFO）
+# SCHEDULER_QUEUE_CLASS = 'scrapy_redis.queue.SpiderQueue'
+# 可选的 按后进先出排序（LIFO）
+# SCHEDULER_QUEUE_CLASS = 'scrapy_redis.queue.SpiderStack'
+
+# 在redis中保持scrapy-redis用到的各个队列，从而允许暂停和暂停后恢复，也就是不清理redis queues
+SCHEDULER_PERSIST = True
+
+# 只在使用SpiderQueue或者SpiderStack是有效的参数，指定爬虫关闭的最大间隔时间
+# SCHEDULER_IDLE_BEFORE_CLOSE = 10
+
+# 通过配置RedisPipeline将item写入key为 spider.name : items 的redis的list中，供后面的分布式处理item
+# 这个已经由 scrapy-redis 实现，不需要我们写代码
+ITEM_PIPELINES = {
+    'example.pipelines.ExamplePipeline': 300,
+    'scrapy_redis.pipelines.RedisPipeline': 400
+}
+
+# 指定redis数据库的连接参数
+# REDIS_PASS是我自己加上的redis连接密码（默认不做）
+REDIS_HOST = '127.0.0.1'
+REDIS_PORT = 6379
+#REDIS_PASS = 'redisP@ssw0rd'
+
+# LOG等级
+LOG_LEVEL = 'DEBUG'
+
+#默认情况下,RFPDupeFilter只记录第一个重复请求。将DUPEFILTER_DEBUG设置为True会记录所有重复的请求。
+DUPEFILTER_DEBUG =True
+
+# 覆盖默认请求头，可以自己编写Downloader Middlewares设置代理和UserAgent
+DEFAULT_REQUEST_HEADERS = {
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Language': 'zh-CN,zh;q=0.8',
+    'Connection': 'keep-alive',
+    'Accept-Encoding': 'gzip, deflate, sdch'
+}
+
+
+查看pipeline.py
+# -*- coding: utf-8 -*-
+
+from datetime import datetime
+
+class ExamplePipeline(object):
+    def process_item(self, item, spider):
+        #utcnow() 是获取UTC时间
+        item["crawled"] = datetime.utcnow()
+        # 爬虫名
+        item["spider"] = spider.name
+        return item
+
+
+修改items.py
+
+增加我们最后要保存的youyuanItem项，这里只写出来一个非常简单的版本
+# -*- coding: utf-8 -*-
+
+from scrapy.item import Item, Field
+
+class youyuanItem(Item):
+    # 个人头像链接
+    header_url = Field()
+    # 用户名
+    username = Field()
+    # 内心独白
+    monologue = Field()
+    # 相册图片链接
+    pic_urls = Field()
+    # 年龄
+    age = Field()
+
+    # 网站来源 youyuan
+    source = Field()
+    # 个人主页源url
+    source_url = Field()
+
+    # 获取UTC时间
+    crawled = Field()
+    # 爬虫名
+    spider = Field()
+
+
+编写 spiders/youyuan.py
+
+在spiders目录下增加youyuan.py文件编写我们的爬虫，之后就可以运行爬虫了。 这里的提供一个简单的版本：
+
+# -*- coding:utf-8 -*-
+
+from scrapy.linkextractors import LinkExtractor
+from scrapy.spiders import CrawlSpider, Rule
+# 使用redis去重
+from scrapy.dupefilters import RFPDupeFilter
+
+from example.items import youyuanItem
+import re
+
+#
+class YouyuanSpider(CrawlSpider):
+    name = 'youyuan'
+    allowed_domains = ['youyuan.com']
+    # 有缘网的列表页
+    start_urls = ['http://www.youyuan.com/find/beijing/mm18-25/advance-0-0-0-0-0-0-0/p1/']
+
+    # 搜索页面匹配规则，根据response提取链接
+    list_page_lx = LinkExtractor(allow=(r'http://www.youyuan.com/find/.+'))
+
+    # 北京、18~25岁、女性 的 搜索页面匹配规则，根据response提取链接
+    page_lx = LinkExtractor(allow =(r'http://www.youyuan.com/find/beijing/mm18-25/advance-0-0-0-0-0-0-0/p\d+/'))
+
+    # 个人主页 匹配规则，根据response提取链接
+    profile_page_lx = LinkExtractor(allow=(r'http://www.youyuan.com/\d+-profile/'))
+
+    rules = (
+        # 匹配find页面，跟进链接，跳板
+        Rule(list_page_lx, follow=True),
+
+        # 匹配列表页成功，跟进链接，跳板
+        Rule(page_lx, follow=True),
+
+        # 匹配个人主页的链接，形成request保存到redis中等待调度，一旦有响应则调用parse_profile_page()回调函数处理，不做继续跟进
+        Rule(profile_page_lx, callback='parse_profile_page', follow=False),
+    )
+
+    # 处理个人主页信息，得到我们要的数据
+    def parse_profile_page(self, response):
+        item = youyuanItem()
+        item['header_url'] = self.get_header_url(response)
+        item['username'] = self.get_username(response)
+        item['monologue'] = self.get_monologue(response)
+        item['pic_urls'] = self.get_pic_urls(response)
+        item['age'] = self.get_age(response)
+        item['source'] = 'youyuan'
+        item['source_url'] = response.url
+
+        #print "Processed profile %s" % response.url
+        yield item
+
+
+    # 提取头像地址
+    def get_header_url(self, response):
+        header = response.xpath('//dl[@class=\'personal_cen\']/dt/img/@src').extract()
+        if len(header) > 0:
+            header_url = header[0]
+        else:
+            header_url = ""
+        return header_url.strip()
+
+    # 提取用户名
+    def get_username(self, response):
+        usernames = response.xpath("//dl[@class=\'personal_cen\']/dd/div/strong/text()").extract()
+        if len(usernames) > 0:
+            username = usernames[0]
+        else:
+            username = "NULL"
+        return username.strip()
+
+    # 提取内心独白
+    def get_monologue(self, response):
+        monologues = response.xpath("//ul[@class=\'requre\']/li/p/text()").extract()
+        if len(monologues) > 0:
+            monologue = monologues[0]
+        else:
+            monologue = "NULL"
+        return monologue.strip()
+
+    # 提取相册图片地址
+    def get_pic_urls(self, response):
+        pic_urls = []
+        data_url_full = response.xpath('//li[@class=\'smallPhoto\']/@data_url_full').extract()
+        if len(data_url_full) <= 1:
+            pic_urls.append("");
+        else:
+            for pic_url in data_url_full:
+                pic_urls.append(pic_url)
+        if len(pic_urls) <= 1:
+            return "NULL"
+        # 每个url用|分隔
+        return '|'.join(pic_urls)
+
+    # 提取年龄
+    def get_age(self, response):
+        age_urls = response.xpath("//dl[@class=\'personal_cen\']/dd/p[@class=\'local\']/text()").extract()
+        if len(age_urls) > 0:
+            age = age_urls[0]
+        else:
+            age = "0"
+        age_words = re.split(' ', age)
+        if len(age_words) <= 2:
+            return "0"
+        age = age_words[2][:-1]
+        # 从age字符串开始匹配数字，失败返回None
+        if re.compile(r'[0-9]').match(age):
+            return age
+        return "0"
+
+
+运行程序：
+1.Master端打开 Redis：  redis-server 
+2.Slave端直接运行爬虫：  scrapy crawl youyuan 
+3.多个Slave端运行爬虫顺序没有限制。
+
+
+
+
+
+将项目修改成 RedisCrawlSpider 类的分布式爬虫，并尝试在多个Slave端运行。
+
+==========================================================================================================================================================================================
+
+
+处理Redis里的数据
+
+有缘网的数据爬回来了，但是放在Redis里没有处理。之前我们配置文件里面没有定制自己的ITEM_PIPELINES，而是使用了RedisPipeline，所以现在这些数据都被保存在redis的youyuan:items键中，所以我们需要另外做处理。
+
+在scrapy-youyuan目录下可以看到一个 process_items.py 文件，这个文件就是scrapy-redis的example提供的从redis读取item进行处理的模版。 
+
+假设我们要把youyuan:items中保存的数据读出来写进MongoDB或者MySQL，那么我们可以自己写一个 process_youyuan_profile.py 文件，然后保持后台运行就可以不停地将爬回来的数据入库了。
+
+存入MongoDB
+
+1.启动MongoDB数据库： sudo mongod 
+
+
+2.执行下面程序： py2 process_youyuan_mongodb.py 
+
+# process_youyuan_mongodb.py
+
+# -*- coding: utf-8 -*-
+
+import json
+import redis
+import pymongo
+
+def main():
+
+    # 指定Redis数据库信息
+    rediscli = redis.StrictRedis(host='192.168.199.108', port=6379, db=0)
+    # 指定MongoDB数据库信息
+    mongocli = pymongo.MongoClient(host='localhost', port=27017)
+
+    # 创建数据库名
+    db = mongocli['youyuan']
+    # 创建表名
+    sheet = db['beijing_18_25']
+
+    while True:
+        # FIFO模式为 blpop，LIFO模式为 brpop，获取键值
+        source, data = rediscli.blpop(["youyuan:items"])
+
+        item = json.loads(data)
+        sheet.insert(item)
+
+        try:
+            print u"Processing: %(name)s <%(link)s>" % item
+        except KeyError:
+            print u"Error procesing: %r" % item
+
+if __name__ == '__main__':
+    main()
+
+
+
+
+存入 MySQL
+1.启动mysql： mysql.server start （更平台不一样）
+2.登录到root用户： mysql -uroot -p 
+3.创建数据库 youyuan : create database youyuan; 
+4.切换到指定数据库： use youyuan 
+
+5.创建表 beijing_18_25 以及所有字段的列名和数据类型。
+
+
+
+6.执行下面程序： py2 process_youyuan_mysql.py 
+#process_youyuan_mysql.py
+
+# -*- coding: utf-8 -*-
+
+import json
+import redis
+import MySQLdb
+
+def main():
+    # 指定redis数据库信息
+    rediscli = redis.StrictRedis(host='192.168.199.108', port = 6379, db = 0)
+    # 指定mysql数据库
+    mysqlcli = MySQLdb.connect(host='127.0.0.1', user='power', passwd='xxxxxxx', db = 'youyuan', port=3306, use_unicode=True)
+
+    while True:
+        # FIFO模式为 blpop，LIFO模式为 brpop，获取键值
+        source, data = rediscli.blpop(["youyuan:items"])
+        item = json.loads(data)
+
+        try:
+            # 使用cursor()方法获取操作游标
+            cur = mysqlcli.cursor()
+            # 使用execute方法执行SQL INSERT语句
+            cur.execute("INSERT INTO beijing_18_25 (username, crawled, age, spider, header_url, source, pic_urls, monologue, source_url) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s )", [item['username'], item['crawled'], item['age'], item['spider'], item['header_url'], item['source'], item['pic_urls'], item['monologue'], item['source_url']])
+            # 提交sql事务
+            mysqlcli.commit()
+            #关闭本次操作
+            cur.close()
+            print "inserted %s" % item['source_url']
+        except MySQLdb.Error,e:
+            print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+
+if __name__ == '__main__':
+    main()
+
+================================================================================================================================================================================
+
+新浪网分类资讯爬虫
+
+思考：如何将已有的Scrapy爬虫项目，改写成scrapy-redis分布式爬虫。
+
+要求：将所有对应的大类的 标题和urls、小类的 标题和urls、子链接url、文章名以及文章内容，存入Redis数据库。
+
+
+
+以下为原Scrapy爬虫项目源码：
+
+items.py
+# -*- coding: utf-8 -*-
+
+import scrapy
+import sys
+reload(sys)
+sys.setdefaultencoding("utf-8")
+
+class SinaItem(scrapy.Item):
+    # 大类的标题 和 url
+    parentTitle = scrapy.Field()
+    parentUrls = scrapy.Field()
+
+    # 小类的标题 和 子url
+    subTitle = scrapy.Field()
+    subUrls = scrapy.Field()
+
+    # 小类目录存储路径
+    subFilename = scrapy.Field()
+
+    # 小类下的子链接
+    sonUrls = scrapy.Field()
+
+    # 文章标题和内容
+    head = scrapy.Field()
+    content = scrapy.Field()
+
+
+pipelines.py
+# -*- coding: utf-8 -*-
+
+from scrapy import signals
+import sys
+reload(sys)
+sys.setdefaultencoding("utf-8")
+
+class SinaPipeline(object):
+    def process_item(self, item, spider):
+        sonUrls = item['sonUrls']
+
+        # 文件名为子链接url中间部分，并将 / 替换为 _，保存为 .txt格式
+        filename = sonUrls[7:-6].replace('/','_')
+        filename += ".txt"
+
+        fp = open(item['subFilename']+'/'+filename, 'w')
+        fp.write(item['content'])
+        fp.close()
+
+        return item
+
+
+settings.py
+# -*- coding: utf-8 -*-
+
+BOT_NAME = 'Sina'
+
+SPIDER_MODULES = ['Sina.spiders']
+NEWSPIDER_MODULE = 'Sina.spiders'
+
+ITEM_PIPELINES = {
+    'Sina.pipelines.SinaPipeline': 300,
+}
+
+LOG_LEVEL = 'DEBUG'
+
+
+spiders/sina.py
+# -*- coding: utf-8 -*-
+
+from Sina.items import SinaItem
+import scrapy
+import os
+
+import sys
+reload(sys)
+sys.setdefaultencoding("utf-8")
+
+
+class SinaSpider(scrapy.Spider):
+    name= "sina"
+    allowed_domains= ["sina.com.cn"]
+    start_urls= [
+       "http://news.sina.com.cn/guide/"
+    ]
+
+    def parse(self, response):
+        items= []
+        # 所有大类的url 和 标题
+        parentUrls = response.xpath('//div[@id=\"tab01\"]/div/h3/a/@href').extract()
+        parentTitle = response.xpath("//div[@id=\"tab01\"]/div/h3/a/text()").extract()
+
+        # 所有小类的ur 和 标题
+        subUrls  = response.xpath('//div[@id=\"tab01\"]/div/ul/li/a/@href').extract()
+        subTitle = response.xpath('//div[@id=\"tab01\"]/div/ul/li/a/text()').extract()
+
+        #爬取所有大类
+        for i in range(0, len(parentTitle)):
+            # 指定大类目录的路径和目录名
+            parentFilename = "./Data/" + parentTitle[i]
+
+            #如果目录不存在，则创建目录
+            if(not os.path.exists(parentFilename)):
+                os.makedirs(parentFilename)
+
+            # 爬取所有小类
+            for j in range(0, len(subUrls)):
+                item = SinaItem()
+
+                # 保存大类的title和urls
+                item['parentTitle'] = parentTitle[i]
+                item['parentUrls'] = parentUrls[i]
+
+                # 检查小类的url是否以同类别大类url开头，如果是返回True (sports.sina.com.cn 和 sports.sina.com.cn/nba)
+                if_belong = subUrls[j].startswith(item['parentUrls'])
+
+                # 如果属于本大类，将存储目录放在本大类目录下
+                if(if_belong):
+                    subFilename =parentFilename + '/'+ subTitle[j]
+                    # 如果目录不存在，则创建目录
+                    if(not os.path.exists(subFilename)):
+                        os.makedirs(subFilename)
+
+                    # 存储 小类url、title和filename字段数据
+                    item['subUrls'] = subUrls[j]
+                    item['subTitle'] =subTitle[j]
+                    item['subFilename'] = subFilename
+
+                    items.append(item)
+
+        #发送每个小类url的Request请求，得到Response连同包含meta数据 一同交给回调函数 second_parse 方法处理
+        for item in items:
+            yield scrapy.Request( url = item['subUrls'], meta={'meta_1': item}, callback=self.second_parse)
+
+    #对于返回的小类的url，再进行递归请求
+    def second_parse(self, response):
+        # 提取每次Response的meta数据
+        meta_1= response.meta['meta_1']
+
+        # 取出小类里所有子链接
+        sonUrls = response.xpath('//a/@href').extract()
+
+        items= []
+        for i in range(0, len(sonUrls)):
+            # 检查每个链接是否以大类url开头、以.shtml结尾，如果是返回True
+            if_belong = sonUrls[i].endswith('.shtml') and sonUrls[i].startswith(meta_1['parentUrls'])
+
+            # 如果属于本大类，获取字段值放在同一个item下便于传输
+            if(if_belong):
+                item = SinaItem()
+                item['parentTitle'] =meta_1['parentTitle']
+                item['parentUrls'] =meta_1['parentUrls']
+                item['subUrls'] = meta_1['subUrls']
+                item['subTitle'] = meta_1['subTitle']
+                item['subFilename'] = meta_1['subFilename']
+                item['sonUrls'] = sonUrls[i]
+                items.append(item)
+
+        #发送每个小类下子链接url的Request请求，得到Response后连同包含meta数据 一同交给回调函数 detail_parse 方法处理
+        for item in items:
+                yield scrapy.Request(url=item['sonUrls'], meta={'meta_2':item}, callback = self.detail_parse)
+
+    # 数据解析方法，获取文章标题和内容
+    def detail_parse(self, response):
+        item = response.meta['meta_2']
+        content = ""
+        head = response.xpath('//h1[@id=\"main_title\"]/text()')
+        content_list = response.xpath('//div[@id=\"artibody\"]/p/text()').extract()
+
+        # 将p标签里的文本内容合并到一起
+        for content_one in content_list:
+            content += content_one
+
+        item['head']= head
+        item['content']= content
+
+        yield item
+
+
+执行：
+scrapy crawl sina
+
+==================================================================================================================================================================================
+
+将已有的新浪网分类资讯Scrapy爬虫项目，修改为基于RedisSpider类的scrapy-redis分布式爬虫项目
+
+注：items数据直接存储在Redis数据库中，这个功能已经由scrapy-redis自行实现。除非单独做额外处理(比如直接存入本地数据库等)，否则不用编写pipelines.py代码。
+
+items.py文件
+# items.py
+
+# -*- coding: utf-8 -*-
+
+import scrapy
+
+import sys
+reload(sys)
+sys.setdefaultencoding("utf-8")
+
+class SinaItem(scrapy.Item):
+    # 大类的标题 和 url
+    parentTitle = scrapy.Field()
+    parentUrls = scrapy.Field()
+
+    # 小类的标题 和 子url
+    subTitle = scrapy.Field()
+    subUrls = scrapy.Field()
+
+    # 小类目录存储路径
+    # subFilename = scrapy.Field()
+
+    # 小类下的子链接
+    sonUrls = scrapy.Field()
+
+    # 文章标题和内容
+    head = scrapy.Field()
+    content = scrapy.Field()
+
+
+settings.py文件
+# settings.py
+
+SPIDER_MODULES = ['Sina.spiders']
+NEWSPIDER_MODULE = 'Sina.spiders'
+
+USER_AGENT = 'scrapy-redis (+https://github.com/rolando/scrapy-redis)'
+
+DUPEFILTER_CLASS = "scrapy_redis.dupefilter.RFPDupeFilter"
+SCHEDULER = "scrapy_redis.scheduler.Scheduler"
+SCHEDULER_PERSIST = True
+SCHEDULER_QUEUE_CLASS = "scrapy_redis.queue.SpiderPriorityQueue"
+#SCHEDULER_QUEUE_CLASS = "scrapy_redis.queue.SpiderQueue"
+#SCHEDULER_QUEUE_CLASS = "scrapy_redis.queue.SpiderStack"
+
+ITEM_PIPELINES = {
+#    'Sina.pipelines.SinaPipeline': 300,
+    'scrapy_redis.pipelines.RedisPipeline': 400,
+}
+
+LOG_LEVEL = 'DEBUG'
+
+# Introduce an artifical delay to make use of parallelism. to speed up the
+# crawl.
+DOWNLOAD_DELAY = 1
+
+REDIS_HOST = "192.168.13.26"
+REDIS_PORT = 6379
+
+
+spiders/sina.py
+# sina.py
+
+# -*- coding: utf-8 -*-
+
+from Sina.items import SinaItem
+from scrapy_redis.spiders import RedisSpider
+#from scrapy.spiders import Spider
+import scrapy
+
+import sys
+reload(sys)
+sys.setdefaultencoding("utf-8")
+
+#class SinaSpider(Spider):
+class SinaSpider(RedisSpider):
+    name= "sina"
+    redis_key = "sinaspider:start_urls"
+    #allowed_domains= ["sina.com.cn"]
+    #start_urls= [
+    #   "http://news.sina.com.cn/guide/"
+    #]#起始urls列表
+
+    def __init__(self, *args, **kwargs):
+        domain = kwargs.pop('domain', '')
+        self.allowed_domains = filter(None, domain.split(','))
+        super(SinaSpider, self).__init__(*args, **kwargs)
+
+
+    def parse(self, response):
+        items= []
+
+        # 所有大类的url 和 标题
+        parentUrls = response.xpath('//div[@id=\"tab01\"]/div/h3/a/@href').extract()
+        parentTitle = response.xpath("//div[@id=\"tab01\"]/div/h3/a/text()").extract()
+
+        # 所有小类的ur 和 标题
+        subUrls  = response.xpath('//div[@id=\"tab01\"]/div/ul/li/a/@href').extract()
+        subTitle = response.xpath('//div[@id=\"tab01\"]/div/ul/li/a/text()').extract()
+
+        #爬取所有大类
+        for i in range(0, len(parentTitle)):
+
+            # 指定大类的路径和目录名
+            #parentFilename = "./Data/" + parentTitle[i]
+
+            #如果目录不存在，则创建目录
+            #if(not os.path.exists(parentFilename)):
+            #    os.makedirs(parentFilename)
+
+            # 爬取所有小类
+            for j in range(0, len(subUrls)):
+                item = SinaItem()
+
+                # 保存大类的title和urls
+                item['parentTitle'] = parentTitle[i]
+                item['parentUrls'] = parentUrls[i]
+
+                # 检查小类的url是否以同类别大类url开头，如果是返回True (sports.sina.com.cn 和 sports.sina.com.cn/nba)
+                if_belong = subUrls[j].startswith(item['parentUrls'])
+
+                # 如果属于本大类，将存储目录放在本大类目录下
+                if(if_belong):
+                    #subFilename =parentFilename + '/'+ subTitle[j]
+
+                    # 如果目录不存在，则创建目录
+                    #if(not os.path.exists(subFilename)):
+                    #    os.makedirs(subFilename)
+
+                    # 存储 小类url、title和filename字段数据
+                    item['subUrls'] = subUrls[j]
+                    item['subTitle'] =subTitle[j]
+                    #item['subFilename'] = subFilename
+
+                    items.append(item)
+
+        #发送每个小类url的Request请求，得到Response连同包含meta数据 一同交给回调函数 second_parse 方法处理
+        for item in items:
+            yield scrapy.Request( url = item['subUrls'], meta={'meta_1': item}, callback=self.second_parse)
+
+    #对于返回的小类的url，再进行递归请求
+    def second_parse(self, response):
+        # 提取每次Response的meta数据
+        meta_1= response.meta['meta_1']
+
+        # 取出小类里所有子链接
+        sonUrls = response.xpath('//a/@href').extract()
+
+        items= []
+        for i in range(0, len(sonUrls)):
+            # 检查每个链接是否以大类url开头、以.shtml结尾，如果是返回True
+            if_belong = sonUrls[i].endswith('.shtml') and sonUrls[i].startswith(meta_1['parentUrls'])
+
+            # 如果属于本大类，获取字段值放在同一个item下便于传输
+            if(if_belong):
+                item = SinaItem()
+                item['parentTitle'] =meta_1['parentTitle']
+                item['parentUrls'] =meta_1['parentUrls']
+                item['subUrls'] =meta_1['subUrls']
+                item['subTitle'] =meta_1['subTitle']
+                #item['subFilename'] = meta_1['subFilename']
+                item['sonUrls'] = sonUrls[i]
+                items.append(item)
+
+        #发送每个小类下子链接url的Request请求，得到Response后连同包含meta数据 一同交给回调函数 detail_parse 方法处理
+        for item in items:
+                yield scrapy.Request(url=item['sonUrls'], meta={'meta_2':item}, callback = self.detail_parse)
+
+    # 数据解析方法，获取文章标题和内容
+    def detail_parse(self, response):
+        item = response.meta['meta_2']
+        content = ""
+        head = response.xpath('//h1[@id=\"main_title\"]/text()').extract()
+        content_list = response.xpath('//div[@id=\"artibody\"]/p/text()').extract()
+
+        # 将p标签里的文本内容合并到一起
+        for content_one in content_list:
+            content += content_one
+
+        item['head']= head[0] if len(head) > 0 else "NULL"
+
+        item['content']= content
+
+        yield item
+
+
+执行：
+slave端：
+scrapy runspider sina.py
+
+Master端：
+redis-cli> lpush sinaspider:start_urls http://news.sina.com.cn/guide/
+
+============================================================================================================================================================================
+
+IT桔子是关注IT互联网行业的结构化的公司数据库和商业信息服务提供商，于2013年5月21日上线。
+
+
+IT桔子致力于通过信息和数据的生产、聚合、挖掘、加工、处理，帮助目标用户和客户节约时间和金钱、提高效率，以辅助其各类商业行为，包括风险投资、收购、竞争情报、细分行业信息、国外公司产品信息数据服务等。
+
+用于需自行对所发表或采集的内容负责,因所发表或采集的内容引发的一切纠纷、损失，由该内容的发表或采集者承担全部直接或间接(连带)法律责任，IT桔子不承担任何法律责任。
+
+项目采集地址：http://www.itjuzi.com/company
+
+要求：采集页面下所有创业公司的公司信息，包括以下但不限于：
+# items.py
+
+# -*- coding: utf-8 -*-
+import scrapy
+
+class CompanyItem(scrapy.Item):
+
+    # 公司id (url数字部分)
+    info_id = scrapy.Field()
+    # 公司名称
+    company_name = scrapy.Field()
+    # 公司口号
+    slogan = scrapy.Field()
+    # 分类
+    scope = scrapy.Field()
+    # 子分类
+    sub_scope = scrapy.Field()
+
+    # 所在城市
+    city = scrapy.Field()
+    # 所在区域
+    area = scrapy.Field()
+    # 公司主页
+    home_page = scrapy.Field()
+    # 公司标签
+    tags = scrapy.Field()
+
+    # 公司简介
+    company_intro = scrapy.Field()
+    # 公司全称：
+    company_full_name = scrapy.Field()
+    # 成立时间：
+    found_time = scrapy.Field()
+    # 公司规模：
+    company_size = scrapy.Field()
+    # 运营状态
+    company_status = scrapy.Field()
+
+    # 投资情况列表：包含获投时间、融资阶段、融资金额、投资公司
+    tz_info = scrapy.Field()
+    # 团队信息列表：包含成员姓名、成员职称、成员介绍
+    tm_info = scrapy.Field()
+    # 产品信息列表：包含产品名称、产品类型、产品介绍
+    pdt_info = scrapy.Field()
+
+=========================================================================================================================================================================
+
+项目实现：
+
+items.py
+
+# items.py
+
+# -*- coding: utf-8 -*-
+import scrapy
+
+class CompanyItem(scrapy.Item):
+
+    # 公司id (url数字部分)
+    info_id = scrapy.Field()
+    # 公司名称
+    company_name = scrapy.Field()
+    # 公司口号
+    slogan = scrapy.Field()
+    # 分类
+    scope = scrapy.Field()
+    # 子分类
+    sub_scope = scrapy.Field()
+
+    # 所在城市
+    city = scrapy.Field()
+    # 所在区域
+    area = scrapy.Field()
+    # 公司主页
+    home_page = scrapy.Field()
+    # 公司标签
+    tags = scrapy.Field()
+
+    # 公司简介
+    company_intro = scrapy.Field()
+    # 公司全称：
+    company_full_name = scrapy.Field()
+    # 成立时间：
+    found_time = scrapy.Field()
+    # 公司规模：
+    company_size = scrapy.Field()
+    # 运营状态
+    company_status = scrapy.Field()
+
+    # 投资情况列表：包含获投时间、融资阶段、融资金额、投资公司
+    tz_info = scrapy.Field()
+    # 团队信息列表：包含成员姓名、成员职称、成员介绍
+    tm_info = scrapy.Field()
+    # 产品信息列表：包含产品名称、产品类型、产品介绍
+    pdt_info = scrapy.Field()
+
+
+settings.py
+
+# -*- coding: utf-8 -*-
+
+BOT_NAME = 'itjuzi'
+
+SPIDER_MODULES = ['itjuzi.spiders']
+NEWSPIDER_MODULE = 'itjuzi.spiders'
+
+# Enables scheduling storing requests queue in redis.
+SCHEDULER = "scrapy_redis.scheduler.Scheduler"
+
+# Ensure all spiders share same duplicates filter through redis.
+DUPEFILTER_CLASS = "scrapy_redis.dupefilter.RFPDupeFilter"
+
+# REDIS_START_URLS_AS_SET = True
+
+COOKIES_ENABLED = False
+
+DOWNLOAD_DELAY = 1.5
+
+# 支持随机下载延迟
+RANDOMIZE_DOWNLOAD_DELAY = True
+
+# Obey robots.txt rules
+ROBOTSTXT_OBEY = False
+
+ITEM_PIPELINES = {
+    'scrapy_redis.pipelines.RedisPipeline': 300
+}
+
+DOWNLOADER_MIDDLEWARES = {
+    # 该中间件将会收集失败的页面，并在爬虫完成后重新调度。（失败情况可能由于临时的问题，例如连接超时或者HTTP 500错误导致失败的页面）
+   'scrapy.downloadermiddlewares.retry.RetryMiddleware': 80,
+
+    # 该中间件提供了对request设置HTTP代理的支持。您可以通过在 Request 对象中设置 proxy 元数据来开启代理。
+    'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 100,
+
+    'itjuzi.middlewares.RotateUserAgentMiddleware': 200,
+}
+
+REDIS_HOST = "192.168.199.108"
+REDIS_PORT = 6379
+
+
+middlewares.py
+# -*- coding: utf-8 -*-
+
+from scrapy.contrib.downloadermiddleware.useragent import UserAgentMiddleware
+import random
+
+# User-Agetn 下载中间件
+class RotateUserAgentMiddleware(UserAgentMiddleware):
+    def __init__(self, user_agent=''):
+        self.user_agent = user_agent
+
+    def process_request(self, request, spider):
+        # 这句话用于随机选择user-agent
+        ua = random.choice(self.user_agent_list)
+        request.headers.setdefault('User-Agent', ua)
+
+    user_agent_list = [
+        "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.1 (KHTML, like Gecko) Chrome/22.0.1207.1 Safari/537.1",
+        "Mozilla/5.0 (X11; CrOS i686 2268.111.0) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11",
+        "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/536.6 (KHTML, like Gecko) Chrome/20.0.1092.0 Safari/536.6",
+        "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/536.6 (KHTML, like Gecko) Chrome/20.0.1090.0 Safari/536.6",
+        "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.1 (KHTML, like Gecko) Chrome/19.77.34.5 Safari/537.1",
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/19.0.1084.9 Safari/536.5",
+        "Mozilla/5.0 (Windows NT 6.0) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/19.0.1084.36 Safari/536.5",
+        "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1063.0 Safari/536.3",
+        "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1063.0 Safari/536.3",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_0) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1063.0 Safari/536.3",
+        "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1062.0 Safari/536.3",
+        "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1062.0 Safari/536.3",
+        "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1061.1 Safari/536.3",
+        "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1061.1 Safari/536.3",
+        "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1061.1 Safari/536.3",
+        "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1061.0 Safari/536.3",
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.24 (KHTML, like Gecko) Chrome/19.0.1055.1 Safari/535.24",
+        "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/535.24 (KHTML, like Gecko) Chrome/19.0.1055.1 Safari/535.24",
+        "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/531.21.8 (KHTML, like Gecko) Version/4.0.4 Safari/531.21.10",
+        "Mozilla/5.0 (Windows; U; Windows NT 5.2; en-US) AppleWebKit/533.17.8 (KHTML, like Gecko) Version/5.0.1 Safari/533.17.8",
+        "Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US) AppleWebKit/533.19.4 (KHTML, like Gecko) Version/5.0.2 Safari/533.18.5",
+        "Mozilla/5.0 (Windows; U; Windows NT 6.1; en-GB; rv:1.9.1.17) Gecko/20110123 (like Firefox/3.x) SeaMonkey/2.0.12",
+        "Mozilla/5.0 (Windows NT 5.2; rv:10.0.1) Gecko/20100101 Firefox/10.0.1 SeaMonkey/2.7.1",
+        "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_5_8; en-US) AppleWebKit/532.8 (KHTML, like Gecko) Chrome/4.0.302.2 Safari/532.8",
+        "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_4; en-US) AppleWebKit/534.3 (KHTML, like Gecko) Chrome/6.0.464.0 Safari/534.3",
+        "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_5; en-US) AppleWebKit/534.13 (KHTML, like Gecko) Chrome/9.0.597.15 Safari/534.13",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_2) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.186 Safari/535.1",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/535.2 (KHTML, like Gecko) Chrome/15.0.874.54 Safari/535.2",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/535.7 (KHTML, like Gecko) Chrome/16.0.912.36 Safari/535.7",
+        "Mozilla/5.0 (Macintosh; U; Mac OS X Mach-O; en-US; rv:2.0a) Gecko/20040614 Firefox/3.0.0 ",
+        "Mozilla/5.0 (Macintosh; U; PPC Mac OS X 10.5; en-US; rv:1.9.0.3) Gecko/2008092414 Firefox/3.0.3",
+        "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.5; en-US; rv:1.9.1) Gecko/20090624 Firefox/3.5",
+        "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.6; en-US; rv:1.9.2.14) Gecko/20110218 AlexaToolbar/alxf-2.0 Firefox/3.6.14",
+        "Mozilla/5.0 (Macintosh; U; PPC Mac OS X 10.5; en-US; rv:1.9.2.15) Gecko/20110303 Firefox/3.6.15",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.6; rv:2.0.1) Gecko/20100101 Firefox/4.0.1"
+    ]
+
+
+spiders/juzi.py
+# -*- coding: utf-8 -*-
+
+from bs4 import BeautifulSoup
+from scrapy.linkextractors import LinkExtractor
+from scrapy.spiders import CrawlSpider, Rule
+
+from scrapy_redis.spiders import RedisCrawlSpider
+from itjuzi.items import CompanyItem
+
+
+class ITjuziSpider(RedisCrawlSpider):
+    name = 'itjuzi'
+    allowed_domains = ['www.itjuzi.com']
+    # start_urls = ['http://www.itjuzi.com/company']
+    redis_key = 'itjuzispider:start_urls'
+    rules = [
+        # 获取每一页的链接
+        Rule(link_extractor=LinkExtractor(allow=('/company\?page=\d+'))),
+        # 获取每一个公司的详情
+        Rule(link_extractor=LinkExtractor(allow=('/company/\d+')), callback='parse_item')
+    ]
+
+    def parse_item(self, response):
+        soup = BeautifulSoup(response.body, 'lxml')
+
+        # 开头部分： //div[@class="infoheadrow-v2 ugc-block-item"]
+        cpy1 = soup.find('div', class_='infoheadrow-v2')
+        if cpy1:
+            # 公司名称：//span[@class="title"]/b/text()[1]
+            company_name = cpy1.find(class_='title').b.contents[0].strip().replace('\t', '').replace('\n', '')
+
+            # 口号： //div[@class="info-line"]/p
+            slogan = cpy1.find(class_='info-line').p.get_text()
+
+            # 分类：子分类//span[@class="scope c-gray-aset"]/a[1]
+            scope_a = cpy1.find(class_='scope c-gray-aset').find_all('a')
+            # 分类：//span[@class="scope c-gray-aset"]/a[1]
+            scope = scope_a[0].get_text().strip() if len(scope_a) > 0 else ''
+            # 子分类：# //span[@class="scope c-gray-aset"]/a[2]
+            sub_scope = scope_a[1].get_text().strip() if len(scope_a) > 1 else ''
+
+            # 城市+区域：//span[@class="loca c-gray-aset"]/a
+            city_a = cpy1.find(class_='loca c-gray-aset').find_all('a')
+            # 城市：//span[@class="loca c-gray-aset"]/a[1]
+            city = city_a[0].get_text().strip() if len(city_a) > 0 else ''
+            # 区域：//span[@class="loca c-gray-aset"]/a[2]
+            area = city_a[1].get_text().strip() if len(city_a) > 1 else ''
+
+            # 主页：//a[@class="weblink marl10"]/@href
+            home_page = cpy1.find(class_='weblink marl10')['href']
+            # 标签：//div[@class="tagset dbi c-gray-aset"]/a
+            tags = cpy1.find(class_='tagset dbi c-gray-aset').get_text().strip().strip().replace('\n', ',')
+
+        #基本信息：//div[@class="block-inc-info on-edit-hide"]
+        cpy2 = soup.find('div', class_='block-inc-info on-edit-hide')
+        if cpy2:
+
+            # 公司简介：//div[@class="block-inc-info on-edit-hide"]//div[@class="des"]
+            company_intro = cpy2.find(class_='des').get_text().strip()
+
+            # 公司全称：成立时间：公司规模：运行状态：//div[@class="des-more"]
+            cpy2_content = cpy2.find(class_='des-more').contents
+
+            # 公司全称：//div[@class="des-more"]/div[1]
+            company_full_name = cpy2_content[1].get_text().strip()[len('公司全称：'):] if cpy2_content[1] else ''
+
+            # 成立时间：//div[@class="des-more"]/div[2]/span[1]
+            found_time = cpy2_content[3].contents[1].get_text().strip()[len('成立时间：'):] if cpy2_content[3] else ''
+
+            # 公司规模：//div[@class="des-more"]/div[2]/span[2]
+            company_size = cpy2_content[3].contents[3].get_text().strip()[len('公司规模：'):] if cpy2_content[3] else ''
+
+            #运营状态：//div[@class="des-more"]/div[3]
+            company_status = cpy2_content[5].get_text().strip() if cpy2_content[5] else ''
+
+        # 主体信息：
+        main = soup.find('div', class_='main')
+
+        # 投资情况：//table[@class="list-round-v2 need2login"]
+          # 投资情况，包含获投时间、融资阶段、融资金额、投资公司
+        tz = main.find('table', 'list-round-v2')
+        tz_list = []
+        if tz:
+            all_tr = tz.find_all('tr')
+            for tr in all_tr:
+                tz_dict = {}
+                all_td = tr.find_all('td')
+                tz_dict['tz_time'] = all_td[0].span.get_text().strip()
+                tz_dict['tz_round'] = all_td[1].get_text().strip()
+                tz_dict['tz_finades'] = all_td[2].get_text().strip()
+                tz_dict['tz_capital'] = all_td[3].get_text().strip().replace('\n', ',')
+                tz_list.append(tz_dict)
+
+        # 团队信息：成员姓名、成员职称、成员介绍
+        tm = main.find('ul', class_='list-prodcase limited-itemnum')
+        tm_list = []
+        if tm:
+            for li in tm.find_all('li'):
+                tm_dict = {}
+                tm_dict['tm_m_name'] = li.find('span', class_='c').get_text().strip()
+                tm_dict['tm_m_title'] = li.find('span', class_='c-gray').get_text().strip()
+                tm_dict['tm_m_intro'] = li.find('p', class_='mart10 person-des').get_text().strip()
+                tm_list.append(tm_dict)
+
+        # 产品信息：产品名称、产品类型、产品介绍
+        pdt = main.find('ul', class_='list-prod limited-itemnum')
+        pdt_list = []
+        if pdt:
+            for li in pdt.find_all('li'):
+                pdt_dict = {}
+                pdt_dict['pdt_name'] = li.find('h4').b.get_text().strip()
+                pdt_dict['pdt_type'] = li.find('span', class_='tag yellow').get_text().strip()
+                pdt_dict['pdt_intro'] = li.find(class_='on-edit-hide').p.get_text().strip()
+                pdt_list.append(pdt_dict)
+
+        item = CompanyItem()
+        item['info_id'] = response.url.split('/')[-1:][0]
+        item['company_name'] = company_name
+        item['slogan'] = slogan
+        item['scope'] = scope
+        item['sub_scope'] = sub_scope
+        item['city'] = city
+        item['area'] = area
+        item['home_page'] = home_page
+        item['tags'] = tags
+        item['company_intro'] = company_intro
+        item['company_full_name'] = company_full_name
+        item['found_time'] = found_time
+        item['company_size'] = company_size
+        item['company_status'] = company_status
+        item['tz_info'] = tz_list
+        item['tm_info'] = tm_list
+        item['pdt_info'] = pdt_list
+        return item
+
+
+scrapy.cfg
+# Automatically created by: scrapy startproject
+#
+# For more information about the [deploy] section see:
+# https://scrapyd.readthedocs.org/en/latest/deploy.html
+
+[settings]
+default = itjuzi.settings
+
+[deploy]
+#url = http://localhost:6800/
+project = itjuzi
+
+
+运行：
+Slave端：
+scrapy runspider juzi.py
+
+Master端：
+redis-cli > lpush itjuzispider:start_urls http://www.itjuzi.com/company
+
+=================================================================================================================================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
