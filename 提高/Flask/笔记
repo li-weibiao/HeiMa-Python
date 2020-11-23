@@ -73,7 +73,7 @@ pip install –r requirements.txt
 
 4.1 Flask创建app对象
 4.1.1 初始化参数
-import_name: 
+import_name: 导入路径（寻找静态目录与模版目录位置的参数）
 static_url_path:
 static_folder: 默认‘static’
 template_folder: 默认‘templates’
@@ -300,7 +300,7 @@ pip install Flask-WTF
 在其它模板文件中先导入，再调用
 
 {% import 'macro.html' as func %}
-{% func.input() %}
+{{ func.input() }}
 
 6.4 模板继承
 extend
